@@ -100,6 +100,17 @@ class SnapshotManager:
 
 class MergeEngine:
     """Multi-profile memory fusion with conflict detection and resolution."""
+
+    POLICIES = ("keep_newest", "keep_highest_novelty", "keep_both_as_alternatives", "require_manual")
+
+    @staticmethod
+    def validate_policy(policy: str) -> str:
+        """Return ``policy`` unchanged, or raise before any write for an unknown value."""
+        if policy not in MergeEngine.POLICIES:
+            raise ValueError(
+                f"unknown merge policy {policy!r}; expected one of {', '.join(MergeEngine.POLICIES)}"
+            )
+        return policy
     
     @staticmethod
     def detect_conflicts(store_a, store_b) -> List[Dict]:
@@ -146,6 +157,8 @@ class MergeEngine:
     @staticmethod
     def merge_memories(store_a, store_b, policy: str = "require_manual") -> Dict:
         """Merge two Droid memories by unioning knowledge stores and fusing plastic states."""
+        # Reject an unknown policy before any conflict is resolved or written.
+        MergeEngine.validate_policy(policy)
         conflicts = MergeEngine.detect_conflicts(store_a, store_b)
         
         # Resolve per policy

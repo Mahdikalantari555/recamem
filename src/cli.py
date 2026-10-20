@@ -1,10 +1,11 @@
 
 import argparse
-import sys
 import json
 import logging
+import random
+import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 # ponytail: unified headless CLI - tmt-droid entrypoint
 
@@ -368,9 +369,135 @@ def cmd_package(args):
         return 1
     return 0
 
+def _eval_error(message: str) -> int:
+    """Report an invalid-input error on stderr and return exit code 2."""
+    print(f"error: {message}", file=sys.stderr)
+    return 2
+
+
+def _ranking_metrics(ranked_ids: List[int], relevant_ids: set, top_k: int) -> tuple:
+    """(precision@k, recall@k, reciprocal rank) for one query."""
+    seen = list(ranked_ids[:top_k])
+    tp = len(set(seen) & relevant_ids)
+    precision = tp / top_k
+    recall = tp / len(relevant_ids) if relevant_ids else 0.0
+    rr = 0.0
+    for rank, fid in enumerate(seen, start=1):
+        if fid in relevant_ids:
+            rr = 1.0 / rank
+            break
+    return precision, recall, rr
+
+
+def _load_labeled_queries(path: str) -> List[Dict]:
+    """Read a JSONL query file: {"query": "...", "fact_ids": [1, 2]}."""
+    queries = []
+    with open(path, "r", encoding="utf-8") as fh:
+        for lineno, line in enumerate(fh, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"{path}:{lineno}: invalid JSON ({exc.msg})") from exc
+            if not isinstance(entry, dict) or not isinstance(entry.get("query"), str):
+                raise ValueError(f"{path}:{lineno}: expected an object with a string 'query'")
+            fact_ids = entry.get("fact_ids")
+            if not isinstance(fact_ids, list) or not fact_ids:
+                raise ValueError(f"{path}:{lineno}: expected a non-empty 'fact_ids' list")
+            try:
+                labeled = {int(fid) for fid in fact_ids}
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"{path}:{lineno}: 'fact_ids' must contain integers") from exc
+            queries.append({"query": entry["query"], "fact_ids": labeled})
+    if not queries:
+        raise ValueError(f"{path}: no query records found")
+    return queries
+
+
 def cmd_eval(args):
-    """Evaluation subcommand."""
-    print("Eval subcommand not yet implemented", file=sys.stderr)
+    """Evaluate retrieval quality for a Droid profile.
+
+    Labeled mode (``--queries``) scores against labeled fact ids. Without a
+    query file, a self-recall sanity check runs over a sample of stored facts:
+    each fact's own text is used as the query and the metric counts whether the
+    fact is returned. The output names the mode it actually ran.
+    """
+    profile_name = (args.name or "").strip().lower().replace(" ", "-")
+    if not profile_name:
+        return _eval_error("--name is required")
+    if args.top_k < 1:
+        return _eval_error(f"--top-k must be >= 1 (got {args.top_k})")
+    if args.sample < 1:
+        return _eval_error(f"--sample must be >= 1 (got {args.sample})")
+
+    profile_dir = Path(args.base_dir) / profile_name
+    if not (profile_dir / "config.json").exists():
+        return _eval_error(f"droid profile not found: {profile_dir}")
+
+    labeled_queries = None
+    if args.queries:
+        try:
+            labeled_queries = _load_labeled_queries(args.queries)
+        except (OSError, ValueError) as exc:
+            return _eval_error(str(exc))
+
+    try:
+        from src.model.droid_manager import DroidManager
+
+        mgr = DroidManager(base_dir=args.base_dir)
+        droid = mgr.get_droid(profile_name)
+        facts = droid.knowledge.total_count()
+        if facts == 0:
+            return _eval_error(f"droid profile {profile_name} has an empty knowledge store; nothing to evaluate")
+
+        top_k = args.top_k
+        precision_sum = 0.0
+        recall_sum = 0.0
+        rr_sum = 0.0
+
+        if labeled_queries is not None:
+            mode = "labeled"
+            samples = len(labeled_queries)
+            for entry in labeled_queries:
+                hits = droid.recall(entry["query"], top_k=top_k, threshold=0.0)
+                ranked = [h.get("id") for h in hits]
+                p, r, rr = _ranking_metrics(ranked, entry["fact_ids"], top_k)
+                precision_sum += p
+                recall_sum += r
+                rr_sum += rr
+        else:
+            mode = "self_recall"
+            active = droid.knowledge.get_active_facts()
+            if not active:
+                return _eval_error(f"droid profile {profile_name} has no active facts; nothing to evaluate")
+            samples = min(args.sample, len(active))
+            # Deterministic sample so repeated runs report the same number.
+            chosen = random.Random(0).sample(active, samples)
+            for fact in chosen:
+                hits = droid.recall(fact["text"], top_k=top_k, threshold=0.0)
+                ranked = [h.get("id") for h in hits]
+                p, r, rr = _ranking_metrics(ranked, {int(fact["id"])}, top_k)
+                precision_sum += p
+                recall_sum += r
+                rr_sum += rr
+    except Exception as exc:  # evaluation failure, not invalid input
+        print(f"error: evaluation failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 1
+
+    if samples == 0:
+        return _eval_error("evaluation measured no samples")
+
+    # Stable key=value order, no ANSI: a shell can split on '='.
+    print(f"mode={mode}")
+    print(f"profile={profile_name}")
+    print(f"facts={facts}")
+    print(f"samples={samples}")
+    print(f"top_k={top_k}")
+    print(f"precision_at_k={precision_sum / samples:.3f}")
+    print(f"recall_at_k={recall_sum / samples:.3f}")
+    print(f"mrr={rr_sum / samples:.3f}")
     return 0
 
 def cmd_download_model(args):
@@ -410,7 +537,7 @@ def cmd_generate(args):
         print("GGUF backend not available, falling back to chat", file=sys.stderr)
         print(droid.chat(args.query))
 
-def main():
+def main(argv: Optional[List[str]] = None):
     parser = argparse.ArgumentParser(prog='tmt-droid', description='Unified headless CLI for Droid')
     parser.add_argument('--base-dir', default='droids', help='Droids base directory')
     subparsers = parser.add_subparsers(dest='command', required=True)
@@ -458,7 +585,11 @@ def main():
     p_pkg.set_defaults(func=cmd_package)
     
     # eval
-    p_eval = subparsers.add_parser('eval', help='Evaluation')
+    p_eval = subparsers.add_parser('eval', help='Retrieval evaluation')
+    p_eval.add_argument('--name', required=True, help='Droid name')
+    p_eval.add_argument('--queries', help='JSONL file of {"query": ..., "fact_ids": [...]} labels')
+    p_eval.add_argument('--top-k', type=int, default=5, help='Cutoff k (default 5)')
+    p_eval.add_argument('--sample', type=int, default=50, help='Facts sampled for the self-recall check (default 50)')
     p_eval.set_defaults(func=cmd_eval)
     
     # download-model
@@ -476,7 +607,7 @@ def main():
     p_gen.add_argument('--verbose', action='store_true')
     p_gen.set_defaults(func=cmd_generate)
     
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     return args.func(args)
 
 if __name__ == '__main__':

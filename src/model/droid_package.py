@@ -103,7 +103,6 @@ class DroidPackage:
         """
         archive_path = Path(archive_path)
         target_path = Path(target_dir)
-        target_path.mkdir(parents=True, exist_ok=True)
 
         if not archive_path.exists():
             raise FileNotFoundError(f"Archive not found: {archive_path}")
@@ -145,6 +144,9 @@ class DroidPackage:
                     actual = DroidPackage._sha256_bytes(data)
                     if actual != expected_sha256:
                         raise ValueError(f"Checksum mismatch for {arcname}: expected {expected_sha256}, got {actual}")
+
+            # Verification passed: only now touch the target profile.
+            target_path.mkdir(parents=True, exist_ok=True)
 
             # Extract all
             for member in zf.namelist():
