@@ -1,10 +1,13 @@
 
 from abc import ABC, abstractmethod
+from copy import deepcopy
+from dataclasses import dataclass
+import math
 from typing import Dict, List, Type, Any, Optional
 import torch
 import importlib.metadata
 
-class PlasticAdapter(ABC):
+class PlasticAdapter(torch.nn.Module, ABC):
     @abstractmethod
     def update(self, x: torch.Tensor) -> torch.Tensor:
         pass
@@ -24,10 +27,88 @@ class PlasticAdapter(ABC):
     def load_state_dict(self, state: dict):
         pass
     def update_associative_memory(self, x: torch.Tensor, surprise_factor: float = 1.0) -> torch.Tensor:
-        try:
-            return self.update(x)
-        except:
-            return self.update(x)
+        # Compatibility bridge, never retry an update that may already have mutated state.
+        return self.update(x)
+
+    def consolidate(self) -> dict:
+        """Optional optimization is not supported by the default implementation."""
+        return {"status": "unsupported", "updated": False}
+
+    def get_health(self) -> dict:
+        return {"status": "unsupported", "metrics": {}}
+
+    def create_snapshot(self) -> dict:
+        return clone_state(self.state_dict())
+
+    def restore_snapshot(self, snapshot: dict):
+        # Some third-party loaders retain references to their inputs.
+        return self.load_state_dict(clone_state(snapshot))
+
+
+def clone_state(state):
+    """Detach/clone tensors recursively; deepcopy all other mutable metadata."""
+    if isinstance(state, torch.Tensor):
+        return state.detach().clone()
+    if isinstance(state, dict):
+        return {key: clone_state(value) for key, value in state.items()}
+    if isinstance(state, list):
+        return [clone_state(value) for value in state]
+    if isinstance(state, tuple):
+        return tuple(clone_state(value) for value in state)
+    return deepcopy(state)
+
+
+class PlasticUpdateError(RuntimeError):
+    """A plastic update failed. Its state may be partially changed; never retry implicitly."""
+
+
+@dataclass(frozen=True)
+class PlasticUpdateResult:
+    output: torch.Tensor
+    requested_lr: float
+    applied_lr: Optional[float]
+    scheduling_supported: bool
+
+
+def apply_plastic_update(adapter, x, *, surprise_factor, effective_lr, base_lr):
+    """Call exactly one declared capability, without probing signatures by execution.
+
+    Scheduled adapters implement update_scheduled(...) and return (output, applied_lr).
+    Legacy adapters receive only their historical arguments. Exceptions propagate as
+    PlasticUpdateError with the original cause, including failures after mutation.
+    """
+    if not math.isfinite(effective_lr) or effective_lr < 0:
+        raise ValueError("effective_lr must be finite and non-negative")
+    if not math.isfinite(base_lr) or base_lr <= 0:
+        raise ValueError("base_lr must be finite and positive")
+    scheduled = getattr(adapter, "update_scheduled", None)
+    try:
+        if callable(scheduled):
+            output, applied_lr = scheduled(
+                x, surprise_factor=surprise_factor,
+                effective_lr=effective_lr, base_lr=base_lr,
+            )
+            applied_lr = float(applied_lr)
+            if not math.isfinite(applied_lr) or applied_lr < 0:
+                raise ValueError("adapter reported an invalid applied learning rate")
+            return PlasticUpdateResult(output, effective_lr, applied_lr, True)
+        associative = getattr(adapter, "update_associative_memory", None)
+        update = getattr(adapter, "update", None)
+        if callable(associative):
+            output = associative(x, surprise_factor=surprise_factor)
+        elif callable(update):
+            output = update(x)
+        else:
+            output, new_state = adapter(x)
+            if hasattr(adapter, "states"):
+                with torch.no_grad():
+                    adapter.states.copy_(new_state)
+        return PlasticUpdateResult(output, effective_lr, None, False)
+    except Exception as exc:
+        raise PlasticUpdateError(
+            f"{type(adapter).__name__} plastic update failed; state may be partially changed: {exc}"
+        ) from exc
+
 
 _ADAPTER_REGISTRY: Dict[str, Type[PlasticAdapter]] = {}
 
@@ -84,10 +165,9 @@ def _register_builtins():
             pass
     try:
         from src.model.rtu import RTUMemoryBlock
-        class LegacyRTUAdapter(PlasticAdapter, torch.nn.Module):
+        class LegacyRTUAdapter(PlasticAdapter):
             def __init__(self, dim=384, **kwargs):
                 super().__init__()
-                torch.nn.Module.__init__(self)
                 if "d_model" in kwargs:
                     dim = kwargs.pop("d_model")
                 self.rtu = RTUMemoryBlock(dim=dim)

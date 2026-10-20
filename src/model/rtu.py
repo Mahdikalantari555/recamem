@@ -548,7 +548,7 @@ class RTUMemoryBlock(nn.Module):
 # ---------------------------------------------------------------------------
 # New: PlasticAssociativeRTU - Titans + RWKV-7 hybrid
 # ---------------------------------------------------------------------------
-class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
+class PlasticAssociativeRTU(PlasticAdapter):
     """
     Multi-head associative plastic memory (Titans + RWKV-7 hybrid) replacing 1D EMA RTU
     with predictive surprise gating, momentum-augmented surprise updates,
@@ -822,6 +822,13 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
         out = out + 0.1 * self.h_trace
         return out
 
+    def update_scheduled(self, x, *, surprise_factor, effective_lr, base_lr):
+        output = self.update_associative_memory(
+            x, surprise_factor=surprise_factor,
+            effective_lr=effective_lr, base_lr=base_lr,
+        )
+        return output, effective_lr
+
     def update(self, x: torch.Tensor) -> torch.Tensor:
         """PlasticAdapter interface: update with input embedding, return adapted output."""
         return self.update_associative_memory(x, surprise_factor=1.0)
@@ -858,14 +865,15 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
         sd["heads"] = self.heads
         sd["K_max"] = int(getattr(self, 'K_max', 5000))
         sd["eviction_count"] = int(getattr(self, 'eviction_count', 0))
-        # Store key registry norms and k_hat for persistence (as tensors)
-        try:
-            if hasattr(self, '_key_registry') and self._key_registry:
-                sd["_key_registry_norms"] = torch.tensor([n for n, _ in self._key_registry], dtype=torch.float32)
-                # Stack k_hats: each is H x Dh, registry list of (norm, k_hat) -> stack to N x H x Dh
-                sd["_key_registry_khats"] = torch.stack([k for _, k in self._key_registry], dim=0)
-        except Exception:
-            pass
+        # Empty registries are state too: restoring a pristine snapshot must
+        # clear keys created after it, not retain the live register accidentally.
+        sd["_key_registry_norms"] = torch.tensor(
+            [n for n, _ in self._key_registry], dtype=torch.float32
+        )
+        sd["_key_registry_khats"] = (
+            torch.stack([k.detach().cpu() for _, k in self._key_registry], dim=0)
+            if self._key_registry else torch.empty(0, self.heads, self.head_dim)
+        )
         return sd
 
     def load_state_dict(self, state: Dict[str, Any], strict: bool = True):

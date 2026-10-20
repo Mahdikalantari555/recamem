@@ -1,5 +1,6 @@
 
 import time
+from src.model.plastic_adapter import clone_state
 import json
 import threading
 import queue
@@ -20,7 +21,7 @@ class SnapshotManager:
         """Create complete memory snapshot containing plastic RTU state, knowledge store checkpoint, metadata."""
         # Get plastic state
         if hasattr(droid.memory, 'state_dict'):
-            plastic_state = droid.memory.state_dict()
+            plastic_state = clone_state(droid.memory.state_dict())
         else:
             plastic_state = {}
         
@@ -61,7 +62,7 @@ class SnapshotManager:
         plastic_state = snap.get("plastic_state", {})
         if hasattr(droid.memory, 'load_state_dict') and plastic_state:
             try:
-                droid.memory.load_state_dict(plastic_state)
+                droid.memory.load_state_dict(clone_state(plastic_state))
             except Exception as e:
                 print(f"Failed to restore plastic state: {e}")
                 return False
@@ -84,7 +85,7 @@ class SnapshotManager:
         base = self.snapshots[version_id]
         # Copy plastic state
         new_snap = {
-            "plastic_state": base.get("plastic_state", {}).copy() if isinstance(base.get("plastic_state"), dict) else base.get("plastic_state"),
+            "plastic_state": clone_state(base.get("plastic_state", {})),
             "metadata": {
                 "version_id": new_version_id,
                 "timestamp": time.time(),

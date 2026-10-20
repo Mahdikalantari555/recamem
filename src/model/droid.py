@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 from safetensors.torch import save_file, load_file
 
+from src.model.plastic_adapter import apply_plastic_update, clone_state
 from src.model.onnx_anchor import OnnxMiniLM
 from src.model.knowledge_store import KnowledgeStore
 from src.model.byte_rtu_backend import ByteRtuBackend
@@ -557,6 +558,7 @@ class DroidEngine(nn.Module):
         superseded_total = 0
         episodic_absorbed = 0
         surprises = []
+        update_results = []
         for i, prop in enumerate(propositions):
             try:
                 e_i = self.anchor.embed(prop)
@@ -575,17 +577,11 @@ class DroidEngine(nn.Module):
             surprises.append(surprise)
             novelty_losses.append(surprise)
             should_insert = surprise >= surprise_threshold
-            try:
-                if hasattr(self.memory, 'update_associative_memory'):
-                    self.memory.update_associative_memory(e_i, surprise_factor=surprise, effective_lr=effective_lr, base_lr=self.base_lr)
-                elif hasattr(self.memory, 'update'):
-                    self.memory.update(e_i)
-                else:
-                    _, new_state = self.memory(e_i)
-                    if hasattr(self.memory, 'states'):
-                        self.memory.states.copy_(new_state)
-            except Exception as e:
-                pass
+            update_result = apply_plastic_update(
+                self.memory, e_i, surprise_factor=surprise,
+                effective_lr=effective_lr, base_lr=self.base_lr,
+            )
+            update_results.append(update_result)
             if should_insert:
                 conflicts = []
                 try:
@@ -613,7 +609,10 @@ class DroidEngine(nn.Module):
                 mem_norm = 0.0
         except:
             mem_norm = 0.0
-        applied_lr = effective_lr
+        applied_rates = [update.applied_lr for update in update_results]
+        applied_lr = applied_rates[0] if applied_rates and all(
+            rate == applied_rates[0] for rate in applied_rates
+        ) else None
         result = {
             "status": "learned",
             "propositions": len(propositions),
@@ -625,6 +624,11 @@ class DroidEngine(nn.Module):
             "memory_norm": mem_norm,
             "effective_lr": effective_lr,
             "applied_lr": applied_lr,
+            "requested_lr": effective_lr,
+            "applied_lrs": applied_rates,
+            "scheduling_supported": bool(update_results) and all(
+                update.scheduling_supported for update in update_results
+            ),
             "total_knowledge": self.knowledge.active_count(),
             "superseded": superseded_total
         }
@@ -1006,9 +1010,9 @@ class DroidEngine(nn.Module):
                 serializable_state = {}
                 for k, v in plastic_state.items():
                     if isinstance(v, torch.Tensor):
-                        serializable_state[k] = v.detach().cpu()
+                        serializable_state[k] = v.detach().cpu().clone()
                     else:
-                        serializable_state[k] = v
+                        serializable_state[k] = clone_state(v)
             else:
                 serializable_state = {}
         except Exception as e:
@@ -1045,7 +1049,7 @@ class DroidEngine(nn.Module):
         plastic_state = snapshot.get("plastic_state", {})
         try:
             if hasattr(self.memory, 'load_state_dict') and plastic_state:
-                self.memory.load_state_dict(plastic_state)
+                self.memory.load_state_dict(clone_state(plastic_state))
         except Exception as e:
             return False
         meta = snapshot.get("metadata", {})
@@ -1066,7 +1070,7 @@ class DroidEngine(nn.Module):
                 snapshot = self.snapshot_manager.snapshots.get(version_id)
             if snapshot is None:
                 return None
-        new_snapshot = {"plastic_state": snapshot.get("plastic_state", {}), "metadata": {"version_id": new_version_id, "timestamp": time.time(), "step_count": snapshot.get("metadata", {}).get("step_count", 0), "fact_count": snapshot.get("metadata", {}).get("fact_count", 0), "parent_version": version_id, "branch_from": version_id}, "version": new_version_id, "timestamp": time.time(), "step_count": snapshot.get("metadata", {}).get("step_count", 0), "fact_count": snapshot.get("metadata", {}).get("fact_count", 0)}
+        new_snapshot = {"plastic_state": clone_state(snapshot.get("plastic_state", {})), "metadata": {"version_id": new_version_id, "timestamp": time.time(), "step_count": snapshot.get("metadata", {}).get("step_count", 0), "fact_count": snapshot.get("metadata", {}).get("fact_count", 0), "parent_version": version_id, "branch_from": version_id}, "version": new_version_id, "timestamp": time.time(), "step_count": snapshot.get("metadata", {}).get("step_count", 0), "fact_count": snapshot.get("metadata", {}).get("fact_count", 0)}
         self.snapshots[new_version_id] = new_snapshot
         self.current_version = new_version_id
         return new_snapshot

@@ -1,0 +1,3205 @@
+{
+  "baseline_commit": "c246043",
+  "purpose": "Frozen scope inventory, not implementation certification. Populate the implementation evidence ledger under task 1.1; unverified does not mean missing.",
+  "archived_tasks": [
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T1.1",
+      "historically_checked": true,
+      "description": "Create `src/model/knowledge_store.py` with `KnowledgeStore` class wrapping SQLite WAL + FTS5 + dense vectors",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T1.2",
+      "historically_checked": true,
+      "description": "Implement `insert_fact(text, source, timestamp, step, novelty, vec)` with pre-normalization",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T1.3",
+      "historically_checked": true,
+      "description": "Implement `recall(query_vec, top_k, threshold)` using fused RRF ranking",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T1.4",
+      "historically_checked": true,
+      "description": "Implement `supersede(old_id, new_id)` marking outdated facts",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T1.5",
+      "historically_checked": true,
+      "description": "Implement `get_audit_trail()` returning all facts including superseded",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T2.1",
+      "historically_checked": true,
+      "description": "Update `DroidEngine.__init__` to use `KnowledgeStore` instead of `knowledge_bank` list",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T2.2",
+      "historically_checked": true,
+      "description": "Update `teach()` to run rolling anaphora resolution before proposition extraction",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T2.3",
+      "historically_checked": true,
+      "description": "Update `teach()` to run two-tier contradiction gating on each new proposition",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T2.4",
+      "historically_checked": true,
+      "description": "Update `teach()` to insert facts and vectors into `KnowledgeStore`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T2.5",
+      "historically_checked": true,
+      "description": "Update `recall()` to delegate to `KnowledgeStore.recall()`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T2.6",
+      "historically_checked": true,
+      "description": "Update `chat()` to use new recall interface and handle superseded facts",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T3.1",
+      "historically_checked": true,
+      "description": "Update `save_profile()` to persist SQLite DB alongside `memory.safetensors`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T3.2",
+      "historically_checked": true,
+      "description": "Update `load_profile()` to restore SQLite DB from disk",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T3.3",
+      "historically_checked": true,
+      "description": "Implement `PRAGMA wal_checkpoint(TRUNCATE)` on save",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T4.1",
+      "historically_checked": true,
+      "description": "Create `tests/test_knowledge_store.py` with unit tests for insert, recall, supersede, and RRF fusion",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T4.2",
+      "historically_checked": true,
+      "description": "Add integration tests in `tests/test_droid_engine.py` for anaphora resolution and contradiction detection",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T4.3",
+      "historically_checked": true,
+      "description": "Run full test suite: `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T5.1",
+      "historically_checked": true,
+      "description": "Benchmark retrieval latency at 10k, 50k, and 100k facts",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T5.2",
+      "historically_checked": true,
+      "description": "Verify 0 KB query-time allocation at 50k facts",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T5.3",
+      "historically_checked": true,
+      "description": "Verify contradiction detection and superseding behavior",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md",
+      "task_id": "T5.4",
+      "historically_checked": true,
+      "description": "Run `scripts/verify_remote_sensing_e2e.py` end-to-end",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md",
+      "task_id": "1.1",
+      "historically_checked": true,
+      "description": "Implement `OnnxMiniLM` in `src/model/onnx_anchor.py` loading INT8 MiniLM from `~/.cache/huggingface`, verified by `tests/test_onnx_anchor.py`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md",
+      "task_id": "1.2",
+      "historically_checked": true,
+      "description": "Implement `DroidEngine` in `src/model/droid.py` coupling ONNX semantic vectors to RTU plastic memory with auto-tuned parameters, verified by `tests/test_droid_engine.py`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md",
+      "task_id": "2.1",
+      "historically_checked": true,
+      "description": "Implement in-chat knowledge absorption (`teach()` method) with zero-collapse guarantees, verified by `tests/test_conversational_teaching.py`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md",
+      "task_id": "2.2",
+      "historically_checked": true,
+      "description": "Implement multi-droid profile manager (`droids/<name>/`), verified by `tests/test_droid_profiles.py`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md",
+      "task_id": "2.3",
+      "historically_checked": true,
+      "description": "Implement optional OpenAI-compatible teacher synthesis helper in `src/model/teacher.py`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md",
+      "task_id": "3.1",
+      "historically_checked": true,
+      "description": "Update `app.py` with Droid profile selector, in-chat teaching buttons, live transparent logs, and ONNX status",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md",
+      "task_id": "3.2",
+      "historically_checked": true,
+      "description": "End-to-end verification: teach Droid the Remote Sensing paragraph in chat and verify instant factual recall without model collapse",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "1.1",
+      "historically_checked": false,
+      "description": "Add `llama-cpp-python` to `requirements.txt` as optional extra `[gguf]`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "1.2",
+      "historically_checked": false,
+      "description": "Create `src/model/gguf_backend.py` with `GgufBackend` class wrapping `llama_cpp.Llama`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "1.3",
+      "historically_checked": false,
+      "description": "Implement `__init__(model_path=None, repo_id=None, filename=None, n_ctx=4096, n_gpu_layers=-1, **params)`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "1.4",
+      "historically_checked": false,
+      "description": "Implement `generate(prompt, max_tokens=512, temperature=0.7, top_p=0.9, stream=False, callback=None)`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "1.5",
+      "historically_checked": false,
+      "description": "Implement `tokenize(text)`, `detokenize(tokens)`, `get_kv_cache()`, `set_kv_cache(kv)`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "1.6",
+      "historically_checked": false,
+      "description": "Implement `download_model(repo_id, filename, local_dir)` using `huggingface_hub`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "1.7",
+      "historically_checked": false,
+      "description": "Verify: `tests/test_gguf_backend.py` loads model, generates, streams",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "2.1",
+      "historically_checked": false,
+      "description": "Create `src/model/memory_injection.py` with three strategy functions",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "2.2",
+      "historically_checked": false,
+      "description": "Implement `inject_prompt(query, facts, max_context_tokens)` \u2192 formatted prompt string",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "2.3",
+      "historically_checked": false,
+      "description": "Implement `inject_hidden(backend, query, h_trace, layer_idx)` \u2192 forward hook adding projected $h_t$",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "2.4",
+      "historically_checked": false,
+      "description": "Implement `inject_kv_cache(backend, facts, query)` \u2192 encode facts, prime KV cache",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "2.5",
+      "historically_checked": false,
+      "description": "Implement `select_strategy(fact_count, query_type, profile_config)` \u2192 strategy name",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "2.6",
+      "historically_checked": false,
+      "description": "Verify: unit tests for each strategy with mock backend",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "3.1",
+      "historically_checked": false,
+      "description": "Create `src/model/confidence.py` with `estimate_confidence()` and components",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "3.2",
+      "historically_checked": false,
+      "description": "Implement `retrieval_confidence(similarity, surprise, health_metrics)` \u2192 float [0,1]",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "3.3",
+      "historically_checked": false,
+      "description": "Implement `generation_confidence(token_logprobs, self_consistency, entropy)` \u2192 float [0,1]",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "3.4",
+      "historically_checked": false,
+      "description": "Implement `fuse_confidence(Cr, Cg, weights)` \u2192 harmonic mean",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "3.5",
+      "historically_checked": false,
+      "description": "Implement `confidence_tier(confidence)` \u2192 \"high\"/\"medium\"/\"low\"",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "3.6",
+      "historically_checked": false,
+      "description": "Verify: unit tests with known inputs produce expected outputs",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "4.1",
+      "historically_checked": false,
+      "description": "Update `DroidEngine.__init__` to accept optional `gguf_backend` and `gguf_config`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "4.2",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.generate_with_memory(query, strategy=\"auto\")` using injection + GGUF",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "4.4",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.estimate_confidence(retrieval_conf, generation_conf)` ",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "4.5",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.decide_path(query)` using System-1 `DecisionHead` (fast_recall vs slow_synthesis)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "4.6",
+      "historically_checked": false,
+      "description": "Update `chat()` to call `decide_path()`, route to `recall()` (fast) or `generate_with_memory()` (slow)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "4.7",
+      "historically_checked": false,
+      "description": "Add `/fast` and `/slow` chat command overrides",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "4.8",
+      "historically_checked": false,
+      "description": "Verify: integration test shows fast path <50ms, slow path grounded in facts",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "5.1",
+      "historically_checked": false,
+      "description": "Update `DroidManager.create_droid()` to accept optional `gguf_model` config",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "5.2",
+      "historically_checked": false,
+      "description": "Update `config.json` schema: `gguf_model_path`, `gguf_repo_id`, `gguf_filename`, `gguf_params`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "5.3",
+      "historically_checked": false,
+      "description": "Add `DroidManager.download_model(name, repo_id, filename)` downloading to profile dir",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "5.4",
+      "historically_checked": false,
+      "description": "Update `save_profile()`/`load_profile()` to persist GGUF config",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "5.5",
+      "historically_checked": false,
+      "description": "Verify: manager test creates droid with GGUF, downloads model, generates",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "6.1",
+      "historically_checked": false,
+      "description": "Add `download-model` subcommand to `src/cli.py`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "6.2",
+      "historically_checked": false,
+      "description": "Add `--mode fast|slow|auto` to `chat` subcommand",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "6.3",
+      "historically_checked": false,
+      "description": "Add `generate` subcommand for direct LLM generation with memory",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "6.4",
+      "historically_checked": false,
+      "description": "Add MCP tool `generate_with_memory` exposing slow path",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "6.5",
+      "historically_checked": false,
+      "description": "Verify: CLI commands work; MCP tool returns structured response",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "7.1",
+      "historically_checked": false,
+      "description": "Create `tests/test_gguf_backend.py` (requires model fixture or skip if no model)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "7.2",
+      "historically_checked": false,
+      "description": "Create `tests/test_memory_injection.py` with mock backend",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "7.3",
+      "historically_checked": false,
+      "description": "Create `tests/test_confidence.py`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "7.4",
+      "historically_checked": false,
+      "description": "Extend `tests/test_droid_engine.py` for dual-mode, injection, confidence",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "7.5",
+      "historically_checked": false,
+      "description": "Run full test suite: `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests -v`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md",
+      "task_id": "7.6",
+      "historically_checked": false,
+      "description": "Benchmark: fast path <50ms, slow path 500\u20132000ms, memory injection adds <100ms",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "1.1",
+      "historically_checked": false,
+      "description": "Add `update_fact(fact_id: int, new_text: str)` method to `KnowledgeStore` in `src/model/knowledge_store.py`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "1.2",
+      "historically_checked": false,
+      "description": "Add `delete_fact(fact_id: int)` method to `KnowledgeStore` in `src/model/knowledge_store.py`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "1.3",
+      "historically_checked": false,
+      "description": "Add `get_fact(fact_id: int)` method for single fact retrieval",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "2.1",
+      "historically_checked": false,
+      "description": "Create `src/model/propositions.py` module with `extract_propositions(text: str) -> List[str]`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "3.1",
+      "historically_checked": false,
+      "description": "Add session state initialization for feedback UI in `app.py`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "3.2",
+      "historically_checked": false,
+      "description": "Modify chat rendering loop in `app.py` (tab_chat) to detect LLM-synthesized responses",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "3.3",
+      "historically_checked": false,
+      "description": "Render expandable feedback expander after each LLM message",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "4.1",
+      "historically_checked": false,
+      "description": "Add \"\ud83e\udde0 Memory Console\" tab to main tabs list in `app.py`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "4.2",
+      "historically_checked": false,
+      "description": "Implement Memory Console tab with three sub-tabs:",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "4.3",
+      "historically_checked": false,
+      "description": "Browse & Manage sub-tab",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "4.4",
+      "historically_checked": false,
+      "description": "LLM Teach sub-tab",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "4.5",
+      "historically_checked": false,
+      "description": "Stats sub-tab",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "5.1",
+      "historically_checked": false,
+      "description": "Ensure feedback expander state persists across Streamlit reruns",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "5.2",
+      "historically_checked": false,
+      "description": "Add \"Memory Console\" to sidebar droid stats (optional)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "5.3",
+      "historically_checked": false,
+      "description": "Run full verification",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "6.1",
+      "historically_checked": false,
+      "description": "Update README.md with Memory Console usage",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md",
+      "task_id": "6.2",
+      "historically_checked": false,
+      "description": "Add docstrings to new KnowledgeStore methods and propositions module",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "1.1",
+      "historically_checked": false,
+      "description": "Create `src/model/memory_lifecycle.py` with `SnapshotManager`, `MergeEngine`, `SemanticStore`, `ContradictionResolver`, `RetrievalPolicy`, `ContinuousStream` classes",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "1.2",
+      "historically_checked": false,
+      "description": "Implement `SnapshotManager`: `create_snapshot()`, `restore_snapshot()`, `list_snapshots()`, `branch_from()` using safetensors + knowledge.db",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "1.3",
+      "historically_checked": false,
+      "description": "Implement `MergeEngine`: `merge_memories(store_a, store_b, policy)`, `fuse_plastic(rtu_a, rtu_b, weight_a, weight_b)`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "1.4",
+      "historically_checked": false,
+      "description": "Implement `ContradictionResolver`: `detect_contradictions(facts)`, `resolve(contradictions, policy)` reusing SVO logic",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "1.5",
+      "historically_checked": false,
+      "description": "Implement `SemanticStore` as `KnowledgeStore` extension: `distill()`, `retrieve_semantic()`, `incremental_distill()`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "1.6",
+      "historically_checked": false,
+      "description": "Implement `RetrievalPolicy`: epsilon-greedy bandit per query type, `select_strategy()`, `update()`, `persist()`, `load()`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "1.7",
+      "historically_checked": false,
+      "description": "Implement `ContinuousStream`: background thread, rate limiter, novelty filter, pause/resume/status",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "1.8",
+      "historically_checked": false,
+      "description": "Verify: unit tests in `tests/test_memory_lifecycle.py` cover all classes",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "2.1",
+      "historically_checked": false,
+      "description": "Add `version_id TEXT`, `feedback TEXT`, `needs_review INTEGER DEFAULT 0` columns to `facts` table",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "2.2",
+      "historically_checked": false,
+      "description": "Create `semantic_facts` table: `id, text, source_cluster_ids, confidence, created_at, access_count`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "2.3",
+      "historically_checked": false,
+      "description": "Create `feedback_log` table: `id, fact_id, action, correction_text, timestamp, strategy_used`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "2.4",
+      "historically_checked": false,
+      "description": "Add migration in `__init__` for new columns/tables",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "2.5",
+      "historically_checked": false,
+      "description": "Update `recall()` to log strategy used for feedback correlation",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "2.6",
+      "historically_checked": false,
+      "description": "Verify: `tests/test_knowledge_store.py` covers migrations and new tables",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "3.1",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.create_snapshot(version_id)` returning snapshot dict with metadata",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "3.2",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.rollback_to(version_id)` restoring plastic state and knowledge store",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "3.3",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.branch_from(version_id, new_version_id)` creating divergent branch",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "3.4",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.list_snapshots()` returning version metadata list",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "3.5",
+      "historically_checked": false,
+      "description": "Update `save_profile()` to include snapshot version in config",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "3.6",
+      "historically_checked": false,
+      "description": "Verify: `tests/test_droid_engine.py` snapshot create/restore/branch round-trip",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "4.1",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.merge_memory(other_droid, policy=\"require_manual\")` returning new version ID",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "4.2",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.distill_to_semantic()` clustering episodic facts, resolving contradictions, writing semantic store",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "4.3",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.retrieve_semantic(query)` for definitional queries",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "4.4",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.get_contradictions()` returning unresolved conflicts",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "4.5",
+      "historically_checked": false,
+      "description": "Verify: merge test with two droids having slot clash; distillation reduces fact count",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "5.1",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.approve(fact_id)` incrementing access_count, boosting confidence, rewarding strategy",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "5.2",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.reject(fact_id)` flagging needs_review, penalizing strategy, trying alternative next query",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "5.3",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.correct(old_fact_id, new_text)` superseding old, inserting new with high novelty",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "5.4",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.get_feedback_log()` returning audit trail",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "5.5",
+      "historically_checked": false,
+      "description": "Verify: feedback loop test showing strategy probability shifts",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "6.1",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.start_continuous_stream(source, max_fpm=10)` launching background ingestion",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "6.2",
+      "historically_checked": false,
+      "description": "Add `DroidEngine.pause_stream()`, `resume_stream()`, `get_stream_status()`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "6.3",
+      "historically_checked": false,
+      "description": "Add test-time training budget: `ttt_steps_this_session`, `max_ttt_steps=100`, LR decay",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "6.4",
+      "historically_checked": false,
+      "description": "In `recall()`: if budget allows, call `memory.update_associative_memory(retrieved_fact_emb, surprise=confidence)`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "6.5",
+      "historically_checked": false,
+      "description": "In `approve()`/`reject()`/`correct()`: if budget allows, call `memory.update_associative_memory()` with feedback-derived surprise",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "6.6",
+      "historically_checked": false,
+      "description": "Add profile config `test_time_training: true/false` to opt out",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "6.7",
+      "historically_checked": false,
+      "description": "Verify: stream test absorbs chat log; TTT budget respected; opt-out freezes weights",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "7.1",
+      "historically_checked": false,
+      "description": "Add `DroidManager.merge_droids(name_a, name_b, new_name, policy)` creating merged profile",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "7.2",
+      "historically_checked": false,
+      "description": "Add `DroidManager.export_version(name, version_id, out_path)` exporting snapshot artifact",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "7.3",
+      "historically_checked": false,
+      "description": "Add `DroidManager.import_version(name, snapshot_path)` restoring from exported snapshot",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "7.4",
+      "historically_checked": false,
+      "description": "Verify: manager tests cover merge, export, import",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "8.1",
+      "historically_checked": false,
+      "description": "Create `tests/test_memory_lifecycle.py` with unit tests for all `memory_lifecycle.py` classes",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "8.2",
+      "historically_checked": false,
+      "description": "Extend `tests/test_droid_engine.py` with integration tests for versioning, merge, feedback, stream, TTT",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "8.3",
+      "historically_checked": false,
+      "description": "Extend `tests/test_knowledge_store.py` for semantic store, feedback log, migrations",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "8.4",
+      "historically_checked": false,
+      "description": "Run full test suite: `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests -v`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md",
+      "task_id": "8.5",
+      "historically_checked": false,
+      "description": "Benchmark: merge 2\u00d710k fact droids < 5s; distillation 10k\u21922k facts < 10s; stream 100 msg/min",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "1.1",
+      "historically_checked": false,
+      "description": "Create `src/model/plastic_adapter.py` with `PlasticAdapter` ABC (inherits `nn.Module`) and 6 abstract methods: `update`, `retrieve`, `predict_next`, `compute_surprise`, `state_dict`, `load_state_dict`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "1.2",
+      "historically_checked": false,
+      "description": "Add optional methods with default implementations: `consolidate()`, `get_health()`, `create_snapshot()`, `restore_snapshot()`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "1.3",
+      "historically_checked": false,
+      "description": "Implement registry: `_ADAPTER_REGISTRY`, `register_adapter(name, cls)`, `get_adapter(name, **kwargs)`, `list_adapters()`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "1.4",
+      "historically_checked": false,
+      "description": "Implement entry point auto-discovery: scan `importlib.metadata.entry_points(group=\"tmt.plastic_adapters\")` on module import",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "1.5",
+      "historically_checked": false,
+      "description": "Register built-in: `register_adapter(\"associative_rtu\", PlasticAssociativeRTU)` in `rtu.py`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "1.6",
+      "historically_checked": false,
+      "description": "Verify: `tests/test_plastic_adapter.py` tests ABC compliance, registry, entry points",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "2.1",
+      "historically_checked": false,
+      "description": "Update `PlasticAssociativeRTU` class definition: `class PlasticAssociativeRTU(PlasticAdapter)`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "2.2",
+      "historically_checked": false,
+      "description": "Verify all 6 abstract methods implemented (map existing: `update_associative_memory`\u2192`update`, `retrieve`\u2192`retrieve`, `predict_next`, `compute_surprise`, `state_dict`, `load_state_dict`)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "2.3",
+      "historically_checked": false,
+      "description": "Add `state_dict()` returning `{**super().state_dict(), \"_adapter_version\": 1, \"_adapter_type\": \"associative_rtu\"}`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "2.4",
+      "historically_checked": false,
+      "description": "Add `load_state_dict()` handling version migration",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "2.5",
+      "historically_checked": false,
+      "description": "Verify: `tests/test_rtu.py` passes with interface checks",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "3.1",
+      "historically_checked": false,
+      "description": "Update `DroidEngine.__init__` to accept `plastic_adapter` instance or create via `get_adapter(config[\"plastic_adapter\"], **config.get(\"adapter_kwargs\", {}))`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "3.2",
+      "historically_checked": false,
+      "description": "Replace direct `self.memory.method()` calls with `self.memory.method()` (interface same, but type is now `PlasticAdapter`)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "3.3",
+      "historically_checked": false,
+      "description": "Update type hints: `self.memory: PlasticAdapter`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "3.4",
+      "historically_checked": false,
+      "description": "Verify: `tests/test_droid_engine.py` works with interface",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "4.1",
+      "historically_checked": false,
+      "description": "Update `DroidManager.create_droid()` to accept `plastic_adapter=\"associative_rtu\"`, `adapter_kwargs={}`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "4.2",
+      "historically_checked": false,
+      "description": "Update `config.json` schema: add `plastic_adapter`, `adapter_kwargs` fields",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "4.3",
+      "historically_checked": false,
+      "description": "Update `save_profile()` to write `plastic_adapter` and `adapter_kwargs`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "4.4",
+      "historically_checked": false,
+      "description": "Update `load_profile()` to read and instantiate adapter via registry",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "4.5",
+      "historically_checked": false,
+      "description": "Verify: manager test creates droid with explicit adapter config",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "5.1",
+      "historically_checked": false,
+      "description": "Create `tests/test_plastic_adapter.py`: ABC compliance, registry CRUD, entry point mock, state_dict round-trip",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "5.2",
+      "historically_checked": false,
+      "description": "Extend `tests/test_rtu.py`: verify `PlasticAssociativeRTU` passes ABC checks",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "5.3",
+      "historically_checked": false,
+      "description": "Extend `tests/test_droid_engine.py`: test with mock adapter implementing interface",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "5.4",
+      "historically_checked": false,
+      "description": "Run full test suite: `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests -v`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md",
+      "task_id": "5.5",
+      "historically_checked": false,
+      "description": "Benchmark: adapter instantiation < 10ms, no performance regression vs direct class",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "1.1",
+      "historically_checked": false,
+      "description": "Create `PlasticAssociativeRTU` class in `src/model/rtu.py` with multi-head associative state (4 heads \u00d7 96 \u00d7 96), projections (W_pred, W_K, W_V, W_Q, W_gate, W_alpha), and buffers (S, momentum, h_trace)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "1.2",
+      "historically_checked": false,
+      "description": "Implement `predict_next()` returning top-down expectation from h_trace",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "1.3",
+      "historically_checked": false,
+      "description": "Implement `compute_surprise(x)` returning (error_vector, surprise_scalar) with cosine surprise clamped to [0, 2]",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "1.4",
+      "historically_checked": false,
+      "description": "Implement `update_associative_memory(x, surprise_factor)` with momentum-augmented update and Householder-like erasure operator",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "1.5",
+      "historically_checked": false,
+      "description": "Implement `retrieve(q_vec)` for associative recall from fast weights",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "1.6",
+      "historically_checked": false,
+      "description": "Keep `RTUMemoryBlock` for backward compat; add deprecation comment",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "1.7",
+      "historically_checked": false,
+      "description": "Verify: unit tests in `tests/test_rtu.py` pass for all new methods",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "2.1",
+      "historically_checked": false,
+      "description": "Add `access_count INTEGER DEFAULT 1` and `last_retrieved REAL` columns to `facts` table in `KnowledgeStore._create_schema()`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "2.2",
+      "historically_checked": false,
+      "description": "Implement migration in `KnowledgeStore.__init__` to add columns if missing (ALTER TABLE)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "2.3",
+      "historically_checked": false,
+      "description": "Update `recall()` in `KnowledgeStore` to increment `access_count` and update `last_retrieved` on hit",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "2.4",
+      "historically_checked": false,
+      "description": "Verify: `tests/test_knowledge_store.py` covers new columns and migration",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "3.1",
+      "historically_checked": false,
+      "description": "Update `DroidEngine.__init__` to instantiate `PlasticAssociativeRTU` as `self.memory`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "3.2",
+      "historically_checked": false,
+      "description": "In `teach()`: for each proposition embedding, call `memory.compute_surprise(e_i)` before insertion",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "3.3",
+      "historically_checked": false,
+      "description": "In `teach()`: only insert into `KnowledgeStore` if `surprise >= 0.4` (configurable threshold)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "3.4",
+      "historically_checked": false,
+      "description": "In `teach()`: always call `memory.update_associative_memory(e_i, surprise_factor=surprise)`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "3.5",
+      "historically_checked": false,
+      "description": "Update `teach()` return dict to include `episodic_absorbed`, `avg_surprise`, `surprise_threshold`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "3.6",
+      "historically_checked": false,
+      "description": "Verify: `tests/test_droid_engine.py` test shows surprise gate reduces episodic inserts",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "4.1",
+      "historically_checked": false,
+      "description": "In `recall()`: compute semantic sims via `KnowledgeStore.recall()` (existing RRF)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "4.2",
+      "historically_checked": false,
+      "description": "In `recall()`: compute contextual alignment `cos(memory.h_trace, fact_emb)` for candidates",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "4.3",
+      "historically_checked": false,
+      "description": "In `recall()`: fuse as `final = semantic * (1 + 0.2 * max(0, contextual))` only if `semantic >= 0.48`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "4.4",
+      "historically_checked": false,
+      "description": "In `recall()`: update `access_count` and `last_retrieved` in knowledge store for returned facts",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "4.5",
+      "historically_checked": false,
+      "description": "Verify: `tests/test_droid_engine.py` shows unrelated queries not boosted by h_trace",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "5.1",
+      "historically_checked": false,
+      "description": "Implement `DroidEngine.consolidate_memory(max_prune_ratio=0.1)` with utility scoring and pruning",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "5.2",
+      "historically_checked": false,
+      "description": "Add `access_count`/`last_retrieved` tracking in knowledge store recall (from 2.3)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "5.3",
+      "historically_checked": false,
+      "description": "Implement associative reconstruction loss gradient steps on `PlasticAssociativeRTU` params (3\u20135 steps, lr=1e-4)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "5.4",
+      "historically_checked": false,
+      "description": "Add orthogonality regularization on associative matrices during consolidation",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "5.5",
+      "historically_checked": false,
+      "description": "Verify: `tests/test_droid_engine.py` test shows pruning reduces fact count, consolidation improves reconstruction",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "6.1",
+      "historically_checked": false,
+      "description": "Implement `PlasticAssociativeRTU.state_dict()` / `load_state_dict()` covering S, momentum, h_trace, decay",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "6.2",
+      "historically_checked": false,
+      "description": "Implement `DroidEngine.create_snapshot()` returning dict with plastic state, knowledge store checkpoint, version metadata",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "6.3",
+      "historically_checked": false,
+      "description": "Implement `DroidEngine.restore_snapshot(snapshot_dict)` restoring plastic state and knowledge store",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "6.4",
+      "historically_checked": false,
+      "description": "Update `save_profile()` to include snapshot version in config.json",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "6.5",
+      "historically_checked": false,
+      "description": "Update `load_profile()` to migrate from legacy memory.safetensors to new format",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "6.6",
+      "historically_checked": false,
+      "description": "Verify: `tests/test_droid_engine.py` round-trip snapshot save/load",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "7.1",
+      "historically_checked": false,
+      "description": "Implement `DroidEngine.get_memory_health()` returning dict: saturation, forgetting_rate, interference, retrieval_quality",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "7.2",
+      "historically_checked": false,
+      "description": "Saturation: active_facts / K_max + associative_norm / reference_scale",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "7.3",
+      "historically_checked": false,
+      "description": "Forgetting rate: fraction of facts with accessibility below threshold over rolling window",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "7.4",
+      "historically_checked": false,
+      "description": "Interference: mean pairwise cosine similarity of fact embeddings (sample if >1000)",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "7.5",
+      "historically_checked": false,
+      "description": "Retrieval quality: precision@k and MRR from recent queries with feedback",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "7.6",
+      "historically_checked": false,
+      "description": "Verify: `tests/test_droid_engine.py` health metrics return expected ranges",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "8.1",
+      "historically_checked": false,
+      "description": "Create `tests/test_plastic_associative_rtu.py` with unit tests for all `PlasticAssociativeRTU` methods",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "8.2",
+      "historically_checked": false,
+      "description": "Extend `tests/test_droid_engine.py` with integration tests for surprise gate, consolidation, snapshots, health",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "8.3",
+      "historically_checked": false,
+      "description": "Run full test suite: `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests -v`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md",
+      "task_id": "8.4",
+      "historically_checked": false,
+      "description": "Benchmark: verify RAM < 30 MB, recall latency < 5 ms at 50k facts, surprise gate reduces inserts by 40%+",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T1.1",
+      "historically_checked": false,
+      "description": "Create `src/model/decision_head.py` with `DecisionHead` class",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T1.2",
+      "historically_checked": false,
+      "description": "Implement zero-shot prototype routing via cosine similarity",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T1.3",
+      "historically_checked": false,
+      "description": "Implement calibrated Shannon entropy confidence gating",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T1.4",
+      "historically_checked": false,
+      "description": "Implement closed-form Ridge linear probe training",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T1.5",
+      "historically_checked": false,
+      "description": "Implement structured decision output serialization",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T2.1",
+      "historically_checked": false,
+      "description": "Create `src/mcp_server.py` with stdio JSON-RPC 2.0 server",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T2.2",
+      "historically_checked": false,
+      "description": "Implement `tools/list` method advertising available tools",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T2.3",
+      "historically_checked": false,
+      "description": "Implement `tools/call` dispatch for `recall_memory`, `teach_fact`, `decide_action`, `list_droids`, `inspect_state`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T2.4",
+      "historically_checked": false,
+      "description": "Redirect all logging to `sys.stderr` to prevent JSON-RPC framing corruption",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T2.5",
+      "historically_checked": false,
+      "description": "Create `tests/test_mcp_server.py` with unit tests for tool dispatch",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T3.1",
+      "historically_checked": false,
+      "description": "Create `src/cli.py` with unified CLI entrypoint",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T3.2",
+      "historically_checked": false,
+      "description": "Implement `chat` subcommand with interactive terminal loop",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T3.3",
+      "historically_checked": false,
+      "description": "Implement `teach` subcommand with stdin markdown ingestion",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T3.4",
+      "historically_checked": false,
+      "description": "Implement `decide` subcommand with System-1 option scoring",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T3.5",
+      "historically_checked": false,
+      "description": "Implement `serve --mcp` and `serve --rest` subcommands",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T3.6",
+      "historically_checked": false,
+      "description": "Implement `package export` and `package import` subcommands",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T3.7",
+      "historically_checked": false,
+      "description": "Create `tests/test_cli.py` with unit tests for subcommand routing",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T4.1",
+      "historically_checked": false,
+      "description": "Create `src/model/droid_package.py` with ZIP archive packaging",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T4.2",
+      "historically_checked": false,
+      "description": "Implement SHA-256 member checksum verification in `manifest.json`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T4.3",
+      "historically_checked": false,
+      "description": "Implement zip-slip path traversal protection during extraction",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T4.4",
+      "historically_checked": false,
+      "description": "Create `tests/test_droid_package.py` with unit tests for export/import",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T5.1",
+      "historically_checked": false,
+      "description": "Benchmark decision head latency at K=5, K=10, K=20 prototypes",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T5.2",
+      "historically_checked": false,
+      "description": "Verify out-of-domain rejection behavior",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T5.3",
+      "historically_checked": false,
+      "description": "Verify MCP server JSON-RPC framing integrity",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md",
+      "task_id": "T5.4",
+      "historically_checked": false,
+      "description": "Run full test suite: `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests`",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.1",
+      "historically_checked": true,
+      "description": "Apply `effective_lr` (`src/model/droid.py:455`) to every plastic update. The value must change the optimizer step, not only the reported value at `src/model/droid.py:524`. Pass the rate into `DroidEngine.teach()`'s `update_associative_memory()` call and scale the momentum write by `effective_lr / base_lr`; assert the state delta differs between `step_count=0` and a later step.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.2",
+      "historically_checked": true,
+      "description": "Record the applied learning rate in the train log. Add `applied_lr` to the teach result and to the `train_log.json` entry, keep `effective_lr` unchanged, and test that both keys are present and equal at `step_count=0`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.3",
+      "historically_checked": true,
+      "description": "Remove `retrieve()` (`src/model/rtu.py:626-655`) if it stays unreferenced. Call it from `recall()` if it carries the semantic signal. Make the call guarded (`None` on failure) and expose it as the `associative` scorer signal at weight `0.0` in this change; verify zero behavior change on the existing fixture before closing.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.4",
+      "historically_checked": true,
+      "description": "Delete the second `RTUMemoryBlock` (`src/model/droid.py:164-203`). Keep the import at `src/model/droid.py:209`. Confirm `RTUMemoryBlock` resolves to `src.model.rtu.RTUMemoryBlock` at runtime and that no test imports the deleted class.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.5",
+      "historically_checked": true,
+      "description": "Remove the duplicate `error_vec` assignments (`src/model/rtu.py:539`, `:544`). Keep one. Keep one comment explaining why the normalized residual is used, and assert `compute_surprise()` still returns the same `(error_vec, surprise)` for a fixed input.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.6",
+      "historically_checked": true,
+      "description": "Enforce `K_max` (`src/model/droid.py:346`) in the associative memory update. Evict the weakest key when capacity is full. Use the key projection norm as the strength measure and the existing attenuation operator for removal; never evict below the bound.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.7",
+      "historically_checked": true,
+      "description": "Report the eviction count in the memory health metrics. Expose `memory.eviction_count` and add `evictions` to `get_memory_health()`; test that the count is zero below the bound and one per eviction at the bound.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.8",
+      "historically_checked": true,
+      "description": "Replace the hardcoded recall boosts (`src/model/droid.py:542-607`) with a documented scorer. Each signal states its weight and its source. Implement `score_candidate(signals, weights)` with the `RECALL_SCORE_WEIGHTS` table (`dense`, `lexical`, `definitional`, `associative`, `recency`, `confidence`, `contextual`) and keep the `dense >= 0.48` gate authoritative.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.9",
+      "historically_checked": true,
+      "description": "Add a test that asserts the scorer returns the documented order for a fixed fixture. `tests/test_recall_scoring.py` covers: definitional beats higher-dense non-definitional, equal-signal ties keep insertion order, and a below-gate fact never outranks a gated fact even with maximal lexical overlap.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.10",
+      "historically_checked": true,
+      "description": "Make the mock anchor (`src/model/onnx_anchor.py:103-110`, `src/model/onnx_anchor.py:241-244`) explicit. Log a warning and expose an `is_mock` flag. Set `is_mock = False` in `__init__`, set it to `True` on every fallback path, keep `use_mock` as an alias, and test both the flag and the warning.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.11",
+      "historically_checked": true,
+      "description": "Make the Streamlit badge (`app.py:114`) read the flag instead of a hardcoded string. Show the success badge only when the anchor is real; show a warning that names the fallback reason otherwise.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.12",
+      "historically_checked": true,
+      "description": "Persist the adapter type in the profile. The loader at `src/model/droid.py:1360-1372` reads a field that does not exist. Write the field on save and read it on load. Save writes `plastic_adapter` plus the constructor kwargs; load reads `plastic_adapter` first, falls back to class-name inference, and reconstructs only when the live adapter differs.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.13",
+      "historically_checked": true,
+      "description": "Add a single-writer lock to `KnowledgeStore` (`src/model/knowledge_store.py:62`). The daemon thread in the continuous stream must use the same lock. Add `self._write_lock = threading.RLock()` and acquire it in every write method; do not add a second lock in `ContinuousStream`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.14",
+      "historically_checked": true,
+      "description": "Add a test that writes from the main thread and the stream thread at the same time. Assert the final fact count, that no exception escaped either thread, and that the dense cache returns a consistent matrix after the concurrent writes.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.15",
+      "historically_checked": true,
+      "description": "Add `psutil` and `numpy` to `requirements.txt`. `scripts/verify_reproduction.py` imports `psutil`. Pin lower bounds consistent with the existing file and confirm a fresh install can import both.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.16",
+      "historically_checked": true,
+      "description": "Correct the README test count. The README states 43 tests. The suite has 68. Replace the number with the collected count and state the command used to collect it.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md",
+      "task_id": "2.17",
+      "historically_checked": true,
+      "description": "Correct every other README claim that the code does not support. Review at minimum: \"zero catastrophic collapse\" (no forgetting measurement exists), \"sub-15ms CPU\" (not measured here), and \"22 MB on disk\" (cache-dependent). Remove or qualify each unsupported claim; do not add new performance numbers without a recorded measurement.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.1",
+      "historically_checked": true,
+      "description": "Add `engine` to the profile manifest. Values: `droid`, `byte_rtu`, `hybrid`. Write it on save, read it on load, and infer `byte_rtu` when a checkpoint is declared but the field is absent.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.2",
+      "historically_checked": true,
+      "description": "Add `byte_rtu_checkpoint` and `fusion_mode` to the manifest. `byte_rtu_checkpoint` is the relative checkpoint filename; `fusion_mode` is `prompt_stuffing` or `off`. Keep writing the legacy `rtu_checkpoint` alias for one release and read `byte_rtu_checkpoint` \u2192 `rtu_checkpoint` \u2192 `None`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.3",
+      "historically_checked": true,
+      "description": "Write `rtu.safetensors` into `droids/<name>/` for byte-RTU and hybrid profiles. Save only through `ByteRtuBackend.model.save()`; the GGUF path and plain droid profiles write no checkpoint.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.4",
+      "historically_checked": true,
+      "description": "Save in this order: `knowledge.json`, then `rtu.safetensors`, then `config.json` last. In this codebase the knowledge artifact is `knowledge.db` (the JSON writer is legacy), so the enforced rule is: every artifact the manifest names is written first, and the manifest is written last through `config.json.tmp` + `os.replace`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.5",
+      "historically_checked": true,
+      "description": "Raise a named error on load when the manifest names a checkpoint that is absent. Do not fall back to random weights. Use `MissingCheckpointError` and put the resolved path in the message.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.6",
+      "historically_checked": true,
+      "description": "Keep every profile artifact inside `droids/<name>/`. Share no file between profiles. Reject an absolute checkpoint path or one containing `..` with `InvalidProfileError`, and test that two profiles never resolve to the same file.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.7",
+      "historically_checked": true,
+      "description": "Add a public `reset()` to `ByteRtuBackend`. It clears the prompt buffer and the session cache. Call it on entry and in `finally` inside `generate()` so no primed state survives an answer.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.8",
+      "historically_checked": true,
+      "description": "Remove the trailing `\"\\n\"` that `ByteRtuBackend` appends to the prompt. The query stays last; the UI-loop parity test compares against the UI loop's own newline instead.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.9",
+      "historically_checked": true,
+      "description": "Bound the backend output by `min(max_tokens, max_output_bytes)`. `max_tokens <= 0` returns `\"\"`; `max_output_bytes` still caps a larger `max_tokens`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.10",
+      "historically_checked": true,
+      "description": "Add a test for each of the three items in 1.7\u20131.9. In `tests/test_droid_rtu_fusion.py`: `test_reset_clears_prompt_and_state`, `test_prompt_has_no_trailing_newline`, `test_output_bounded_by_min_of_tokens_and_bytes`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.11",
+      "historically_checked": true,
+      "description": "Compute the associative bonus inside `recall()` in `src/model/droid.py` from the associative memory scores. Do not hardcode boosts. Use `normalize(memory.retrieve(q_emb))` in a guarded block, apply `w_assoc * relu(dot(q_assoc, fact_emb))` to candidates that already passed the dense gate, and add the re-rank plus cold-start (empty `S`) tests from T012.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.12",
+      "historically_checked": true,
+      "description": "Rank candidates by combined score: lexical + dense + associative bonus + recency + confidence. Raise the `associative`, `recency`, and `confidence` weights in the documented `RECALL_SCORE_WEIGHTS` table from the correctness change (0.15, 0.02, 0.05), keep the multiplicative contextual term, and assert the composition in the scorer test.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.13",
+      "historically_checked": true,
+      "description": "Add `DroidManager.create_droid(name, byte_rtu=True)`. Construct the backend with the profile's `rtu_dim/rtu_layers/rtu_spread`, attach it through `byte_rtu_backend=`, save the profile, and add `test_dual_backend_construction_raises` so the `ValueError` guard stays covered (T015).",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.14",
+      "historically_checked": true,
+      "description": "Persist the byte-RTU profile round trip through `DroidManager`. `create_droid(byte_rtu=True)` \u2192 teach \u2192 save \u2192 `get_droid` in a fresh manager must restore `engine`, the checkpoint field, and the backend; assert on parameters and buffers, never on sampled text.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.15",
+      "historically_checked": true,
+      "description": "Load and save a fused profile with no loss of knowledge, RTU state, or config. Assert fact count, `step_count`, every `m.*` parameter, and `state.0`/`decaytrace.0`/`embedtrace.0` are equal after the round trip.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.16",
+      "historically_checked": true,
+      "description": "Reject a profile whose `config.json` is missing or corrupt. Replace the `return False` path with `InvalidProfileError` naming the file and the reason; test missing, unreadable, and non-object JSON.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.17",
+      "historically_checked": true,
+      "description": "Assert that a write in one profile does not change a second profile of the same engine. Write and save profile A, reload profile B, and assert B's state checksums and fact count are unchanged.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.18",
+      "historically_checked": true,
+      "description": "Add the third engine option to the Streamlit engine selector in `app.py`. Label it \"Droid + Raw Byte RTU (Fused)\"; reuse the droid chat handler so fast-path answers stay byte-identical; leave the standalone raw-mode widgets and byte loop untouched.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.19",
+      "historically_checked": true,
+      "description": "Add the answer-path badge. It names the path that produced the answer: recall, fused, or LLM. Read `engine._last_answer_path`, rename the T010 values at their source, keep a read-only alias for the old names, and show the engine, checkpoint filename, and anchor real-vs-mock state.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.20",
+      "historically_checked": true,
+      "description": "Validate the fusion path manually in the WebUI. Record the result in the change `tasks.md`. Cover: three engine options, a taught remote-sensing paragraph, `/fast` unchanged versus plain droid mode, `/slow` returning grounded text or the fallback, and the badge naming the path. Record the measured `/slow` latency ceiling here (T027).",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.21",
+      "historically_checked": true,
+      "description": "Add a training script that trains the byte-RTU model on the project corpus. Reuse the losses in `src/model/rtu.py`. Add `scripts/train_byte_rtu.py` with `--profile`, `--corpus`, `--steps`, `--seq-len`, `--dim`, `--layers`, `--spread`, `--seed`, and `--losses ce`; log the loss curve to the profile's `train_log.json`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.22",
+      "historically_checked": true,
+      "description": "Write the trained weights to `rtu.safetensors` in the target profile directory. Use `Model.save()` and update the manifest afterwards, in the save order from 1.4. Do not commit the weights; `droids/` is a generated artifact directory.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.23",
+      "historically_checked": true,
+      "description": "Make `Model.load()` raise on a missing checkpoint. It currently returns the initialized model. Raise `MissingCheckpointError` for an empty or absent path, update the two production callers to check existence explicitly, and test both the raise and the explicit-random-init path.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.24",
+      "historically_checked": true,
+      "description": "Keep the grounding assertion gated on the environment variable `RTU_CHECKPOINT`. The test skips when the variable is unset. The plumbing assertion (taught facts reach the primed bytes) always runs.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.25",
+      "historically_checked": true,
+      "description": "Update `README.md` with the fusion section and the engine options. Document `droid` / `byte_rtu` / `hybrid`, the `rtu.safetensors` location, the training script, the `RTU_CHECKPOINT` gate, and the expected quality ceiling of a small-corpus checkpoint.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.26",
+      "historically_checked": true,
+      "description": "Update `AGENTS.md` with the byte-RTU engine path and the checkpoint location. Record the frozen-weights rule, the ownership of `src/model/byte_rtu_backend.py`, and that `droids/<name>/rtu.safetensors` is the only checkpoint location.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.27",
+      "historically_checked": true,
+      "description": "Update `plans/10_droid_rtu_fusion.md`. Change the header from \"plan (not implemented)\" to \"implemented\". Tick each box as its task closes. Implementation record, latency, and quality ceiling added there.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.28",
+      "historically_checked": true,
+      "description": "Gate E1: the profile round-trip test passes. Run `PYTHONPATH=. pytest tests/test_droid_rtu_fusion.py::test_fused_profile_roundtrip` and the full suite before ticking.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.29",
+      "historically_checked": true,
+      "description": "Gate E2: the grounding test passes with `RTU_CHECKPOINT` set. Train the checkpoint per 1.21\u20131.22, export `RTU_CHECKPOINT=<profile>/rtu.safetensors`, and run `test_fused_chat_is_grounded`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md",
+      "task_id": "1.30",
+      "historically_checked": true,
+      "description": "Gate E3: the profile isolation test passes. Run `test_profiles_are_isolated` and record the two profile names used.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md",
+      "task_id": "4.1",
+      "historically_checked": true,
+      "description": "Implement the associative prefix scan for `h_t = decay \u2299 h_{t-1} + e_t` over a chunk of the sequence. Add `src/model/parallel_scan.py` with `associative_scan(decays, inputs, h0=None, chunk=128)` accepting `(B, L, D)` tensors and returning `(B, L, D)` states plus the final state.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md",
+      "task_id": "4.2",
+      "historically_checked": true,
+      "description": "Use a closed-form associative operator. Do not loop over tokens in Python. Compose `(a1, b1) \u2218 (a2, b2) = (a1 \u2299 a2, a2 \u2299 b1 + b2)` with `ceil(log2 L)` vectorized Hillis\u2013Steele levels; assert by inspection that the only Python loop is over levels and chunks.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md",
+      "task_id": "4.3",
+      "historically_checked": true,
+      "description": "Keep the batch dimension parallel. Do not loop over the batch. All batch elements share the same tensor operations; add a `B = 3` case to the tests so a batch-shape bug cannot hide.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md",
+      "task_id": "4.4",
+      "historically_checked": true,
+      "description": "Add a test that compares the chunked result with the sequential loop. Use `rtol=1e-4`. Cover a random decay from the layer initialization (`spread=32`), a sequence longer than the chunk so a boundary is crossed, `B > 1`, an all-zero input, and an all-one input.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md",
+      "task_id": "4.5",
+      "historically_checked": true,
+      "description": "Keep the sequential loop as the reference. Keep it for tests. Commit `sequential_scan(decays, inputs, h0=None)` in `src/model/parallel_scan.py`, documented as the test oracle and used by no production path.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md",
+      "task_id": "4.6",
+      "historically_checked": true,
+      "description": "Measure the wall clock of the chunked path against the sequential path on a fixed corpus. Report the factor. Add `scripts/bench_parallel_scan.py` with a deterministic corpus slice, `dim=384`, `L \u2208 {128, 512, 1024}`, three runs per path, and print `path,L,seconds,factor`. Record the numbers and the hardware in `plans/10_droid_rtu_fusion.md`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md",
+      "task_id": "4.7",
+      "historically_checked": true,
+      "description": "Assert that the factor is at least 10 at sequence length 512. Put the assertion in `tests/test_parallel_scan.py`, skip with an explicit message when the run-to-run coefficient of variation exceeds 20%, and never lower the threshold to make a machine pass.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md",
+      "task_id": "4.8",
+      "historically_checked": true,
+      "description": "Add the chunked path to the training loop. Select it with a flag. Add `--parallel-scan` to `main.py`, default off, and route the state-trajectory computation for a chunk through `associative_scan` while leaving output and trace-buffer code unchanged.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md",
+      "task_id": "4.9",
+      "historically_checked": true,
+      "description": "Keep the flag default off until the equivalence test passes. Assert the default value in `tests/test_parallel_scan.py`; flip the default only in a separate change once 4.4 is green on the target environment.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.1",
+      "historically_checked": true,
+      "description": "Implement `cmd_eval` (`src/cli.py:371-374`). It currently prints a notice and returns 0. Add `--name`, `--queries`, `--top-k`, `--sample`; evaluate labeled precision@k/recall@k/MRR when a query file is given, otherwise run the documented self-recall sanity check.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.2",
+      "historically_checked": true,
+      "description": "Print the evaluation result in the Unix-friendly format from the `cli` capability. Emit stable `key=value` lines to stdout with no ANSI, send errors to stderr with an `error:` prefix, and return 0 success / 1 evaluation failure / 2 invalid input.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.3",
+      "historically_checked": true,
+      "description": "Add `generate_with_memory` to the tool list in `openspec/specs/mcp-server/spec.md`. The server exposes 6 tools (`src/mcp_server.py`). The spec lists 5. Make the edit through this change's `specs/mcp-server/spec.md` delta (the main spec updates at archive), documenting the tool's arguments and result.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.4",
+      "historically_checked": true,
+      "description": "Add a test that asserts the tool list matches the spec. Parse the tool names from `openspec/specs/mcp-server/spec.md` plus active `openspec/changes/*/specs/mcp-server/spec.md` deltas and compare with `handle_tools_list`; fail naming the file and the extra or missing tool.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.5",
+      "historically_checked": true,
+      "description": "Replace `supersede(fact_id_input, 0)` (`app.py:541`). The call must pass the id of the new successor fact. Add \"supersede with replacement\" (insert the replacement, then supersede with its id) and \"mark superseded\" (explicit no-successor, never `0`); test at store level that `superseded_by` is a real id or `NULL`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.6",
+      "historically_checked": true,
+      "description": "Replace the bare `except:` at `app.py:109`, `app.py:196`, and `app.py:675`. Each handler must name the exception and report it. Use the narrowest exception the path can raise, show the message to the user, and do not zero the step count when a reset fails. Add a structural test that `app.py` contains no bare `except:`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.7",
+      "historically_checked": true,
+      "description": "Add the snapshot, rollback, and branch actions to the memory console. Use `SnapshotManager.create_snapshot/restore_snapshot/branch_from/list_snapshots`; snapshot before a rollback and require confirmation.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.8",
+      "historically_checked": true,
+      "description": "Add the merge action with a conflict policy selector. Offer `keep_newest`, `keep_highest_novelty`, `keep_both_as_alternatives`, and `require_manual`; show detected conflicts before merging; write the result to a new profile name, never an existing one.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.9",
+      "historically_checked": true,
+      "description": "Add the continuous stream panel with a start control and a stop control. Key the worker in `st.session_state` per profile so a rerun cannot start a second daemon; expose pause/resume and the status/stats readouts.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.10",
+      "historically_checked": true,
+      "description": "Add the `decide_path` panel with the structured decision output. Show `action`, the probability distribution, `confidence`, and `latency_ms` from `engine.decide_path(query)`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.11",
+      "historically_checked": true,
+      "description": "Add the confidence tier display. Show the tier beside every answer. Use `confidence_tier`; label extractive and fallback answers `retrieval-only`; keep the low-tier clarification prefix.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.12",
+      "historically_checked": true,
+      "description": "Add a `.droid` package export in the UI. The archive must contain the profile files. Export outside the profile directory, then show member names, sizes, and manifest digests from `DroidPackage.list_contents`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.13",
+      "historically_checked": true,
+      "description": "Add a `.droid` package import in the UI. Verify the digest before the import. Show the manifest table, require confirmation, call `import_droid(..., verify=True)`, and abort with the member name and both digests on a mismatch.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md",
+      "task_id": "5.14",
+      "historically_checked": true,
+      "description": "Add a GGUF download action. Show the target path and the size before the download starts. Resolve the path from `repo_id`/`filename`/`local_dir`, show `size unknown` when the Hub gives no metadata, require confirmation, run with a spinner, and report the returned path or the exception message.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.1",
+      "historically_checked": true,
+      "description": "Add `tests/test_confidence.py` for `src/model/confidence.py`. Cover component bounds, the harmonic-mean fusion formula, the 0.5/0.8 tier boundaries, and the low-confidence clarification prefix.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.2",
+      "historically_checked": true,
+      "description": "Add `tests/test_decision_head.py` for `src/model/decision_head.py`. Cover prototype argmax, entropy-derived confidence bounds, out-of-domain rejection, and JSON-serializable structured output.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.3",
+      "historically_checked": true,
+      "description": "Add `tests/test_memory_lifecycle.py` for `src/model/memory_lifecycle.py` (614 lines). Cover snapshot create/restore/list, rollback equality, branch independence, merge conflict detection with each policy, and stream pause/resume with a fake clock.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.4",
+      "historically_checked": true,
+      "description": "Add `tests/test_memory_injection.py` for `src/model/memory_injection.py`. Cover the prompt layout with the query last, the byte-backend `tokenize()` fallback, a pinned config returning `prompt`, and explicit handling of the hidden/KV stubs.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.5",
+      "historically_checked": true,
+      "description": "Add `tests/test_propositions.py` for `src/model/propositions.py`. Cover sentence splitting, length/word filters, anaphora resolution, and stable output for a fixed paragraph.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.6",
+      "historically_checked": true,
+      "description": "Add `tests/test_droid_package.py` for `src/model/droid_package.py`. Cover export/import round trip in `tmp_path`, manifest digests, tampered-member rejection, and `../` rejection.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.7",
+      "historically_checked": true,
+      "description": "Add `tests/test_gguf_backend.py` for `src/model/gguf_backend.py`. Use a stub `llama_cpp` module: cover constructor handling, `generate()` call shape, download failure, and import without the package installed.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.8",
+      "historically_checked": true,
+      "description": "Add `tests/test_plastic_adapter.py` for `src/model/plastic_adapter.py`. Cover registry registration, listing, construction by name, unknown-name error, and state round trip.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.9",
+      "historically_checked": true,
+      "description": "Add `tests/test_cli.py` for `src/cli.py`. Cover subcommand dispatch, `eval` output shape, unknown subcommand exit code, and the stdin teach path with a fake engine.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.10",
+      "historically_checked": true,
+      "description": "Add `tests/test_mcp_server.py` for `src/mcp_server.py`. Cover `initialize`, the `tools/list` name set, `tools/call` for each tool against a temp profile, and the JSON-RPC error envelope.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.11",
+      "historically_checked": true,
+      "description": "Fix `tests/test_rtu.py::test_model_forward_accepts_ce_only`. The test destructures the second return value of `Model.forward` as a loss. `Model.forward` returns `(sampled_byte, stop_value)`. The loss lives in `model.last_loss`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.12",
+      "historically_checked": true,
+      "description": "Assert `model.last_loss` equals the cross-entropy term. Keep the assertion on `step_count == 1` and on the trace buffers. Compute the expected CE independently from `compute_losses(..., ce_only=True)` and compare with `pytest.approx`.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.13",
+      "historically_checked": true,
+      "description": "Do not change the return signature of `Model.forward`. The MLX reference returns `(sample, stop)` at `main_mlx.py:114` and `main_mlx.py:172`. Record that reasoning in the test docstring so the next reader does not \"fix\" it.",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md",
+      "task_id": "3.14",
+      "historically_checked": true,
+      "description": "Add a test that lists the modules that have no test file. Fail the test when the list grows. Put `MODULE_TESTS` in `tests/test_surface_coverage.py`, assert every mapped file exists and contains a test, and fail with the untested module and its expected filename.",
+      "evidence_status": "unverified"
+    }
+  ],
+  "current_requirements": [
+    {
+      "source": "openspec/specs/adaptation/adapter-registry/spec.md",
+      "requirement": "Adapter registration",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/adapter-registry/spec.md",
+      "requirement": "Adapter listing",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/adapter-registry/spec.md",
+      "requirement": "Adapter instantiation by name",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/adapter-registry/spec.md",
+      "requirement": "Per-profile adapter config",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/adapter-registry/spec.md",
+      "requirement": "Entry point discovery",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/memory-forgetting/spec.md",
+      "requirement": "Power-law retrieval availability decay",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/memory-forgetting/spec.md",
+      "requirement": "Sleep consolidation during idle",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/memory-forgetting/spec.md",
+      "requirement": "Utility-based episodic pruning",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/memory-health/spec.md",
+      "requirement": "Saturation metric",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/memory-health/spec.md",
+      "requirement": "Forgetting rate metric",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/memory-health/spec.md",
+      "requirement": "Interference metric",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/memory-health/spec.md",
+      "requirement": "Retrieval quality metric",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/memory-snapshots/spec.md",
+      "requirement": "Full state snapshot serialization",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/memory-snapshots/spec.md",
+      "requirement": "Snapshot versioning with metadata",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/memory-snapshots/spec.md",
+      "requirement": "Rollback to snapshot",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-adapter/spec.md",
+      "requirement": "Latent Coupling Interface",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-adapter/spec.md",
+      "requirement": "Few-shot Factual Acquisition",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-adapter-interface/spec.md",
+      "requirement": "PlasticAdapter abstract base class",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-adapter-interface/spec.md",
+      "requirement": "Update with input embedding",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-adapter-interface/spec.md",
+      "requirement": "Retrieve with query embedding",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-adapter-interface/spec.md",
+      "requirement": "Predict next expectation",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-adapter-interface/spec.md",
+      "requirement": "Surprise computation",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-adapter-interface/spec.md",
+      "requirement": "State serialization",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-memory-titans/spec.md",
+      "requirement": "Multi-head associative state",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-memory-titans/spec.md",
+      "requirement": "Predictive expectation generation",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-memory-titans/spec.md",
+      "requirement": "Surprise computation",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-memory-titans/spec.md",
+      "requirement": "Momentum-augmented associative update",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-memory-titans/spec.md",
+      "requirement": "Householder-like selective erasure",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-memory-titans/spec.md",
+      "requirement": "1D trace summary with surprise modulation",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-memory-titans/spec.md",
+      "requirement": "Latent Coupling Interface",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/adaptation/plastic-memory-titans/spec.md",
+      "requirement": "Capacity bound enforcement",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/belief-revision/spec.md",
+      "requirement": "Contradiction detection via SVO slot clash",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/belief-revision/spec.md",
+      "requirement": "Non-monotonic superseding",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/belief-revision/spec.md",
+      "requirement": "Two-tier contradiction gating",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/belief-revision/spec.md",
+      "requirement": "Preserved audit trail",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/cli/spec.md",
+      "requirement": "Subcommand routing",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/cli/spec.md",
+      "requirement": "Unix-friendly output",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/droid/conversational-teaching/spec.md",
+      "requirement": "In-Chat Knowledge Ingestion",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/droid/conversational-teaching/spec.md",
+      "requirement": "Automatic Hyperparameter Selection",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/droid/conversational-teaching/spec.md",
+      "requirement": "Rolling Discourse Anaphora Resolution",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/droid/conversational-teaching/spec.md",
+      "requirement": "Truth Maintenance Metadata on Facts",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/droid/memory-console/spec.md",
+      "requirement": "Inline LLM Response Feedback",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/droid/memory-console/spec.md",
+      "requirement": "Memory Console Tab - Fact Browser",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/droid/memory-console/spec.md",
+      "requirement": "Memory Console Tab - Fact CRUD",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/droid/memory-console/spec.md",
+      "requirement": "Memory Console Tab - LLM Teach Workflow",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/droid/onnx-anchor/spec.md",
+      "requirement": "ONNX Inference Pipeline",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/droid/profile-management/spec.md",
+      "requirement": "Named Droid Isolation",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/evaluation/lifelong-benchmarks/spec.md",
+      "requirement": "Continual Retention Metric",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/knowledge-store/spec.md",
+      "requirement": "Hybrid lexical-dense retrieval",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/knowledge-store/spec.md",
+      "requirement": "Pre-normalized dense vectors on insert",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/knowledge-store/spec.md",
+      "requirement": "Persistent SQLite storage",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/knowledge-store/spec.md",
+      "requirement": "Reciprocal Rank Fusion",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/mcp-server/spec.md",
+      "requirement": "Stdio JSON-RPC 2.0 transport",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/mcp-server/spec.md",
+      "requirement": "Exposed MCP tools",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/mcp-server/spec.md",
+      "requirement": "Zero-dependency implementation",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/adaptive-retrieval/spec.md",
+      "requirement": "Query classification for strategy selection",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/adaptive-retrieval/spec.md",
+      "requirement": "Feedback-driven strategy adaptation",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/adaptive-retrieval/spec.md",
+      "requirement": "Strategy exploration",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/adaptive-retrieval/spec.md",
+      "requirement": "Policy persistence",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/continuous-stream/spec.md",
+      "requirement": "Stream ingestion from interaction log",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/continuous-stream/spec.md",
+      "requirement": "Configurable rate limiting",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/continuous-stream/spec.md",
+      "requirement": "Novelty filtering in stream",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/continuous-stream/spec.md",
+      "requirement": "Stream pause/resume and status",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/contradiction-resolution/spec.md",
+      "requirement": "SVO slot clash detection",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/contradiction-resolution/spec.md",
+      "requirement": "Polarity inversion detection",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/contradiction-resolution/spec.md",
+      "requirement": "Resolution policies",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/contradiction-resolution/spec.md",
+      "requirement": "Contradiction audit log",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/feedback-learning/spec.md",
+      "requirement": "Approve feedback",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/feedback-learning/spec.md",
+      "requirement": "Reject feedback",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/feedback-learning/spec.md",
+      "requirement": "Correct feedback with replacement",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/feedback-learning/spec.md",
+      "requirement": "Feedback audit trail",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/merge-engine/spec.md",
+      "requirement": "Memory merge with conflict detection",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/merge-engine/spec.md",
+      "requirement": "Configurable conflict resolution policies",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/merge-engine/spec.md",
+      "requirement": "Plastic state fusion",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/merge-engine/spec.md",
+      "requirement": "Merge audit trail",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/semantic-store/spec.md",
+      "requirement": "Distillation from episodic to semantic",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/semantic-store/spec.md",
+      "requirement": "Semantic store separate from episodic",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/semantic-store/spec.md",
+      "requirement": "Semantic retrieval with higher precision",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/semantic-store/spec.md",
+      "requirement": "Continuous distillation",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/test-time-training/spec.md",
+      "requirement": "Retrieval-driven associative update",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/test-time-training/spec.md",
+      "requirement": "Feedback-driven plastic update",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/test-time-training/spec.md",
+      "requirement": "Test-time training budget",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/test-time-training/spec.md",
+      "requirement": "Test-time training opt-out",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/versioning/spec.md",
+      "requirement": "Snapshot creation with version metadata",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/versioning/spec.md",
+      "requirement": "Snapshot listing and inspection",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/versioning/spec.md",
+      "requirement": "Point-in-time rollback",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/memory/versioning/spec.md",
+      "requirement": "Branching from snapshot",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/confidence-estimation/spec.md",
+      "requirement": "Retrieval confidence component",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/confidence-estimation/spec.md",
+      "requirement": "Generation confidence component",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/confidence-estimation/spec.md",
+      "requirement": "Fused confidence score",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/confidence-estimation/spec.md",
+      "requirement": "Confidence thresholds for action",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/dual-mode-generation/spec.md",
+      "requirement": "Fast path \u2014 RTU factual recall",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/dual-mode-generation/spec.md",
+      "requirement": "Slow path \u2014 RTU+LLM synthesis",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/dual-mode-generation/spec.md",
+      "requirement": "Automatic path routing",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/dual-mode-generation/spec.md",
+      "requirement": "Explicit mode override",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/dual-mode-generation/spec.md",
+      "requirement": "Fused RTU+Byte-RTU grounding path",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/gguf-backend/spec.md",
+      "requirement": "GGUF model loading",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/gguf-backend/spec.md",
+      "requirement": "Token generation with streaming",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/gguf-backend/spec.md",
+      "requirement": "Model parameter configuration",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/gguf-backend/spec.md",
+      "requirement": "Per-profile model config",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/memory-injection/spec.md",
+      "requirement": "Prompt stuffing injection",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/memory-injection/spec.md",
+      "requirement": "Hidden state injection",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/memory-injection/spec.md",
+      "requirement": "KV cache priming",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/model/memory-injection/spec.md",
+      "requirement": "Strategy selection",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/portable-brain/spec.md",
+      "requirement": "ZIP archive format",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/portable-brain/spec.md",
+      "requirement": "Integrity verification",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/portable-brain/spec.md",
+      "requirement": "Security hardening",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/system1-decision/spec.md",
+      "requirement": "Zero-shot prototype routing",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/system1-decision/spec.md",
+      "requirement": "Calibrated confidence gating",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/system1-decision/spec.md",
+      "requirement": "Closed-form Ridge linear probe for custom tools",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/system1-decision/spec.md",
+      "requirement": "Structured decision output",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/training/parallel-scan/spec.md",
+      "requirement": "Chunked Recurrent Forward",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/verification/surface-coverage/spec.md",
+      "requirement": "Untested module coverage",
+      "evidence_status": "unverified"
+    },
+    {
+      "source": "openspec/specs/verification/surface-coverage/spec.md",
+      "requirement": "Test contract conformance",
+      "evidence_status": "unverified"
+    }
+  ],
+  "dependency_tasks": [
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "1.1",
+      "description": "Implement `DeltaPlasticAdapter` against the existing `PlasticAdapter` interface, including projection/state initialization and dimension validation.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "1.2",
+      "description": "Implement the per-head gated Delta Rule using the previous memory prediction `K^T S`, residual value, and sigmoid `W_beta` gate.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "1.3",
+      "description": "Implement `erase(key, strength)` with a Householder-reflected direction, bounded attenuation, and an auditable result report.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "1.4",
+      "description": "Add versioned state save/load and backward-compatibility tests for existing `associative_rtu` profile loading.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "1.5",
+      "description": "Add unit tests for zero/full beta, repeated writes, changed-value overwrite, erase of a selected key, and unrelated-key preservation.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "2.1",
+      "description": "Implement `SparseCoder` with a 384-D input, 2048-D latent representation, deterministic TopK 128, reconstruction, and code-usage metrics.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "2.2",
+      "description": "Implement the sparse/delta composition and FlyModel-style configured adapter while retaining the `PlasticAdapter` API.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "2.3",
+      "description": "Register `delta_rtu`, `sparse_delta`, and `fly_model`; test discovery, construction, unknown-name errors, and profile serialization.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "2.4",
+      "description": "Add tests for exact code dimension, exactly 128 active entries, 93.75% expected sparsity, round-trip shape, and stable tie handling.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "3.1",
+      "description": "Allow new profiles to choose `delta_rtu` without changing the adapter selected by existing profile metadata.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "3.2",
+      "description": "Route `DroidEngine` teaching, recall, and snapshots through the adapter contract and preserve the current default until profile migration is explicitly selected.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "3.3",
+      "description": "Add migration/rollback documentation and tests for incompatible checkpoint dimensions.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "4.1",
+      "description": "Add a versioned 20-task benchmark with fixed seeds, task order, train/evaluation splits, and scoring protocol.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "4.2",
+      "description": "Implement the EWC reference under the same budget and document how memory loss is calculated.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "4.3",
+      "description": "Measure dense delta and sparse/delta memory loss, interference, latency, and code utilization; target memory loss <0.10 and compare with the ~0.24 EWC reference.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "4.4",
+      "description": "Publish full benchmark configuration and per-task results; treat unverified figures as targets, not release claims.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "5.1",
+      "description": "Run adapter, DroidEngine, checkpoint, and profile test suites.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "5.2",
+      "description": "Run the full project test suite and verify old `associative_rtu` checkpoints still load.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "delta-plastic-memory",
+      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "task_id": "5.3",
+      "description": "Benchmark CPU memory, update latency, retrieval quality, and interference for 384-D dense vs 2048-D TopK-128 codes.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "1.1",
+      "description": "Implement `SleepConsolidation` with `autonomous_retrieval()` driven only by the Droid's internal memory state and a decaying self-inhibition/refractory trace.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "1.2",
+      "description": "Add bounded replay-step, time, confidence, cancellation, and duplicate-retrieval controls.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "1.3",
+      "description": "Add `DroidEngine.sleep()` returning a structured report with status, duration, coverage, replay counts, pruning counts, and errors.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "1.4",
+      "description": "Integrate sleep with existing `consolidate_memory()` without conflating fact pruning and parameter pruning.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "1.5",
+      "description": "Add fixed correlated-pattern tests proving at least 95 of 100 stored patterns are recovered without passing an expected-pattern list to the replay method.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "2.1",
+      "description": "Implement MAS importance using the squared-L2 output objective and one backward pass per sampled batch.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "2.2",
+      "description": "Restrict the eligible-parameter set to plastic-adapter weights; exclude the frozen anchor and buffers.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "2.3",
+      "description": "Prune the lowest-importance 10% deterministically and save importance scores plus reversible masks in adapter state.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "2.4",
+      "description": "Add tests for importance ranking, one-backward-pass behavior, exact prune count, checkpoint round trip, and no mutation outside the allowlist.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "2.5",
+      "description": "Measure retrieval/retention quality before and after pruning; report rather than hide regressions.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "3.1",
+      "description": "Implement `DecreasingBackprop` with validated `base_lr`, `decay_factor`, and zero-based index using `lr_i = base_lr * decay_factor^i`.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "3.2",
+      "description": "Persist and restore the schedule index and effective learning rate in Droid profile/checkpoint metadata.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "3.3",
+      "description": "Add monotonicity, parameter-boundary, restart/resume, and optimizer-integration tests.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "3.4",
+      "description": "Keep any ReLUDown activation transform isolated behind an explicit experimental option until its exact reference behavior is verified.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "4.1",
+      "description": "Add `/sleep` command dispatch and a CLI sleep action that invoke the same `DroidEngine.sleep()` API.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "4.2",
+      "description": "Add an opt-in single auto-sleep worker per Droid with event-based stop/join and configurable idle/interval settings.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "4.3",
+      "description": "Serialize sleep with teach/recall through a shared engine lock and test cancellation/profile shutdown.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "4.4",
+      "description": "Ensure UI reruns and repeated start calls cannot create duplicate workers.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "5.1",
+      "description": "Add lifecycle tests for an empty store, successful cycle, cancellation, concurrent teaching, and worker restart.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "5.2",
+      "description": "Run the 100-correlated-pattern recovery benchmark and verify >=95% coverage without an external list.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "5.3",
+      "description": "Run MAS pruning and DecreasingBackprop stability tests; document configurations and quality deltas.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "autonomous-sleep-consolidation",
+      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "task_id": "5.4",
+      "description": "Run the full project test suite and checkpoint/profile compatibility tests.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "1.1",
+      "description": "Define a dense-index interface and implement `HNSWIndex` with add/update/delete/rebuild, persistence/version metadata, and exact-search fallback.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "1.2",
+      "description": "Integrate HNSW candidate IDs with FTS5 lexical candidates and existing RRF scoring without changing public recall result fields.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "1.3",
+      "description": "Ensure superseded/deleted facts are filtered and index rebuilds are atomic and repeatable.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "1.4",
+      "description": "Add 100k-fact benchmarks for p50/p95 latency, recall@5 against exact MVM, and a documented ~15 ms brute-force reference; target <5 ms and recall@5 >=0.95.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "1.5",
+      "description": "Preserve current exact mode and test missing optional dependency, corrupted index, and restart/rebuild behavior.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "2.1",
+      "description": "Implement optional `CrossEncoderReranker` over a bounded candidate set and expose pre/post scores.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "2.2",
+      "description": "Add a fixed labeled query set and measure Precision@5 before/after reranking; target +20% relative precision.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "2.3",
+      "description": "Implement `MatryoshkaAnchor` for validated 64-D and 384-D representations with versioned dual-index storage.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "2.4",
+      "description": "Add migration/re-embedding and rollback behavior; prohibit silent truncation of incompatible existing embeddings.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "2.5",
+      "description": "Measure 64-D first-stage latency and retrieval-quality loss against the 384-D baseline; target >=6x speed and <=5% relative quality loss.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "3.1",
+      "description": "Implement `EdgeSLMRegistry` with the requested 13 models, quantization/format metadata, RAM estimates, task tags, provenance, and optional unknown speed fields.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "3.2",
+      "description": "Include the source-reported reference values for Llama 3.2 1B Q4_K_M, Qwen2.5 1.5B, SmolLM2 1.7B, and Gemma 3 1B with explicit provenance labels.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "3.3",
+      "description": "Implement deterministic `recommend(ram_gb, min_tok_s, task)` that filters hard RAM/speed constraints and returns task-ranked candidates with confidence/provenance.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "3.4",
+      "description": "Test low-RAM, throughput-constrained, reasoning, general-chat, unknown-device-speed, and no-match cases.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "3.5",
+      "description": "Integrate recommended IDs/config with `GgufBackend` without downloading or loading a model merely to display recommendations.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "4.1",
+      "description": "Implement `TestTimeCompute` with diverse branching, candidate deduplication, verifier scoring, and strict depth/candidate/token/time budgets.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "4.2",
+      "description": "Add a trace/result contract with selected candidate, verifier evidence/score, and consumed budget.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "4.3",
+      "description": "Add fixed reasoning-task evaluation against an explicitly identified 8B reference model at the same wall-clock or token budget.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "4.4",
+      "description": "Verify a 1B+search/verifier configuration has statistically higher task score than the chosen 8B baseline on the declared benchmark before claiming the target.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "4.5",
+      "description": "Ensure unselected/unverified candidates are not persisted to knowledge without user approval.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "5.1",
+      "description": "Run existing knowledge-store, DroidEngine, GGUF, profile, and checkpoint tests.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "5.2",
+      "description": "Verify lexical exact-match behavior and the existing <5 ms at 100k knowledge-store SLA on documented hardware.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "5.3",
+      "description": "Run model catalog/recommendation and TTC benchmarks with provenance and configuration recorded.",
+      "evidence_status": "unimplemented_at_baseline"
+    },
+    {
+      "change": "edge-slm-optimization",
+      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "task_id": "5.4",
+      "description": "Document optional dependencies, exact fallback, profile flags, and index/embedding version migration.",
+      "evidence_status": "unimplemented_at_baseline"
+    }
+  ]
+}
