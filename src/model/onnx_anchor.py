@@ -109,6 +109,11 @@ class OnnxMiniLM:
             except:
                 self.tokenizer = None
 
+    @property
+    def is_mock(self) -> bool:
+        """True when the deterministic lexical fallback is in use (no ONNX model)."""
+        return bool(getattr(self, "use_mock", True))
+
     def _locate_or_fetch_model(self) -> str:
         candidates = list(Path(self.cache_dir).glob("**/model_quantized.onnx"))
         if candidates:

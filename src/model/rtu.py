@@ -33,6 +33,19 @@ except:
 
 # ponytail: minimal RTU implementation matching MLX 0.32.2 semantics. Upgrade to batched CUDA kernel if scaling beyond 16 layers.
 
+
+class MissingCheckpointError(FileNotFoundError):
+    """A declared checkpoint path is empty, absent, or not a regular file.
+
+    Defined here (the lowest-level module in the import graph) so the model,
+    the backend, and the profile loader all share one exception identity.
+    """
+
+
+class InvalidProfileError(ValueError):
+    """A profile manifest is missing, unreadable, or semantically invalid."""
+
+
 class CustomAdamW(torch.optim.Optimizer):
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.01, bias_correction=False):
         defaults = dict(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay, bias_correction=bias_correction)
@@ -448,8 +461,17 @@ class Model(nn.Module):
         os.replace(tmp_path, path)
 
     def load(self, path: str):
-        if not os.path.exists(path):
-            return
+        """Load a checkpoint, raising when it is absent.
+
+        Silent random initialisation is a degradation, not a fallback: callers
+        that want an explicitly random model construct ``Model(...)`` without
+        calling ``load()``.
+        """
+        if not path or not os.path.isfile(path):
+            raise MissingCheckpointError(
+                f"Checkpoint not found: {path!r}. Refusing to answer from "
+                "randomly initialised weights."
+            )
 
         data = load_file(path)
         model_dict = {}
@@ -756,8 +778,9 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
 
     def state_dict(self, *args, **kwargs) -> Dict[str, Any]:
         # Override to include buffers
-        # Use nn.Module's state_dict for params, plus our buffers
-        base = super().state_dict(*args, **kwargs)
+        # Use nn.Module's state_dict directly: ``super()`` resolves to the
+        # PlasticAdapter ABC stub, which returns None.
+        base = nn.Module.state_dict(self, *args, **kwargs) or {}
         # Add buffers that are not in base (S, momentum, h_trace are buffers)
         # Actually buffers are included in state_dict by default if persistent=True
         # But we also want to ensure custom keys
@@ -779,11 +802,6 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
             "norm_pred_weight": self.norm_pred.weight.detach().cpu().contiguous(),
             "norm_pred_bias": self.norm_pred.bias.detach().cpu().contiguous(),
         }
-        # Merge with base for compatibility, but our custom keys take precedence
-        # Include base params too
-        for k, v in base.items():
-            if k not in sd:
-                sd[k] = v.detach().cpu().contiguous() if isinstance(v, torch.Tensor) else v
         sd["_adapter_type"] = "associative_rtu"
         sd["_adapter_version"] = 1
         sd["dim"] = self.dim
@@ -832,7 +850,7 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
             # Also try to load via parent for any remaining keys
             try:
                 # Filter to only keys that are in parent's state_dict
-                parent_sd = super().state_dict()
+                parent_sd = nn.Module.state_dict(self)
                 filtered = {k: v for k, v in state.items() if k in parent_sd}
                 if filtered:
                     super().load_state_dict(filtered, strict=False)

@@ -113,7 +113,12 @@ class Runtime:
         return datetime.now().strftime('%d/%m/%Y, %H:%M:%S')
 
     def __call__(self, mode: str, dataset: str, save: bool, frozen: bool, ce_only: bool):
-        self.model.load(self.path)
+        # Model.load() is strict: a missing checkpoint raises. The CLI treats a
+        # missing path as an explicit request to train from random init.
+        if os.path.exists(self.path):
+            self.model.load(self.path)
+        else:
+            print(f'No checkpoint at {self.path!r}; starting from random initialisation.')
         print(f'parameters: {self.model.count():,}\n')
 
         try:

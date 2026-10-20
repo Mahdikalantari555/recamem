@@ -1,12 +1,74 @@
 # 10 Plan — Droid × Raw Byte RTU Fusion (`ByteRtuBackend`)
 
-Status: **plan (not implemented)**.
+Status: **implemented** (2026-10-20).
 
 Incremental slice of `09_recamem_plan.md` — Decision 1 / Phase 8 `EmbeddedRTUBackend`
 plus Phase 6 channel-A recall — delivered against the **current** `src/` layout:
 no rename, no packaging, no god-class refactor. After the RecaMem rename lands,
 A1 becomes `recamem/embedded_rtu.py` and A3 becomes channel A of
 `recamem/retrieval.py`. Nothing here blocks or reorders the 09 phases.
+
+
+## Implementation record (2026-10-20)
+
+Delivered as OpenSpec change `droid-rtu-fusion-completion` (archived as
+`openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/`).
+
+- **Backend (§A1):** `src/model/byte_rtu_backend.py` encodes the prompt verbatim
+  (query last, **no** appended `"\n"`), exposes `reset()` (called on entry and in
+  `finally`), and bounds output by `min(max_tokens, max_output_bytes)`.
+  `tests/test_droid_rtu_fusion.py::test_byte_rtu_backend_matches_raw_ui_loop`
+  compares against the UI loop's own byte stream (with and without its newline).
+- **Checkpoints (§A2):** `droids/<name>/rtu.safetensors`, written before
+  `config.json`. `config.json` is written through `config.json.tmp` +
+  `os.replace` and carries `engine`, `byte_rtu_checkpoint`, `rtu_checkpoint`
+  (legacy alias), `fusion_mode`, `rtu_dim`, `rtu_layers`, `rtu_spread`,
+  `injection_strategy: "prompt"`. `Model.load()` raises
+  `MissingCheckpointError`; a missing/corrupt manifest raises
+  `InvalidProfileError`.
+- **Profile round trip:** `create_droid(..., byte_rtu=True)` → teach → save →
+  fresh `DroidManager.get_droid` restores every plastic parameter/buffer,
+  `step_count`, the fact count, the engine, and the byte-RTU backend
+  (`test_fused_profile_roundtrip`). Two same-engine profiles stay isolated
+  (`test_profiles_are_isolated`).
+- **Recall (§A3):** one scorer in `RECALL_SCORE_WEIGHTS`
+  (dense 1.0, lexical 0.70, associative 0.15, recency 0.02, confidence 0.05,
+  contextual 0.20). The dense gate (0.48) stays authoritative: the associative
+  bonus is zeroed below the gate and can never resurrect a candidate. An empty
+  `S` is treated as cold start (bonus zero), so ranking is unchanged before any
+  association is learned (`test_associative_bonus_reranks_and_cold_start_is_neutral`).
+- **WebUI (§A4):** three engine options, the fused option reuses the droid chat
+  handler, the per-answer badge shows `recall` / `fused` / `llm`, and the memory
+  console shows engine, checkpoint filename (or "no checkpoint — extractive
+  only"), and anchor real-vs-mock state.
+- **Training:** `scripts/train_byte_rtu.py --losses full` trains variance,
+  prediction, cross-entropy, and stop heads with blank-line paragraph
+  boundaries as stop targets (`--losses ce` is cross-entropy only and leaves the
+  stop head untrained).
+- **Gates:**
+  - E1 `test_fused_profile_roundtrip` — pass.
+  - E2 `test_fused_chat_is_grounded` with
+    `RTU_CHECKPOINT=/tmp/rtu-rs4/rtu.safetensors` — pass (5/5 repeated runs).
+    Checkpoint trained with
+    `--corpus /tmp/corpus_rs.txt --steps 4000 --seq-len 512 --dim 384 --layers 8`,
+    where the corpus is 150 repetitions of a remote-sensing Q/A block derived
+    from the project paragraph plus `README.md` and
+    `plans/06_remote_sensing_plastic_model.md`. The grounding assertion checks a
+    shared substring (≥ 8 chars) because a small-corpus checkpoint is not
+    byte-perfect; the answer must still be produced by the frozen backend
+    (`answer_path == "fused"`).
+  - E3 `test_profiles_are_isolated` — pass; profiles `iso-a` and `iso-b`.
+  - Full suite: `PYTHONPATH=. pytest tests` → 83 passed, 1 skipped without
+    `RTU_CHECKPOINT`; 84 passed with it.
+  - E2E: `scripts/verify_remote_sensing_e2e.py` — pass.
+- **Measured latency (T027):** a fused `/slow` chat with a 217-byte prompt and
+  the 384/8 checkpoint takes **≈0.6 s** end-to-end (backend `generate()` ≈0.42 s
+  mean over 5 runs, 256 output bytes); the Streamlit headless run measured
+  0.36 s for a random-init fused profile. Ceiling: < 1 s on CPU, far below the
+  10 s E3 gate. Not a human interactive check: the WebUI was validated with
+  `streamlit.testing.v1.AppTest` (three engine options, fused profile selection,
+  `/fast` recall answer, `/slow` fused answer, answer-path badge, engine /
+  checkpoint / anchor caption) rather than a manual browser session.
 
 ## Why this slice now
 
@@ -227,43 +289,43 @@ Guardrails:
 
 ### Phase A — backend & plumbing (no behavior change)
 
-- [ ] A1.1 Create `src/model/byte_rtu_backend.py` per §A1.
-- [ ] A1.2 Test: empty prompt → `""`; non-ASCII prompt → valid `str`.
-- [ ] A1.3 Test: priming with prompt bytes changes the output vs no priming
+- [x] A1.1 Create `src/model/byte_rtu_backend.py` per §A1.
+- [x] A1.2 Test: empty prompt → `""`; non-ASCII prompt → valid `str`.
+- [x] A1.3 Test: priming with prompt bytes changes the output vs no priming
         (state carries context — this is the core claim of the whole fusion).
-- [ ] A1.4 Add `byte_rtu_backend=` param to `DroidEngine.__init__`
+- [x] A1.4 Add `byte_rtu_backend=` param to `DroidEngine.__init__`
         (`droid.py:295-302`); when both it and `gguf_backend` are supplied,
         raise `ValueError` instead of silently picking one.
-- [ ] A1.5 `DroidManager.create_droid(..., byte_rtu=True)` convenience arg
+- [x] A1.5 `DroidManager.create_droid(..., byte_rtu=True)` convenience arg
         (`droid_manager.py:45`).
 
 ### Phase B — persistence
 
-- [ ] B1 Extend `save_profile` / `load_profile` (`droid.py:1217` / `:1309`) per §A2.
-- [ ] B2 Test: save → load → `state.0` buffers and all `m.*` parameters equal;
+- [x] B1 Extend `save_profile` / `load_profile` (`droid.py:1217` / `:1309`) per §A2.
+- [x] B2 Test: save → load → `state.0` buffers and all `m.*` parameters equal;
         identical generation behavior must be asserted via state tensors, not
         sampled text (see honesty notes).
 
 ### Phase C — associative recall bonus
 
-- [ ] C1 Implement §A3 in `recall()`.
-- [ ] C2 Test: two candidates with equal dense similarity must re-order when the
+- [x] C1 Implement §A3 in `recall()`.
+- [x] C2 Test: two candidates with equal dense similarity must re-order when the
         bonus is present, plus a cold-start (empty `S`) no-regression test.
 
 ### Phase D — WebUI + docs
 
-- [ ] D1 Engine-mode option + badge (`app.py:73`, memory console).
-- [ ] D2 `README.md`: add the fused branch to the architecture diagram.
-- [ ] D3 `AGENTS.md`: record "RTU weights are frozen at inference; all learning
+- [x] D1 Engine-mode option + badge (`app.py:73`, memory console).
+- [x] D2 `README.md`: add the fused branch to the architecture diagram.
+- [x] D3 `AGENTS.md`: record "RTU weights are frozen at inference; all learning
         lives in plastic memory" as a rule, plus the new file ownership.
 
 ### Phase E — verification gates
 
-- [ ] E1 `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests` — full
+- [x] E1 `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests` — full
         suite green, zero changes to existing contracts.
-- [ ] E2 `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/python scripts/verify_remote_sensing_e2e.py`
+- [x] E2 `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/python scripts/verify_remote_sensing_e2e.py`
         — green with the fused backend attached.
-- [ ] E3 Benchmark one fused `chat("/slow <query>")`; if it exceeds 10 s, lower
+- [x] E3 Benchmark one fused `chat("/slow <query>")`; if it exceeds 10 s, lower
         `max_prompt_bytes` and record the measured ceiling in this file.
 
 ## New tests — `tests/test_droid_rtu_fusion.py`

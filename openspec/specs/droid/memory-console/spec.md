@@ -7,7 +7,7 @@ Provides a persistent Memory Console for human-in-the-loop verification of LLM-s
 ## Requirements
 
 ### Requirement: Inline LLM Response Feedback
-The system SHALL display an expandable feedback section after each LLM-synthesized assistant response containing auto-extracted proposition checkboxes for selective memory absorption.
+The system SHALL display an expandable feedback section after each LLM-synthesized assistant response containing auto-extracted proposition checkboxes for selective memory absorption. Every assistant answer SHALL carry an answer-path badge naming how it was produced: `recall` for an extractive recall answer (including the no-information fallback), `fused` for a frozen byte-RTU answer, or `llm` for a GGUF or external-LLM answer.
 
 #### Scenario: LLM response shows feedback section
 - **WHEN** the assistant generates a response with source label indicating LLM synthesis (llm_grounded_memory or llm_general_knowledge)
@@ -27,8 +27,13 @@ The system SHALL display an expandable feedback section after each LLM-synthesiz
 - **THEN** the system SHALL display a confirmation with the number of facts absorbed
 - **THEN** the feedback section SHALL collapse or show completion state
 
+#### Scenario: Answer-path badge
+- **WHEN** an assistant answer is rendered
+- **THEN** a badge SHALL name the producing path as `recall`, `fused`, or `llm`
+- **THEN** the badge SHALL NOT be a hardcoded string that ignores `engine._last_answer_path`
+
 ### Requirement: Memory Console Tab - Fact Browser
-The system SHALL provide a dedicated tab for browsing, searching, and managing all facts in the knowledge store, and SHALL provide the memory-lifecycle actions in that tab: snapshot, rollback, branch, merge with a conflict policy, and continuous-stream start/stop.
+The system SHALL provide a dedicated tab for browsing, searching, and managing all facts in the knowledge store, and SHALL provide the memory-lifecycle actions in that tab: snapshot, rollback, branch, merge with a conflict policy, and continuous-stream start/stop. The tab SHALL display the active profile's engine and, when the engine uses a byte-RTU checkpoint, the checkpoint filename or an explicit "no checkpoint — extractive only" state. The tab SHALL display the anchor status from the anchor's `is_mock` flag.
 
 #### Scenario: Browse all facts
 - **WHEN** user opens the Memory Console tab
@@ -43,6 +48,12 @@ The system SHALL provide a dedicated tab for browsing, searching, and managing a
 #### Scenario: View fact details
 - **WHEN** user clicks a fact row
 - **THEN** a detail view SHALL show: full text, source, timestamp, step, novelty, superseded status, valid_until, superseded_by
+
+#### Scenario: Engine and checkpoint status
+- **WHEN** the active profile declares an `engine` of `droid`, `byte_rtu`, or `hybrid`
+- **THEN** the console SHALL display that engine
+- **THEN** for `byte_rtu` and `hybrid` it SHALL display the checkpoint filename, or state that no checkpoint is present
+- **THEN** it SHALL display whether the anchor is real or mock, read from the flag rather than a constant
 
 #### Scenario: Snapshot, rollback, and branch
 - **WHEN** user creates a snapshot with a version id

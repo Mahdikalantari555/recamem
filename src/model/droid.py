@@ -12,6 +12,7 @@ from safetensors.torch import save_file, load_file
 from src.model.onnx_anchor import OnnxMiniLM
 from src.model.knowledge_store import KnowledgeStore
 from src.model.byte_rtu_backend import ByteRtuBackend
+from src.model.rtu import InvalidProfileError, MissingCheckpointError
 
 # ponytail: DroidEngine binds 22MB ONNX MiniLM semantic anchor to plastic RTU memory.
 
@@ -297,6 +298,96 @@ NO_INFORMATION_MESSAGE = (
     "Teach me by saying: 'learn: <facts>'."
 )
 
+# ---------------------------------------------------------------------------
+# Recall scoring (change 1.12)
+# ---------------------------------------------------------------------------
+# One named table, one composition. The dense cosine dominates so the
+# ``dense >= DENSE_GATE`` rule stays authoritative (plan 10 decision 6): the
+# associative bonus is zeroed below the gate and can never resurrect an
+# out-of-domain hit. Lexical/recency/confidence are weaker re-ranking signals;
+# the lexical term keeps the pre-change ability to admit a near-gate candidate
+# that clears the caller's threshold. The associative/recency/confidence
+# weights are the slots the correctness change reserved; this change
+# activates them.
+RECALL_SCORE_WEIGHTS: Dict[str, float] = {
+    "dense": 1.0,
+    "lexical": 0.70,
+    "associative": 0.15,
+    "recency": 0.02,
+    "confidence": 0.05,
+    "contextual": 0.20,
+}
+
+DENSE_GATE = 0.48
+
+# Recency decay half-life for the recall score.
+RECENCY_HALF_LIFE_SECONDS = 30.0 * 24.0 * 60.0 * 60.0
+
+# Canonical answer paths (change 1.19). The old names are kept as a
+# read-only mapping for external callers.
+ANSWER_PATH_RECALL = "recall"
+ANSWER_PATH_FUSED = "fused"
+ANSWER_PATH_LLM = "llm"
+_LEGACY_ANSWER_PATH = {
+    ANSWER_PATH_RECALL: "extractive",
+    ANSWER_PATH_FUSED: "generative",
+    ANSWER_PATH_LLM: "generative",
+}
+
+_STOP_WORDS = {
+    "a", "an", "the", "and", "or", "but", "of", "to", "in", "on", "at", "by",
+    "for", "with", "is", "are", "was", "were", "be", "been", "being", "do",
+    "does", "did", "have", "has", "had", "it", "its", "this", "that", "these",
+    "those", "which", "who", "whom", "whose", "what", "when", "where", "why",
+    "how", "can", "could", "should", "would", "will", "shall", "may", "about",
+    "into", "over", "under", "between", "during", "through", "out", "up",
+    "down", "you", "your",
+}
+
+
+def _lexical_overlap(query: str, fact: str) -> float:
+    """Content-word overlap in [0, 1]; the lexical signal of the recall score."""
+    q_words = set(re.findall(r"[a-z0-9]+", query.lower())) - _STOP_WORDS
+    f_words = set(re.findall(r"[a-z0-9]+", fact.lower())) - _STOP_WORDS
+    if not q_words:
+        return 0.0
+    return len(q_words & f_words) / float(len(q_words))
+
+
+# A definitional predicate ("X is the/a/an ...") marks a fact as a definition
+# candidate for definitional queries; it is the lexical prior the old
+# hardcoded definitional boost encoded.
+_DEFINITIONAL_PREDICATE = re.compile(r"\b(?:is|are)\s+(?:the|a|an)\b", re.IGNORECASE)
+
+
+def _lexical_score(query: str, fact: str, query_type: str) -> float:
+    """Lexical signal: content-word overlap plus a definitional prior."""
+    score = _lexical_overlap(query, fact)
+    if query_type == "definitional" and _DEFINITIONAL_PREDICATE.search(fact):
+        score += 0.5
+    return score
+
+
+def _recency_score(timestamp: Optional[float]) -> float:
+    """Exponential recency in [0, 1] with a 30-day half-life."""
+    if not timestamp:
+        return 0.0
+    try:
+        age = max(0.0, time.time() - float(timestamp))
+    except (TypeError, ValueError):
+        return 0.0
+    return math.exp(-age / RECENCY_HALF_LIFE_SECONDS)
+
+
+def _confidence_score(fact: Dict[str, Any]) -> float:
+    """Fact-level confidence, clamped to [0, 1] (novelty is the stored proxy)."""
+    try:
+        value = float(fact.get("novelty", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+    return max(0.0, min(1.0, value))
+
+
 
 class DroidEngine(nn.Module):
     def __init__(self, name: str = "droid-alpha", dim: int = 384,
@@ -396,11 +487,40 @@ class DroidEngine(nn.Module):
                     print(f"Failed to init GGUF backend from config: {e}")
         self._last_retrieval_strategy = "hybrid_rrf"
         self._retrieval_history: List[Dict] = []
-        self._last_answer_path = "extractive"
+        self._last_answer_path = ANSWER_PATH_RECALL
+        # Manifest fields (change 1.1-1.2). A fresh engine infers its engine
+        # from the attached backend; load_profile() overwrites these.
+        if isinstance(self.gguf_backend, ByteRtuBackend):
+            self.engine = "byte_rtu"
+            self.fusion_mode = "prompt_stuffing"
+            self.byte_rtu_checkpoint: Optional[str] = "rtu.safetensors"
+        else:
+            self.engine = "droid"
+            self.fusion_mode = "off"
+            self.byte_rtu_checkpoint = None
+        self.rtu_dim = getattr(self.gguf_backend, "dim", 384)
+        self.rtu_layers = getattr(self.gguf_backend, "layers", 8)
+        self.rtu_spread = getattr(self.gguf_backend, "spread", 32)
 
     @property
     def knowledge_bank(self) -> List[Dict[str, Any]]:
         return self.knowledge.get_audit_trail()
+
+    # ------------------------------------------------------------------
+    # Answer-path observability (change 1.19)
+    # ------------------------------------------------------------------
+    @property
+    def answer_path(self) -> str:
+        """Canonical path that produced the last answer: recall|fused|llm."""
+        return self._last_answer_path
+
+    @property
+    def legacy_answer_path(self) -> str:
+        """Read-only mapping for callers written against the T010 names."""
+        return _LEGACY_ANSWER_PATH.get(self._last_answer_path, self._last_answer_path)
+
+    def _set_answer_path(self, path: str) -> None:
+        self._last_answer_path = path
 
     def clear_memory(self):
         """Wipe all learned state: knowledge store, plastic memory, and counters."""
@@ -546,6 +666,21 @@ class DroidEngine(nn.Module):
         if q_emb.dim() > 1:
             q_emb = q_emb.squeeze(0)
         q_emb = q_emb / torch.linalg.vector_norm(q_emb).clamp(min=1e-6)
+        # Associative query projection, computed once per recall inside a
+        # guarded block. Absent or cold associative state (empty S) leaves the
+        # bonus at zero, so a fresh profile ranks exactly as it did before.
+        q_assoc = None
+        try:
+            retrieve = getattr(self.memory, "retrieve", None)
+            S = getattr(self.memory, "S", None)
+            cold = True
+            if S is not None:
+                cold = float(torch.linalg.vector_norm(S).item()) == 0.0
+            if retrieve is not None and not cold:
+                candidate = retrieve(q_emb)
+                q_assoc = candidate / torch.linalg.vector_norm(candidate).clamp(min=1e-8)
+        except Exception:
+            q_assoc = None
         try:
             matches = self.knowledge.recall(q_emb, top_k=top_k*2, query_text=query, strategy=strategy)
         except TypeError:
@@ -559,55 +694,56 @@ class DroidEngine(nn.Module):
                 h_trace = self.memory.states
         except:
             pass
+        weights = RECALL_SCORE_WEIGHTS
         for m in matches:
-            sim = m.get("dense_similarity") or m.get("similarity") or 0.0
-            # Definitional boost: for definitional queries, boost facts that are definitional
-            definitional_boost = 0.0
-            fact_text = m.get("text","")
-            fact_lower = fact_text.lower()
-            query_lower = query.lower()
-            if query_type == "definitional":
-                if "is the acquisition" in fact_lower or "is the" in fact_lower or "is a" in fact_lower or "is an" in fact_lower:
-                    definitional_boost = 0.25
-                if "what is" in query_lower and "acquisition" in fact_lower and "remote" in query_lower:
-                    definitional_boost += 0.2
-            # Generic overlap boost: if fact and query share rare words, boost
+            fact_text = m.get("text", "")
+            dense = float(m.get("dense_similarity") or m.get("similarity") or 0.0)
+            passed_gate = dense >= DENSE_GATE
+            fact_emb = None
             try:
-                import re
-                STOP = {"a", "an", "the", "and", "or", "but", "of", "to", "in", "on", "at", "by", "for", "with", "is", "are", "was", "were", "be", "been", "being", "do", "does", "did", "have", "has", "had", "it", "its", "this", "that", "these", "those", "which", "who", "whom", "whose", "what", "when", "where", "why", "how", "can", "could", "should", "would", "will", "shall", "may", "about", "into", "over", "under", "between", "during", "through", "out", "up", "down", "you", "your"}
-                q_words = set(re.findall(r"[a-z0-9]+", query_lower)) - STOP
-                f_words = set(re.findall(r"[a-z0-9]+", fact_lower)) - STOP
-                overlap = q_words & f_words
-                if overlap:
-                    # Boost by overlap size, up to 0.3
-                    definitional_boost += min(0.3, len(overlap) * 0.15)
-                    # Extra boost if overlap contains rare words (len>4)
-                    rare_overlap = [w for w in overlap if len(w) > 4]
-                    if rare_overlap:
-                        definitional_boost += min(0.2, len(rare_overlap) * 0.1)
-            except:
-                pass
-            sim_boosted = sim + definitional_boost
-            if sim < 0.48:
-                if sim_boosted >= threshold:
-                    m["similarity"] = sim_boosted
-                    hits.append(m)
-                continue
+                fact_emb = self.anchor.embed(fact_text)
+                if fact_emb.dim() > 1:
+                    fact_emb = fact_emb.squeeze(0)
+                fact_emb = fact_emb / torch.linalg.vector_norm(fact_emb).clamp(min=1e-6)
+            except Exception:
+                fact_emb = None
             contextual = 0.0
-            if h_trace is not None:
+            if h_trace is not None and fact_emb is not None:
                 try:
-                    fact_emb = self.anchor.embed(m["text"])
-                    if fact_emb.dim() > 1:
-                        fact_emb = fact_emb.squeeze(0)
-                    fact_emb = fact_emb / torch.linalg.vector_norm(fact_emb).clamp(min=1e-6)
                     h_norm = h_trace / (torch.linalg.vector_norm(h_trace).clamp(min=1e-8))
                     contextual = torch.dot(h_norm, fact_emb).item()
                 except:
                     contextual = 0.0
-            final_score = sim_boosted * (1.0 + 0.2 * max(0.0, contextual))
+            # Associative bonus: relu(dot(q_assoc, fact_emb)) so a negative
+            # association can never push a fact below one that passed on merit.
+            # The associative bonus only re-ranks candidates that already pass
+            # the dense gate (plan 10 decision 6); it can never resurrect an
+            # out-of-domain hit on its own.
+            associative = 0.0
+            if passed_gate and q_assoc is not None and fact_emb is not None:
+                try:
+                    associative = max(0.0, float(torch.dot(q_assoc, fact_emb).item()))
+                except Exception:
+                    associative = 0.0
+            lexical = _lexical_score(query, fact_text, query_type)
+            recency = _recency_score(m.get("timestamp"))
+            confidence = _confidence_score(m)
+            final_score = (
+                weights["dense"] * dense
+                + weights["lexical"] * lexical
+                + weights["associative"] * associative
+                + weights["recency"] * recency
+                + weights["confidence"] * confidence
+            )
+            final_score *= 1.0 + weights["contextual"] * max(0.0, contextual)
             m["similarity"] = final_score
+            m["dense_similarity"] = dense
+            m["lexical_score"] = lexical
+            m["associative_bonus"] = weights["associative"] * associative
+            m["recency_score"] = recency
+            m["confidence_score"] = confidence
             m["contextual_alignment"] = contextual
-            m["original_similarity"] = sim
+            m["original_similarity"] = dense
             if final_score >= threshold:
                 hits.append(m)
         hits.sort(key=lambda x: x.get("similarity",0), reverse=True)
@@ -697,28 +833,43 @@ class DroidEngine(nn.Module):
                         explanation_parts.append(t)
                 synthesized = " ".join(explanation_parts)
                 self.log(f"Factual recall hit with similarity {hits[0]['similarity']:.3f}.")
-                self._last_answer_path = "extractive"
+                self._set_answer_path(ANSWER_PATH_RECALL)
                 return f"{synthesized}"
             else:
                 self.log("No relevant facts found above threshold.")
-                self._last_answer_path = "fallback"
+                self._set_answer_path(ANSWER_PATH_RECALL)
                 return NO_INFORMATION_MESSAGE
         if mode == "slow":
             if self.gguf_backend is not None and hasattr(self, 'generate_with_memory'):
+                result = None
                 try:
                     result = self.generate_with_memory(query, strategy="auto")
-                    if isinstance(result, dict):
-                        text = result.get("text", "")
-                        tier = result.get("confidence_tier", "medium")
-                        self._last_answer_path = "generative"
-                        if tier == "low":
-                            return f"I'm uncertain; here's what I found... {text}"
-                        return text
-                    else:
-                        self._last_answer_path = "fallback"
-                        return str(result)
                 except Exception as e:
-                    pass
+                    self.log(f"Slow path failed: {e}")
+                    result = None
+                if isinstance(result, dict):
+                    text = result.get("text", "")
+                    tier = result.get("confidence_tier", "medium")
+                    if isinstance(self.gguf_backend, ByteRtuBackend) and not str(text).strip():
+                        # The frozen component emitted nothing: grounded
+                        # silence beats an empty answer.
+                        self.log("Fused backend produced no bytes; using fallback.")
+                        self._set_answer_path(ANSWER_PATH_RECALL)
+                        return NO_INFORMATION_MESSAGE
+                    # A byte-RTU answer is the fused path; anything else that
+                    # generated text is an LLM answer.
+                    self._set_answer_path(
+                        ANSWER_PATH_FUSED
+                        if isinstance(self.gguf_backend, ByteRtuBackend)
+                        else ANSWER_PATH_LLM
+                    )
+                    if tier == "low":
+                        return f"I'm uncertain; here's what I found... {text}"
+                    return text
+                if isinstance(result, str):
+                    # No facts -> no free generation (decision 5).
+                    self._set_answer_path(ANSWER_PATH_RECALL)
+                    return result
         hits = self.recall(query, top_k=4, threshold=0.45)
         if not hits and self.last_query:
             contextual_query = f"{self.last_query} {query}"
@@ -734,10 +885,10 @@ class DroidEngine(nn.Module):
                     explanation_parts.append(t)
             synthesized = " ".join(explanation_parts)
             self.log(f"Factual recall hit with similarity {hits[0]['similarity']:.3f}.")
-            self._last_answer_path = "extractive"
+            self._set_answer_path(ANSWER_PATH_RECALL)
             return f"{synthesized}"
         self.log("No relevant facts found above threshold.")
-        self._last_answer_path = "fallback"
+        self._set_answer_path(ANSWER_PATH_RECALL)
         return NO_INFORMATION_MESSAGE
 
     def consolidate_memory(self, max_prune_ratio: float = 0.1) -> Dict[str, Any]:
@@ -1251,10 +1402,106 @@ class DroidEngine(nn.Module):
         except Exception as e:
             return {"action": "fast_recall", "path": "fast", "confidence": 0.5, "error": str(e)}
 
+    def _manifest_checkpoint_name(self) -> Optional[str]:
+        """Relative checkpoint filename for this profile, or None."""
+        if not isinstance(self.gguf_backend, ByteRtuBackend):
+            return None
+        declared = getattr(self, "byte_rtu_checkpoint", None) or "rtu.safetensors"
+        # The manifest owns a bare relative filename inside the profile dir.
+        name = os.path.basename(str(declared))
+        return name or "rtu.safetensors"
+
+    @staticmethod
+    def _write_manifest(profile_dir: Path, config: Dict[str, Any]) -> None:
+        """Write config.json atomically via config.json.tmp + os.replace."""
+        tmp = profile_dir / "config.json.tmp"
+        with open(tmp, "w") as f:
+            json.dump(config, f, indent=2)
+        os.replace(str(tmp), str(profile_dir / "config.json"))
+
     def save_profile(self, target_dir: str):
+        """Persist a profile: artifacts first, manifest last.
+
+        Order (change 1.4): knowledge store -> plastic state -> byte-RTU
+        checkpoint -> logs/snapshots -> config.json. The manifest is the last
+        write and is atomic, so an interrupted save never claims an artifact
+        that is not on disk.
+        """
         p = Path(target_dir)
         p.mkdir(parents=True, exist_ok=True)
-        config = {
+        checkpoint_name = self._manifest_checkpoint_name()
+        self.byte_rtu_checkpoint = checkpoint_name
+
+        # 1. Knowledge store.
+        try:
+            self.knowledge.checkpoint()
+            self.knowledge.export_to(str(p / "knowledge.db"))
+        except Exception:
+            pass
+
+        # 2. Plastic state.
+        try:
+            if hasattr(self.memory, 'state_dict'):
+                weights = {}
+                sd = self.memory.state_dict()
+                for k, v in sd.items():
+                    if isinstance(v, torch.Tensor):
+                        weights[k] = v.detach().cpu().contiguous()
+                # ``h_trace`` is already in the adapter state dict; do not
+                # also write it as ``states`` (safetensors rejects two keys
+                # that share memory). Legacy states-only readers still work.
+                if hasattr(self.memory, 'h_trace'):
+                    weights.setdefault(
+                        "h_trace", self.memory.h_trace.detach().cpu().contiguous()
+                    )
+                elif hasattr(self.memory, 'states'):
+                    weights.setdefault(
+                        "states", self.memory.states.detach().cpu().contiguous()
+                    )
+                if hasattr(self.memory, 'decay'):
+                    weights["decay"] = self.memory.decay.detach().cpu().contiguous()
+                if hasattr(self.memory, 'proj'):
+                    weights["proj_weight"] = self.memory.proj.weight.detach().cpu().contiguous()
+                save_file(weights, str(p / "memory.safetensors"))
+            else:
+                weights = {
+                    "states": self.memory.states.detach().cpu().contiguous(),
+                    "decay": self.memory.decay.detach().cpu().contiguous(),
+                    "proj_weight": self.memory.proj.weight.detach().cpu().contiguous(),
+                }
+                save_file(weights, str(p / "memory.safetensors"))
+        except Exception:
+            try:
+                if hasattr(self.memory, 'h_trace'):
+                    save_file({"states": self.memory.h_trace.detach().cpu()}, str(p / "memory.safetensors"))
+            except Exception:
+                pass
+
+        # 3. Byte-RTU checkpoint (byte_rtu / hybrid profiles only).
+        if checkpoint_name is not None:
+            checkpoint_path = p / checkpoint_name
+            self.gguf_backend.checkpoint = str(checkpoint_path)
+            self.gguf_backend.model.save(str(checkpoint_path))
+
+        # 4. Logs, snapshots, retrieval policy (not named by the manifest).
+        try:
+            with open(p / "train_log.json", "w") as f:
+                json.dump(self.logs[-200:], f, indent=2)
+        except Exception:
+            pass
+        try:
+            if self.snapshots:
+                with open(p / "snapshots.json", "w") as f:
+                    serializable = {}
+                    for vid, snap in self.snapshots.items():
+                        meta = snap.get("metadata", {})
+                        serializable[vid] = meta
+                    json.dump(serializable, f, indent=2)
+        except Exception:
+            pass
+
+        # 5. Manifest last.
+        config: Dict[str, Any] = {
             "name": self.name,
             "dim": self.dim,
             "step_count": self.step_count,
@@ -1277,7 +1524,7 @@ class DroidEngine(nn.Module):
                     config["plastic_adapter"] = "legacy_rtu"
                 else:
                     config["plastic_adapter"] = "associative_rtu"
-        except:
+        except Exception:
             config["plastic_adapter"] = "associative_rtu"
         if self.gguf_config:
             config.update(self.gguf_config)
@@ -1288,69 +1535,96 @@ class DroidEngine(nn.Module):
                 policy_path = p / "retrieval_policy.json"
                 self.retrieval_policy.persist(str(policy_path))
                 config["has_retrieval_policy"] = True
-            except:
+            except Exception:
                 pass
-        with open(p / "config.json", "w") as f:
-            json.dump(config, f, indent=2)
-        try:
-            if hasattr(self.memory, 'state_dict'):
-                weights = {}
-                sd = self.memory.state_dict()
-                for k, v in sd.items():
-                    if isinstance(v, torch.Tensor):
-                        weights[k] = v.detach().cpu().contiguous()
-                if hasattr(self.memory, 'h_trace'):
-                    weights["states"] = self.memory.h_trace.detach().cpu().contiguous()
-                elif hasattr(self.memory, 'states'):
-                    weights["states"] = self.memory.states.detach().cpu().contiguous()
-                if hasattr(self.memory, 'decay'):
-                    weights["decay"] = self.memory.decay.detach().cpu().contiguous()
-                if hasattr(self.memory, 'proj'):
-                    weights["proj_weight"] = self.memory.proj.weight.detach().cpu().contiguous()
-                save_file(weights, str(p / "memory.safetensors"))
-            else:
-                weights = {
-                    "states": self.memory.states.detach().cpu().contiguous(),
-                    "decay": self.memory.decay.detach().cpu().contiguous(),
-                    "proj_weight": self.memory.proj.weight.detach().cpu().contiguous(),
-                }
-                save_file(weights, str(p / "memory.safetensors"))
-        except Exception as e:
-            try:
-                if hasattr(self.memory, 'h_trace'):
-                    save_file({"states": self.memory.h_trace.detach().cpu()}, str(p / "memory.safetensors"))
-            except:
-                pass
-        try:
-            self.knowledge.checkpoint()
-            self.knowledge.export_to(str(p / "knowledge.db"))
-        except Exception as e:
-            pass
-        try:
-            with open(p / "train_log.json", "w") as f:
-                json.dump(self.logs[-200:], f, indent=2)
-        except:
-            pass
-        try:
-            if self.snapshots:
-                with open(p / "snapshots.json", "w") as f:
-                    serializable = {}
-                    for vid, snap in self.snapshots.items():
-                        meta = snap.get("metadata", {})
-                        serializable[vid] = meta
-                    json.dump(serializable, f, indent=2)
-        except Exception as e:
-            pass
+
+        # Manifest fields owned by this change (1.1-1.2).
+        config["engine"] = self.engine
+        config["fusion_mode"] = self.fusion_mode
+        config["rtu_dim"] = int(self.rtu_dim)
+        config["rtu_layers"] = int(self.rtu_layers)
+        config["rtu_spread"] = int(self.rtu_spread)
+        if checkpoint_name is not None:
+            config["byte_rtu_checkpoint"] = checkpoint_name
+            # Legacy alias, kept for one release (read-only on load).
+            config["rtu_checkpoint"] = checkpoint_name
+            if isinstance(self.gguf_backend, ByteRtuBackend):
+                config["injection_strategy"] = "prompt"
+        else:
+            config["byte_rtu_checkpoint"] = None
+            config["rtu_checkpoint"] = None
+        self._write_manifest(p, config)
         self.log(f"Profile saved to {target_dir}")
 
     def load_profile(self, target_dir: str) -> bool:
+        """Load a profile, failing loudly on a missing or invalid artifact.
+
+        Change 1.5/1.16/1.23: a missing/corrupt manifest raises
+        ``InvalidProfileError``; a manifest that names an absent checkpoint
+        raises ``MissingCheckpointError``. There is no return-False path and
+        no silent random initialisation.
+        """
         p = Path(target_dir)
         config_file = p / "config.json"
         mem_file = p / "memory.safetensors"
-        if not config_file.exists() or not mem_file.exists():
-            return False
-        with open(config_file, "r") as f:
-            config = json.load(f)
+        if not config_file.is_file():
+            raise InvalidProfileError(
+                f"Profile manifest not found: {config_file}"
+            )
+        try:
+            with open(config_file, "r") as f:
+                config = json.load(f)
+        except json.JSONDecodeError as e:
+            raise InvalidProfileError(
+                f"Profile manifest {config_file} is not valid JSON: {e}"
+            ) from e
+        except OSError as e:
+            raise InvalidProfileError(
+                f"Profile manifest {config_file} is unreadable: {e}"
+            ) from e
+        if not isinstance(config, dict):
+            raise InvalidProfileError(
+                f"Profile manifest {config_file} must be a JSON object, "
+                f"got {type(config).__name__}"
+            )
+        if not mem_file.is_file():
+            raise InvalidProfileError(
+                f"Profile artifact missing: {mem_file} (plastic state)"
+            )
+
+        declared_checkpoint = config.get("byte_rtu_checkpoint") or config.get("rtu_checkpoint")
+        engine = config.get("engine")
+        if engine is None:
+            # Compatibility: infer from the artifact the manifest declares.
+            engine = "byte_rtu" if declared_checkpoint else "droid"
+        if engine not in ("droid", "byte_rtu", "hybrid"):
+            raise InvalidProfileError(
+                f"Profile manifest {config_file} declares unknown engine {engine!r}"
+            )
+        self.engine = engine
+        self.fusion_mode = config.get(
+            "fusion_mode", "prompt_stuffing" if engine != "droid" else "off"
+        )
+        self.rtu_dim = int(config.get("rtu_dim", 384))
+        self.rtu_layers = int(config.get("rtu_layers", 8))
+        self.rtu_spread = int(config.get("rtu_spread", 32))
+
+        checkpoint_path = None
+        if declared_checkpoint:
+            declared_path = Path(str(declared_checkpoint))
+            if declared_path.is_absolute() or ".." in declared_path.parts:
+                raise InvalidProfileError(
+                    f"Profile manifest {config_file} declares checkpoint "
+                    f"{declared_checkpoint!r} outside the profile directory"
+                )
+            checkpoint_path = p / declared_path
+            if not checkpoint_path.is_file():
+                raise MissingCheckpointError(
+                    f"Profile {p.name!r} declares checkpoint "
+                    f"{declared_checkpoint!r} but {checkpoint_path} is missing."
+                )
+        self.byte_rtu_checkpoint = str(declared_checkpoint) if declared_checkpoint else None
+
         self.name = config.get("name", self.name)
         self.step_count = config.get("step_count", 0)
         self.base_lr = config.get("base_lr", self.base_lr)
@@ -1358,7 +1632,11 @@ class DroidEngine(nn.Module):
         self.K_max = config.get("K_max", self.K_max)
         self.test_time_training = config.get("test_time_training", self.test_time_training)
         self.current_version = config.get("current_version", self.current_version)
+        # Keep the pinned injection strategy: it is a profile setting, not a
+        # GGUF-prefixed one, and dropping it re-enables the hidden/kv stubs.
         self.gguf_config = {k: v for k, v in config.items() if k.startswith("gguf_")}
+        if "injection_strategy" in config:
+            self.gguf_config["injection_strategy"] = config["injection_strategy"]
         adapter_name = config.get("plastic_adapter", "associative_rtu")
         adapter_kwargs = config.get("adapter_kwargs", {})
         if adapter_name and get_adapter is not None:
@@ -1366,15 +1644,16 @@ class DroidEngine(nn.Module):
                 current_type = self.memory.__class__.__name__.lower()
                 if adapter_name not in current_type:
                     self.memory = get_adapter(adapter_name, dim=self.dim, **adapter_kwargs)
-            except Exception as e:
+            except Exception:
                 pass
+        weights: Dict[str, Any] = {}
         try:
             weights = load_file(str(mem_file))
             with torch.no_grad():
                 if hasattr(self.memory, 'load_state_dict'):
                     try:
                         self.memory.load_state_dict(weights)
-                    except Exception as e:
+                    except Exception:
                         if "states" in weights and hasattr(self.memory, 'h_trace'):
                             self.memory.h_trace.copy_(weights["states"])
                         elif "states" in weights and hasattr(self.memory, 'states'):
@@ -1390,7 +1669,7 @@ class DroidEngine(nn.Module):
                         self.memory.decay.copy_(weights["decay"])
                     if "proj_weight" in weights:
                         self.memory.proj.weight.copy_(weights["proj_weight"])
-        except Exception as e:
+        except Exception:
             pass
         db_file = p / "knowledge.db"
         know_file = p / "knowledge.json"
@@ -1402,16 +1681,14 @@ class DroidEngine(nn.Module):
             if know_file.exists():
                 with open(know_file, "r") as f:
                     legacy_facts = json.load(f)
-                legacy_vecs = weights.get("knowledge_vectors") if 'weights' in locals() else None
+                legacy_vecs = weights.get("knowledge_vectors") if weights else None
                 for i, fact in enumerate(legacy_facts):
                     vec = None
                     if legacy_vecs is not None and i < len(legacy_vecs):
                         vec = legacy_vecs[i].float()
                     if vec is None:
                         vec = self.anchor.embed(fact["text"])
-                        if vec.dim() == 1:
-                            vec = vec
-                        else:
+                        if vec.dim() > 1:
                             vec = vec.squeeze(0)
                     self.knowledge.insert_fact(
                         fact["text"],
@@ -1433,22 +1710,43 @@ class DroidEngine(nn.Module):
                 for vid, meta in snap_meta.items():
                     if vid not in self.snapshots:
                         self.snapshots[vid] = {"metadata": meta, "plastic_state": {}}
-            except Exception as e:
+            except Exception:
                 pass
         policy_file = p / "retrieval_policy.json"
         if policy_file.exists() and self.retrieval_policy:
             try:
                 self.retrieval_policy.load(str(policy_file))
-            except Exception as e:
+            except Exception:
                 pass
-        if self.gguf_config and GgufBackend is not None:
+
+        # Re-attach the generative backend *after* the artifacts are restored.
+        if checkpoint_path is not None:
+            gguf_path = self.gguf_config.get("gguf_model_path") or self.gguf_config.get("model_path")
+            use_gguf = (
+                self.engine == "droid"
+                or (self.engine == "hybrid" and self.fusion_mode == "off")
+            ) and bool(gguf_path) and GgufBackend is not None
+            if use_gguf:
+                try:
+                    self.gguf_backend = GgufBackend(model_path=gguf_path)
+                except Exception:
+                    self.gguf_backend = None
+            else:
+                self.gguf_backend = ByteRtuBackend(
+                    checkpoint=str(checkpoint_path),
+                    dim=self.rtu_dim,
+                    layers=self.rtu_layers,
+                    spread=self.rtu_spread,
+                )
+                self.gguf_config["injection_strategy"] = "prompt"
+        elif self.gguf_config and GgufBackend is not None:
             try:
                 model_path = self.gguf_config.get("gguf_model_path") or self.gguf_config.get("model_path")
                 repo_id = self.gguf_config.get("gguf_repo_id") or self.gguf_config.get("repo_id")
                 filename = self.gguf_config.get("gguf_filename") or self.gguf_config.get("filename")
                 if model_path or repo_id:
                     self.gguf_backend = GgufBackend(model_path=model_path, repo_id=repo_id, filename=filename)
-            except Exception as e:
+            except Exception:
                 pass
         self.log(f"Profile loaded from {target_dir}")
         return True
