@@ -370,7 +370,7 @@ def test_requirements_contain_deps():
 # 2.16: README test count
 def test_readme_test_count():
     readme = open("README.md").read()
-    assert "68 tests" in readme or "68" in readme
+    assert "90 tests" in readme
     assert "43 tests" not in readme  # old number should be gone
     assert "pytest --collect-only" in readme or "collect-only" in readme
 
