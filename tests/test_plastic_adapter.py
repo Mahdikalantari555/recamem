@@ -185,15 +185,6 @@ def test_associative_adapter_update_and_retrieve():
     assert 0.0 <= surprise <= 2.0
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "PlasticAssociativeRTU.state_dict() calls super().state_dict(), which resolves to "
-        "PlasticAdapter.state_dict (abstract, returns None) rather than nn.Module.state_dict, "
-        "so it raises AttributeError on 'NoneType'. Pre-existing defect in src/model/rtu.py; "
-        "reported to the owning change instead of patched here (this change is tests-only)."
-    ),
-)
 def test_associative_adapter_state_round_trip():
     source = get_adapter("associative_rtu", dim=16, heads=4)
     source.update(_vector(16, seed=6), )

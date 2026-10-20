@@ -20,6 +20,7 @@ TESTS_ROOT = REPO_ROOT / "tests"
 
 # module path (relative to the repo root) -> test file that covers it
 MODULE_TESTS = {
+    "src/model/parallel_scan.py": "tests/test_parallel_scan.py",
     "src/cli.py": "tests/test_cli.py",
     "src/data.py": "tests/test_data.py",
     "src/mcp_server.py": "tests/test_mcp_server.py",
