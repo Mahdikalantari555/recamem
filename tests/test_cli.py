@@ -37,13 +37,33 @@ class FakeAnchor:
         return torch.randn(384, generator=generator)
 
 
+class FakeKnowledge:
+    def __init__(self, facts):
+        self._facts = facts
+
+    def active_count(self):
+        return len(self._facts)
+
+    def total_count(self):
+        return len(self._facts)
+
+    def get_active_facts(self):
+        return list(self._facts)
+
+
+FACTS = [
+    {"id": 1, "text": "Radar uses radio waves."},
+    {"id": 2, "text": "Lidar uses lasers."},
+]
+
+
 class FakeDroid:
     def __init__(self, name="droid-alpha"):
         self.name = name
         self.dim = 384
         self.step_count = 4
         self.anchor = FakeAnchor()
-        self.knowledge = SimpleNamespace(active_count=lambda: 6)
+        self.knowledge = FakeKnowledge(FACTS)
         self.memory = SimpleNamespace(states=torch.tensor([3.0, 4.0]))
         self.logs = [{"event": "teach"}]
         self.taught = []
@@ -60,12 +80,12 @@ class FakeDroid:
             "total_knowledge": 6,
         }
 
-    def recall(self, query, top_k=4):
+    def recall(self, query, top_k=4, threshold=0.0):
         self.queries.append(query)
         return [
-            {"text": "Radar uses radio waves.", "similarity": 0.91},
-            {"text": "Lidar uses lasers.", "similarity": 0.72},
-        ]
+            {"id": 1, "text": "Radar uses radio waves.", "similarity": 0.91},
+            {"id": 2, "text": "Lidar uses lasers.", "similarity": 0.72},
+        ][:top_k]
 
     def chat(self, query):
         self.queries.append(query)
@@ -111,7 +131,15 @@ def fake_manager(monkeypatch):
 
 
 def _args(**kwargs):
-    defaults = dict(base_dir="droids", name="droid-alpha", file=None, source=None)
+    defaults = dict(
+        base_dir="droids",
+        name="droid-alpha",
+        file=None,
+        source=None,
+        queries=None,
+        top_k=5,
+        sample=50,
+    )
     defaults.update(kwargs)
     return SimpleNamespace(**defaults)
 
@@ -127,7 +155,7 @@ def _args(**kwargs):
         (["decide", "what is radar?"], "decide"),
         (["serve"], "serve"),
         (["package", "export", "droid-alpha", "--out", "x.droid"], "package"),
-        (["eval"], "eval"),
+        (["eval", "--name", "demo"], "eval"),
         (["download-model", "org/model", "model.gguf"], "download-model"),
         (["generate", "what is radar?"], "generate"),
     ],
@@ -402,8 +430,49 @@ def test_download_model_failure_returns_one(monkeypatch, capsys):
 
 
 # --------------------------------------------------------------------------- #
-# eval routing
+# eval (implemented by product-surface-completion; the metric contract is
+# asserted there, so these cover routing, validation and the output shape)
 # --------------------------------------------------------------------------- #
-def test_eval_reports_not_implemented_and_exits_zero(capsys):
-    assert cli.cmd_eval(_args()) == 0
-    assert "Eval subcommand not yet implemented" in capsys.readouterr().err
+def _profile_dir(base, name="droid-alpha"):
+    profile = base / name
+    profile.mkdir(parents=True)
+    (profile / "config.json").write_text(json.dumps({"name": name, "dim": 384}))
+    return profile
+
+
+def test_eval_requires_a_profile_name(capsys):
+    assert cli.cmd_eval(_args(name="   ")) == 2
+    assert "error: --name is required" in capsys.readouterr().err
+
+
+def test_eval_missing_profile_exits_two(tmp_path, capsys):
+    code = cli.cmd_eval(_args(name="ghost", base_dir=str(tmp_path)))
+    assert code == 2
+    assert "error: droid profile not found" in capsys.readouterr().err
+
+
+def test_eval_rejects_invalid_top_k_and_sample(tmp_path, capsys):
+    _profile_dir(tmp_path)
+    base = str(tmp_path)
+
+    assert cli.cmd_eval(_args(base_dir=base, top_k=0)) == 2
+    assert "--top-k must be >= 1" in capsys.readouterr().err
+
+    assert cli.cmd_eval(_args(base_dir=base, sample=0)) == 2
+    assert "--sample must be >= 1" in capsys.readouterr().err
+
+
+def test_eval_self_recall_reports_key_value_metrics(fake_manager, tmp_path, capsys):
+    _profile_dir(tmp_path)
+    args = _args(base_dir=str(tmp_path), top_k=2, sample=2)
+
+    assert cli.cmd_eval(args) == 0
+
+    out = dict(line.split("=", 1) for line in capsys.readouterr().out.strip().splitlines())
+    assert out["mode"] == "self_recall"
+    assert out["profile"] == "droid-alpha"
+    assert out["facts"] == "2"
+    assert out["samples"] == "2"
+    assert out["top_k"] == "2"
+    for metric in ("precision_at_k", "recall_at_k", "mrr"):
+        assert 0.0 <= float(out[metric]) <= 1.0

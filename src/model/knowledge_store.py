@@ -598,11 +598,38 @@ class KnowledgeStore:
                 "superseded_by": row[8],
             }
 
-    def supersede(self, old_id: int, new_id: int, now: Optional[float] = None) -> int:
+    def supersede(self, old_id: int, new_id: Optional[int], now: Optional[float] = None) -> int:
+        """Mark ``old_id`` superseded by ``new_id``.
+
+        ``new_id`` must be the id of a stored fact (the replacement) or ``None``
+        when the fact is superseded with no successor. Sentinels such as ``0``
+        are rejected: they would otherwise be written to ``superseded_by`` and
+        point at a fact that does not exist.
+        """
+        if new_id is None:
+            return self.mark_superseded(old_id, now)
+        new_id = int(new_id)
+        if new_id <= 0:
+            raise ValueError(
+                "superseded_by must be a stored fact id or None; "
+                f"got {new_id!r} (sentinels are not allowed)"
+            )
+        exists = self.conn.execute("SELECT 1 FROM facts WHERE id = ?", (new_id,)).fetchone()
+        if exists is None:
+            raise ValueError(f"superseded_by must reference an existing fact; id {new_id} not found")
         cur = self.conn.execute(
             "UPDATE facts SET superseded = 1, valid_until = ?,"
             " superseded_by = ? WHERE id = ? AND superseded = 0",
             (now if now is not None else time.time(), new_id, old_id),
+        )
+        return cur.rowcount
+
+    def mark_superseded(self, fact_id: int, now: Optional[float] = None) -> int:
+        """Mark a fact superseded with no successor: ``superseded_by`` is NULL."""
+        cur = self.conn.execute(
+            "UPDATE facts SET superseded = 1, valid_until = ?,"
+            " superseded_by = NULL WHERE id = ? AND superseded = 0",
+            (now if now is not None else time.time(), int(fact_id)),
         )
         return cur.rowcount
 

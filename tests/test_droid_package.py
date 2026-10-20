@@ -148,7 +148,8 @@ def test_import_rejects_tampered_member(tmp_path):
 
     with pytest.raises(ValueError, match="Checksum mismatch"):
         DroidPackage.import_droid(str(archive), str(tmp_path / "out"))
-    assert not (tmp_path / "out" / "config.json").exists()
+    # Verification runs before the target profile is touched.
+    assert not (tmp_path / "out").exists()
 
 
 def test_import_rejects_member_missing_from_archive(tmp_path):

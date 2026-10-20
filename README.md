@@ -119,7 +119,7 @@ mgr.save_droid("droid-geospatial")
 
 ## Verification & Tests
 
-Run the complete test suite (259 contract, unit, and lifelong learning tests):
+Run the complete test suite (293 contract, unit, and lifelong learning tests):
 
 ```bash
 pytest tests

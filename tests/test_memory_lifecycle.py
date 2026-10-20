@@ -246,6 +246,18 @@ def test_merge_without_conflicts_returns_empty_resolutions():
     assert result == {"conflicts": [], "resolutions": [], "policy": "require_manual", "conflict_count": 0}
 
 
+def test_merge_rejects_unknown_policy_before_any_resolution():
+    store_a, store_b = _conflicting_stores()
+    with pytest.raises(ValueError, match="unknown merge policy"):
+        MergeEngine.merge_memories(store_a, store_b, policy="keep_everything")
+    assert MergeEngine.POLICIES == (
+        "keep_newest",
+        "keep_highest_novelty",
+        "keep_both_as_alternatives",
+        "require_manual",
+    )
+
+
 def test_fuse_plastic_weighted_average():
     rtu_a = type("RTU", (), {})()
     rtu_b = type("RTU", (), {})()
