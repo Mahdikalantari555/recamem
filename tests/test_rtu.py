@@ -104,20 +104,41 @@ def test_rtu_stop_gradient_detached():
     assert not layer.states.requires_grad
 
 def test_model_forward_accepts_ce_only():
-    """Model.forward takes the ce_only flag and still commits trace buffers (upstream --ce-only port)."""
-    from src.model.rtu import Model
+    """Model.forward returns (sampled_byte, stop_value); the loss lives in model.last_loss.
+
+    The MLX reference returns (sample, stop) at main_mlx.py:114 and main_mlx.py:172, and the
+    byte-level call sites depend on that pair, so the return signature is deliberately NOT
+    changed for a test's convenience. The expected cross-entropy is recomputed from an
+    independent forward pass over an identically seeded model, so this pins the number
+    instead of echoing the attribute back.
+    """
+    from src.model.rtu import Model, loss_crossentropy
 
     torch.manual_seed(0)
     model = Model(dim=32, layers=2, spread=16)
 
     before_states = model.blocks[0].states.detach().clone()
-    _, loss = model(10, nextb=11, end=False, frozen=False, ce_only=True)
+    sample, stop = model(10, nextb=11, end=False, frozen=False, ce_only=True)
 
-    assert loss >= 0.0
+    # Return contract: (sampled_byte, stop_value).
+    assert isinstance(sample, int)
+    assert 0 <= sample < model.vocab_size
+    assert 0.0 <= stop <= 1.0
+
+    # Independent expectation: a freshly seeded twin produces the same logits because
+    # Model.forward computes the loss before any optimizer step touches the weights.
+    torch.manual_seed(0)
+    twin = Model(dim=32, layers=2, spread=16)
+    dummies = [torch.zeros(32) for _ in range(twin.layers)]
+    (_, _, _), (output, _) = twin.step(torch.tensor(10), dummies=dummies)
+    expected_ce = loss_crossentropy(output, 11)
+
+    assert model.last_loss == pytest.approx(expected_ce.item(), rel=1e-6)
+    assert model.last_loss > 0.0
     assert model.step_count == 1
-    assert model.last_loss == loss
     # Trace buffers must still advance under ce_only.
     assert not torch.allclose(model.blocks[0].states, before_states)
+
 
 def test_model_save_preserves_trace_buffers():
     """Regression guard: trace buffers stay in checkpoints (upstream removed them, we must not)."""
