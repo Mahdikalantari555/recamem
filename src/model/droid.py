@@ -11,6 +11,7 @@ from safetensors.torch import save_file, load_file
 
 from src.model.onnx_anchor import OnnxMiniLM
 from src.model.knowledge_store import KnowledgeStore
+from src.model.byte_rtu_backend import ByteRtuBackend
 
 # ponytail: DroidEngine binds 22MB ONNX MiniLM semantic anchor to plastic RTU memory.
 
@@ -291,12 +292,19 @@ except:
         def confidence_tier(c):
             return "high" if c>0.8 else "medium" if c>=0.5 else "low"
 
+NO_INFORMATION_MESSAGE = (
+    "I do not have information about this topic in my memory yet. "
+    "Teach me by saying: 'learn: <facts>'."
+)
+
+
 class DroidEngine(nn.Module):
     def __init__(self, name: str = "droid-alpha", dim: int = 384,
                  db_path: Optional[str] = None,
                  plastic_adapter: Optional[Union[str, Any]] = None,
                  adapter_kwargs: Optional[Dict[str, Any]] = None,
                  gguf_backend: Optional[Any] = None,
+                 byte_rtu_backend: Optional[Any] = None,
                  gguf_config: Optional[Dict[str, Any]] = None,
                  test_time_training: bool = True,
                  surprise_threshold: float = 0.4,
@@ -363,26 +371,45 @@ class DroidEngine(nn.Module):
             except:
                 pass
         self.continuous_stream = None
-        self.gguf_backend = gguf_backend
-        self.gguf_config = gguf_config or {}
-        if gguf_config and GgufBackend is not None and self.gguf_backend is None:
-            try:
-                model_path = gguf_config.get("gguf_model_path") or gguf_config.get("model_path")
-                repo_id = gguf_config.get("gguf_repo_id") or gguf_config.get("repo_id")
-                filename = gguf_config.get("gguf_filename") or gguf_config.get("filename")
-                n_ctx = gguf_config.get("n_ctx", 4096)
-                n_gpu_layers = gguf_config.get("n_gpu_layers", -1)
-                params = gguf_config.get("gguf_params", {})
-                if model_path or repo_id:
-                    self.gguf_backend = GgufBackend(model_path=model_path, repo_id=repo_id, filename=filename, n_ctx=n_ctx, n_gpu_layers=n_gpu_layers, **params)
-            except Exception as e:
-                print(f"Failed to init GGUF backend from config: {e}")
+        if byte_rtu_backend is not None:
+            if gguf_backend is not None:
+                raise ValueError(
+                    "Supply only one of gguf_backend and byte_rtu_backend."
+                )
+            self.gguf_backend = byte_rtu_backend
+            self.gguf_config = gguf_config or {}
+            self.gguf_config["injection_strategy"] = "prompt"
+        else:
+            self.gguf_backend = gguf_backend
+            self.gguf_config = gguf_config or {}
+            if gguf_config and GgufBackend is not None and self.gguf_backend is None:
+                try:
+                    model_path = gguf_config.get("gguf_model_path") or gguf_config.get("model_path")
+                    repo_id = gguf_config.get("gguf_repo_id") or gguf_config.get("repo_id")
+                    filename = gguf_config.get("gguf_filename") or gguf_config.get("filename")
+                    n_ctx = gguf_config.get("n_ctx", 4096)
+                    n_gpu_layers = gguf_config.get("n_gpu_layers", -1)
+                    params = gguf_config.get("gguf_params", {})
+                    if model_path or repo_id:
+                        self.gguf_backend = GgufBackend(model_path=model_path, repo_id=repo_id, filename=filename, n_ctx=n_ctx, n_gpu_layers=n_gpu_layers, **params)
+                except Exception as e:
+                    print(f"Failed to init GGUF backend from config: {e}")
         self._last_retrieval_strategy = "hybrid_rrf"
         self._retrieval_history: List[Dict] = []
+        self._last_answer_path = "extractive"
 
     @property
     def knowledge_bank(self) -> List[Dict[str, Any]]:
         return self.knowledge.get_audit_trail()
+
+    def clear_memory(self):
+        """Wipe all learned state: knowledge store, plastic memory, and counters."""
+        self.knowledge.clear_all()
+        self.memory.reset()
+        self.knowledge_vectors = None
+        self.step_count = 0
+
+    clear_knowledge = clear_memory
 
     def log(self, message: str, details: Optional[Dict[str, Any]] = None):
         entry = {"timestamp": time.time(), "message": message}
@@ -670,10 +697,12 @@ class DroidEngine(nn.Module):
                         explanation_parts.append(t)
                 synthesized = " ".join(explanation_parts)
                 self.log(f"Factual recall hit with similarity {hits[0]['similarity']:.3f}.")
+                self._last_answer_path = "extractive"
                 return f"{synthesized}"
             else:
                 self.log("No relevant facts found above threshold.")
-                return "I do not have information about this topic in my memory yet. Teach me by saying: 'learn: <facts>'."
+                self._last_answer_path = "fallback"
+                return NO_INFORMATION_MESSAGE
         if mode == "slow":
             if self.gguf_backend is not None and hasattr(self, 'generate_with_memory'):
                 try:
@@ -681,10 +710,12 @@ class DroidEngine(nn.Module):
                     if isinstance(result, dict):
                         text = result.get("text", "")
                         tier = result.get("confidence_tier", "medium")
+                        self._last_answer_path = "generative"
                         if tier == "low":
                             return f"I'm uncertain; here's what I found... {text}"
                         return text
                     else:
+                        self._last_answer_path = "fallback"
                         return str(result)
                 except Exception as e:
                     pass
@@ -703,9 +734,11 @@ class DroidEngine(nn.Module):
                     explanation_parts.append(t)
             synthesized = " ".join(explanation_parts)
             self.log(f"Factual recall hit with similarity {hits[0]['similarity']:.3f}.")
+            self._last_answer_path = "extractive"
             return f"{synthesized}"
         self.log("No relevant facts found above threshold.")
-        return "I do not have information about this topic in my memory yet. Teach me by saying: 'learn: <facts>'."
+        self._last_answer_path = "fallback"
+        return NO_INFORMATION_MESSAGE
 
     def consolidate_memory(self, max_prune_ratio: float = 0.1) -> Dict[str, Any]:
         total = self.knowledge.active_count()
@@ -1118,6 +1151,10 @@ class DroidEngine(nn.Module):
     def generate_with_memory(self, query: str, strategy: str = "auto", facts: Optional[List[Dict]] = None) -> Dict[str, Any]:
         if facts is None:
             facts = self.recall(query, top_k=10, threshold=0.3)
+        if not facts and isinstance(self.gguf_backend, ByteRtuBackend):
+            # Never free-generate on empty retrieval (FR-004): return the same
+            # no-information message the extractive path uses.
+            return NO_INFORMATION_MESSAGE
         if strategy == "auto":
             try:
                 query_type = self.retrieval_policy.classify_query(query) if self.retrieval_policy else "specific_fact"
