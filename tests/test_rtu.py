@@ -104,18 +104,39 @@ def test_rtu_stop_gradient_detached():
     assert not layer.states.requires_grad
 
 def test_model_forward_accepts_ce_only():
-    """Model.forward takes the ce_only flag and still commits trace buffers (upstream --ce-only port)."""
-    from src.model.rtu import Model
+    """Model.forward takes the ce_only flag and still commits trace buffers.
+
+    Return contract: Model.forward returns (sampled_byte, stop_value); the
+    training loss lives on model.last_loss. The MLX reference returns
+    (sample, stop) at main_mlx.py:114 and main_mlx.py:172, so the return
+    signature is intentionally unchanged -- readers must not destructure the
+    stop value as a loss. The expected CE is computed independently from
+    compute_losses(..., ce_only=True) on the same tensor and compared against
+    model.last_loss with a tolerance.
+    """
+    from src.model.rtu import Model, compute_losses
 
     torch.manual_seed(0)
     model = Model(dim=32, layers=2, spread=16)
 
     before_states = model.blocks[0].states.detach().clone()
-    _, loss = model(10, nextb=11, end=False, frozen=False, ce_only=True)
 
-    assert loss >= 0.0
+    # Independently computed cross-entropy on the same tensors the forward
+    # pass will see. `model.step` does not mutate persistent buffers, so the
+    # subsequent `model(...)` call sees identical states. `x` and `stop` are
+    # unused in ce_only mode; only `output` and `nextb` matter.
+    c = torch.tensor(10, dtype=torch.long, device=model.device)
+    dummies = [torch.zeros(model.dim, dtype=torch.float32, device=model.device) for _ in range(model.layers)]
+    (_, _, _), (output, _) = model.step(c, dummies=dummies, frozen=False)
+    expected_ce = compute_losses(torch.zeros(()), output, output.new_zeros(()),
+                                 nextb=11, end=False, ce_only=True)[0]
+
+    sample, stop = model(10, nextb=11, end=False, frozen=False, ce_only=True)
+
+    assert isinstance(sample, int) and 0 <= sample < model.vocab_size
+    assert 0.0 <= stop <= 1.0
+    assert model.last_loss == pytest.approx(expected_ce.item(), rel=1e-6)
     assert model.step_count == 1
-    assert model.last_loss == loss
     # Trace buffers must still advance under ce_only.
     assert not torch.allclose(model.blocks[0].states, before_states)
 

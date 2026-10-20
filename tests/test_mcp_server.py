@@ -6,6 +6,7 @@ before and after archive: the delta gains the sixth tool now, the main spec
 gains it at archive, and the union is unchanged.
 """
 
+import json
 import re
 from pathlib import Path
 
@@ -85,3 +86,121 @@ def test_generate_with_memory_is_documented_and_exposed():
     spec_path, args = documented["generate_with_memory"]
     for argument in ("query", "strategy", "droid_name"):
         assert argument in args, f"{argument} missing from {spec_path}"
+
+
+# ---------------------------------------------------------------------------
+# Behavioral coverage for src/mcp_server.py (surface-test-coverage 3.10).
+# Exercised directly: no stdio loop, no subprocess; temp profile dirs only.
+# ---------------------------------------------------------------------------
+
+
+class _FakeDroid:
+    def __init__(self):
+        self.name = "droid-alpha"
+        self.dim = 8
+        self.step_count = 3
+
+    class knowledge:
+        @staticmethod
+        def active_count():
+            return 2
+
+    def recall(self, query, top_k=3):
+        return [
+            {"id": 1, "text": "Paris is the capital of France.", "similarity": 0.91},
+            {"id": 2, "text": "Lidar measures distance with laser pulses.", "similarity": 0.4},
+        ][:top_k]
+
+    def teach(self, text, source="general"):
+        return {"propositions": 1, "memory_norm": 0.5, "total_knowledge": 3}
+
+    def get_memory_health(self):
+        return {"interference": 0.1}
+
+
+class _FakeManager:
+    def __init__(self, base_dir="droids"):
+        self.base_dir = base_dir
+
+    def get_droid(self, name):
+        return _FakeDroid()
+
+    def save_droid(self, name):
+        pass
+
+
+def test_handle_initialize_returns_protocol_and_capabilities():
+    server = MCPServer(base_dir="droids")
+    result = server.handle_initialize({})
+    assert result["protocolVersion"] == "2024-11-05"
+    assert "tools" in result["capabilities"]
+    assert result["serverInfo"]["name"] == "tmt-droid-mcp"
+
+
+def test_handle_tools_list_names_all_six_tools():
+    server = MCPServer(base_dir="droids")
+    tools = server.handle_tools_list({})["tools"]
+    names = [tool["name"] for tool in tools]
+    assert names == [
+        "recall_memory",
+        "teach_fact",
+        "decide_action",
+        "list_droids",
+        "inspect_state",
+        "generate_with_memory",
+    ]
+    for tool in tools:
+        assert "inputSchema" in tool
+
+
+def test_handle_tools_call_unknown_tool_returns_json_rpc_style_error_envelope():
+    server = MCPServer(base_dir="droids")
+    result = server.handle_tools_call({"name": "not_a_tool", "arguments": {}})
+    assert result["isError"] is True
+    assert "Unknown tool: not_a_tool" in result["content"][0]["text"]
+
+
+def test_handle_tools_call_list_droids_with_empty_base(tmp_path):
+    server = MCPServer(base_dir=str(tmp_path / "droids"))
+    result = server._tool_list_droids({})
+    assert result.get("isError") is not True
+    assert "[]" in result["content"][0]["text"]
+
+
+def test_handle_tools_call_recall_memory(tmp_path):
+    server = MCPServer(base_dir=str(tmp_path / "droids"))
+    server._manager = _FakeManager()
+    result = server._tool_recall_memory({"query": "paris", "top_k": 1})
+    text = result["content"][0]["text"]
+    assert "Recall for 'paris'" in text
+    hits = json.loads(result["content"][1]["text"])
+    assert len(hits) == 1
+
+
+def test_handle_tools_call_teach_fact(tmp_path):
+    server = MCPServer(base_dir=str(tmp_path / "droids"))
+    server._manager = _FakeManager()
+    result = server._tool_teach_fact({"text": "The sky is blue.", "domain": "general"})
+    assert result.get("isError") is not True
+    assert "Taught 1 facts" in result["content"][0]["text"]
+
+
+def test_handle_tools_call_decide_action(tmp_path):
+    server = MCPServer(base_dir=str(tmp_path / "droids"))
+    server._manager = _FakeManager()
+    result = server._tool_decide_action({"query": "x", "options": ["a", "b"]})
+    assert result.get("isError") is not True
+    text = result["content"][0]["text"]
+    payload = json.loads(text)
+    assert "action" in payload and "confidence" in payload
+
+
+def test_handle_tools_call_inspect_state(tmp_path):
+    server = MCPServer(base_dir=str(tmp_path / "droids"))
+    server._manager = _FakeManager()
+    result = server._tool_inspect_state({})
+    assert result.get("isError") is not True
+    text = result["content"][0]["text"]
+    state = json.loads(text)
+    assert state["name"] == "droid-alpha"
+    assert state["step_count"] == 3
