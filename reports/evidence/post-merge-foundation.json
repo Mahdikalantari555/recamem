@@ -1,0 +1,42 @@
+{
+  "commit": "0fd3b7be438fc85f457ef240c485267d784a3592",
+  "command": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 HF_HUB_OFFLINE=1 PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests -q -ra",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.2.2+cu121",
+    "numpy": "1.26.4",
+    "device": "CPU",
+    "anchor": "deterministic mock; no ONNX artifacts"
+  },
+  "configuration": {
+    "threads": 1,
+    "network": "offline",
+    "scope": "foundation regression suite, NOT full change acceptance"
+  },
+  "tier": "offline",
+  "outcome": "passed",
+  "summary": {
+    "passed": 492,
+    "skipped": 1,
+    "warnings": 51
+  },
+  "excluded_gate": {
+    "test": "tests/test_droid_rtu_fusion.py::test_fused_chat_is_grounded",
+    "reason": "RTU_CHECKPOINT unset; trained artifact absent"
+  },
+  "completed_tasks": [
+    "1.1",
+    "2.1",
+    "2.2",
+    "2.3",
+    "2.4"
+  ],
+  "remaining_tasks": 65,
+  "additional_checks": {
+    "remote_sensing_e2e": "passed with mock anchor",
+    "openspec_validate_all": "36 passed, 0 failed",
+    "openspec_validate_change_strict": "passed",
+    "evidence_schema_coverage": "489 entries valid",
+    "release_complete_gate": "failed as expected: unresolved ledger rows and acceptance tiers"
+  }
+}
