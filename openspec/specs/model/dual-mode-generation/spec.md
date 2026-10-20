@@ -15,12 +15,21 @@ The system SHALL answer factual queries using only `recall()` + template synthes
 - **THEN** no LLM generation SHALL occur
 
 ### Requirement: Slow path — RTU+LLM synthesis
-The system SHALL use memory injection + LLM generation for synthesis, reasoning, creative tasks.
+The system SHALL use memory injection + generation for synthesis, reasoning, and creative tasks. The generative component SHALL be any backend implementing `generate(prompt, max_tokens, temperature, top_p)`: a GGUF model, an external LLM provider, or a frozen byte-RTU backend. The slow path SHALL pass retrieved facts through the pinned injection strategy and SHALL report which component produced the answer.
 
 #### Scenario: Slow path for synthesis
 - **WHEN** query classified as `synthesis`, `reasoning`, or `creative`
 - **THEN** `generate_with_memory()` SHALL be called with appropriate injection strategy
-- **THEN** response SHALL include LLM-generated text grounded in retrieved facts
+- **THEN** response SHALL include generated text grounded in retrieved facts
+
+#### Scenario: Byte-RTU backend is a peer of the GGUF backend
+- **WHEN** a profile attaches a `ByteRtuBackend` instead of a GGUF backend
+- **THEN** the slow path SHALL call `generate(prompt, max_tokens=…, temperature=…, top_p=…)` with the same call shape
+- **THEN** the answer path SHALL be recorded as `fused`
+
+#### Scenario: Both backends supplied
+- **WHEN** a `DroidEngine` is constructed with both `gguf_backend` and `byte_rtu_backend`
+- **THEN** construction SHALL raise `ValueError` rather than silently choosing one
 
 ### Requirement: Automatic path routing
 The system SHALL route queries using System-1 decision head (from `system1-mcp-surface`): `decide_action(query)` returns `fast_recall` or `slow_synthesis` with confidence.
@@ -37,3 +46,39 @@ The user SHALL be able to force fast or slow mode via CLI flag or chat command (
 #### Scenario: User forces slow mode
 - **WHEN** user sends `/slow explain remote sensing`
 - **THEN** slow path SHALL be used regardless of classification
+
+### Requirement: Fused RTU+Byte-RTU grounding path
+The system SHALL provide a fused answer path in which retrieved facts are injected into a query-last prompt consumed by a frozen byte-level RTU. The component's weights SHALL remain frozen, no optimizer step SHALL occur, and output SHALL be bounded by `min(max_tokens, max_output_bytes)`. With no recalled facts the path SHALL return the no-information fallback and SHALL NOT free-generate. The producing path SHALL be observable as `recall`, `fused`, or `llm`.
+
+#### Scenario: Grounded fused answer
+- **WHEN** a profile with a trained checkpoint has taught facts and receives a slow-mode query that recalls at least one fact
+- **THEN** the fused answer SHALL be produced by the frozen byte-RTU component primed with those facts
+- **THEN** the answer path SHALL be reported as `fused`
+
+#### Scenario: No facts, no generation
+- **WHEN** `recall()` returns no hits for a fused profile
+- **THEN** the path SHALL return the no-information fallback string
+- **THEN** no generated text SHALL be returned and no sampling loop SHALL run
+
+#### Scenario: Weights stay frozen
+- **WHEN** several fused answers are produced
+- **THEN** every model parameter and every `state`/`decaytrace`/`embedtrace` buffer SHALL be unchanged
+- **THEN** no optimizer step SHALL be taken during inference
+
+#### Scenario: Output bounds
+- **WHEN** the backend is asked for `max_tokens` greater than `max_output_bytes`
+- **THEN** the output SHALL be capped at `max_output_bytes`
+- **WHEN** `max_tokens` is smaller
+- **THEN** the output SHALL be capped at `max_tokens`
+- **WHEN** `max_tokens` is zero or negative
+- **THEN** the output SHALL be the empty string
+
+#### Scenario: Prompt has no trailing newline
+- **WHEN** the fused path primes the component
+- **THEN** the encoded prompt SHALL NOT contain a trailing `"\n"` added by the backend
+- **THEN** the query SHALL remain the last content in the prompt
+
+#### Scenario: Answer path is observable
+- **WHEN** an answer is returned by the engine
+- **THEN** `_last_answer_path` SHALL be one of `recall`, `fused`, or `llm`
+- **THEN** the console badge SHALL display that value beside the answer

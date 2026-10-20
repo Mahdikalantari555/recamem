@@ -124,17 +124,22 @@ score = w_dense·dense + w_lexical·lexical + w_assoc·relu(dot(q_assoc, fact_em
 score *= (1 + w_contextual·max(0, contextual))
 ```
 
-Weights live in the single `RECALL_SCORE_WEIGHTS` table introduced by the correctness
-change. This change raises `associative` from `0.0` to `0.15`, `recency` from `0.0` to
-`0.02`, and `confidence` from `0.0` to `0.05`. `q_assoc` is
+Weights live in the single `RECALL_SCORE_WEIGHTS` table (`dense` 1.0, `lexical` 0.70,
+`associative` 0.15, `recency` 0.02, `confidence` 0.05, `contextual` 0.20). This change
+raises `associative` from `0.0` to `0.15`, `recency` from `0.0` to `0.02`, and
+`confidence` from `0.0` to `0.05`; the lexical weight carries the content-word overlap
+and the definitional prior that the old hardcoded boost encoded, so the existing
+extractive answers keep their order. The dense gate is enforced on the **associative
+bonus** (zeroed below 0.48); the lexical term keeps its pre-change ability to admit
+near-gate candidates that clear the caller's threshold. `q_assoc` is
 `normalize(memory.retrieve(q_emb))`, computed once per recall inside a guarded block;
 on failure the bonus is zero and the recall proceeds. The bonus is `relu`-clipped, so a
 negative association cannot push a candidate down below a fact that passed the gate on
 its own merit.
 
-Cold start: an empty `S` makes `retrieve()` return `0.1 · h_trace`, which is near zero
-for a fresh profile; the no-regression test asserts identical ordering with and without
-the bonus when `S` is empty.
+Cold start: an empty `S` is detected explicitly and the bonus is forced to zero (the
+raw `retrieve()` would return `0.1 · h_trace`); the no-regression test asserts identical
+ordering with and without the bonus when `S` is empty.
 
 ### Decision 6 — Manager and isolation
 
@@ -183,13 +188,15 @@ python scripts/train_byte_rtu.py --profile droids/droid-rs --corpus plans docs R
     --steps 2000 --seq-len 512 --dim 384 --layers 8 --spread 32 --seed 0
 ```
 
-It reads the corpus as bytes, slices fixed-length sequences, calls
-`Model.forward(..., ce_only=True)` (or the full loss set — see below), reuses
-`compute_losses` from `src/model/rtu.py`, logs loss every N steps to
-`<profile>/train_log.json`, and finishes with `model.save(<profile>/rtu.safetensors)`
-followed by the manifest update. `ce_only` is chosen because the corpus is
-unstructured bytes with no `end` annotations; the stop loss cannot be trained without
-them. The default `--losses ce` is documented in the script's help text.
+It reads the corpus as bytes, walks byte transitions with a truncated-BPTT window
+(`--seq-len`), calls `Model.forward(...)`, reuses `compute_losses` from
+`src/model/rtu.py`, logs loss every N steps to `<profile>/train_log.json`, and finishes
+with `model.save(<profile>/rtu.safetensors)` followed by the manifest update.
+`--losses full` (default) trains variance + prediction + cross-entropy + stop; stop
+targets are annotated from the corpus at blank-line paragraph boundaries and window
+ends, so the stop head is trained without external `end` labels. `--losses ce` keeps
+cross-entropy only for a faster build, but leaves the stop head untrained (it stops
+after one byte when sampled). Both options are documented in `--help`.
 
 Weights are never committed: `droids/` is a generated artifact directory. The grounding
 test reads `RTU_CHECKPOINT` and skips loudly when it is unset.

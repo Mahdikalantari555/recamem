@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 
 from src.model.droid import DroidEngine
+from src.model.byte_rtu_backend import ByteRtuBackend
+from src.model.rtu import InvalidProfileError
 
 # Try imports for new modules
 try:
@@ -42,8 +44,15 @@ class DroidManager:
         dirs = [d.name for d in self.base_dir.iterdir() if d.is_dir() and not d.name.startswith(".")]
         return sorted(dirs)
 
-    def create_droid(self, name: str, plastic_adapter: str = "associative_rtu", adapter_kwargs: Optional[Dict[str, Any]] = None, gguf_model: Optional[str] = None, gguf_config: Optional[Dict[str, Any]] = None, **kwargs) -> DroidEngine:
-        """Create a new Droid profile with optional adapter and GGUF config."""
+    def create_droid(self, name: str, plastic_adapter: str = "associative_rtu", adapter_kwargs: Optional[Dict[str, Any]] = None, gguf_model: Optional[str] = None, gguf_config: Optional[Dict[str, Any]] = None, byte_rtu: bool = False, rtu_dim: int = 384, rtu_layers: int = 8, rtu_spread: int = 32, **kwargs) -> DroidEngine:
+        """Create a new Droid profile with optional adapter, GGUF, or byte-RTU backend.
+
+        ``byte_rtu=True`` builds a :class:`ByteRtuBackend` with the profile's
+        RTU geometry and attaches it through ``byte_rtu_backend=``. The
+        checkpoint does not exist yet at creation time, so the backend starts
+        from an explicit random initialisation; ``save_profile()`` writes the
+        checkpoint and the manifest that declares it (change 1.13/1.14).
+        """
         clean_name = name.strip().lower().replace(" ", "-")
         droid_dir = self.base_dir / clean_name
         droid_dir.mkdir(parents=True, exist_ok=True)
@@ -70,7 +79,26 @@ class DroidManager:
         if "gguf_filename" in kwargs:
             gguf_config["gguf_filename"] = kwargs.pop("gguf_filename")
 
+        if byte_rtu:
+            if "byte_rtu_backend" in kwargs and kwargs["byte_rtu_backend"] is not None:
+                backend = kwargs.pop("byte_rtu_backend")
+            else:
+                backend = ByteRtuBackend(
+                    checkpoint="",
+                    dim=rtu_dim,
+                    layers=rtu_layers,
+                    spread=rtu_spread,
+                )
+            kwargs["byte_rtu_backend"] = backend
+
         engine = DroidEngine(name=clean_name, plastic_adapter=plastic_adapter, adapter_kwargs=adapter_kwargs, gguf_config=gguf_config, **kwargs)
+        if byte_rtu:
+            engine.engine = "byte_rtu"
+            engine.fusion_mode = "prompt_stuffing"
+            engine.byte_rtu_checkpoint = "rtu.safetensors"
+            engine.rtu_dim = rtu_dim
+            engine.rtu_layers = rtu_layers
+            engine.rtu_spread = rtu_spread
         engine.save_profile(str(droid_dir))
         self.cached_instances[clean_name] = engine
         return engine
@@ -85,6 +113,13 @@ class DroidManager:
         engine = DroidEngine(name=clean_name)
         if (droid_dir / "config.json").exists():
             engine.load_profile(str(droid_dir))
+        elif droid_dir.exists() and any(droid_dir.iterdir()):
+            # Artifacts exist but the manifest does not: never silently
+            # replace a damaged profile with a fresh empty one.
+            raise InvalidProfileError(
+                f"Profile directory {droid_dir} has artifacts but no config.json; "
+                "refusing to create a fresh profile in its place."
+            )
         else:
             droid_dir.mkdir(parents=True, exist_ok=True)
             engine.save_profile(str(droid_dir))

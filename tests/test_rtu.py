@@ -111,11 +111,13 @@ def test_model_forward_accepts_ce_only():
     model = Model(dim=32, layers=2, spread=16)
 
     before_states = model.blocks[0].states.detach().clone()
-    _, loss = model(10, nextb=11, end=False, frozen=False, ce_only=True)
+    _, stop = model(10, nextb=11, end=False, frozen=False, ce_only=True)
 
-    assert loss >= 0.0
+    # forward() returns (sampled byte, stop probability); the training loss is
+    # recorded on the model (see main.py's training loop).
+    assert 0.0 <= stop <= 1.0
     assert model.step_count == 1
-    assert model.last_loss == loss
+    assert model.last_loss > 0.0
     # Trace buffers must still advance under ce_only.
     assert not torch.allclose(model.blocks[0].states, before_states)
 

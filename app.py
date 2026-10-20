@@ -8,7 +8,8 @@ import torch
 import pandas as pd
 
 from src.model.rtu import Model
-from src.model.droid import DroidEngine
+from src.model.byte_rtu_backend import ByteRtuBackend
+from src.model.droid import DroidEngine, ANSWER_PATH_LLM, ANSWER_PATH_RECALL
 from src.model.droid_manager import DroidManager
 from src.model.teacher import OpenAITeacher
 from src.model.propositions import extract_propositions
@@ -70,13 +71,19 @@ with st.sidebar:
     
     engine_mode = st.radio(
         "Engine Selection",
-        ["Droid Lifelong Engine (Anchored)", "Raw Byte-Level RTU (Experimental)"],
+        [
+            "Droid Lifelong Engine (Anchored)",
+            "Droid + Raw Byte RTU (Fused)",
+            "Raw Byte-Level RTU (Experimental)",
+        ],
         index=0
     )
-    
+    fused_mode = "Fused" in engine_mode
+    droid_mode = engine_mode.startswith("Droid")
+
     st.divider()
 
-    if engine_mode.startswith("Droid"):
+    if droid_mode:
         st.subheader("Droid Profile")
         
         col_sel, col_new = st.columns([2, 1])
@@ -111,8 +118,30 @@ with st.sidebar:
 
         st.divider()
         st.subheader("Base Model & Anchor")
-        st.success("🟢 ONNX MiniLM (INT8, 22MB) Active")
+        anchor_is_mock = bool(getattr(active_droid.anchor, "is_mock", True))
+        if anchor_is_mock:
+            st.warning("🟡 ONNX MiniLM not found — deterministic mock anchor in use")
+        else:
+            st.success("🟢 ONNX MiniLM (INT8, 22MB) Active")
         st.caption("Cached in `~/.cache/huggingface` (Zero GPU RAM, sub-15ms CPU).")
+
+        profile_engine = getattr(active_droid, "engine", "droid")
+        profile_checkpoint = getattr(active_droid, "byte_rtu_checkpoint", None)
+        st.markdown(f"**Engine**: `{profile_engine}`")
+        if profile_engine in ("byte_rtu", "hybrid"):
+            st.markdown(
+                f"**Byte-RTU checkpoint**: `{profile_checkpoint}`"
+                if profile_checkpoint
+                else "**Byte-RTU checkpoint**: no checkpoint — extractive only"
+            )
+        if fused_mode:
+            if isinstance(active_droid.gguf_backend, ByteRtuBackend):
+                st.success("🔗 Fused slow path armed (frozen byte-RTU backend)")
+            else:
+                st.warning(
+                    "Fused mode selected, but this profile declares no byte-RTU "
+                    "checkpoint — answers stay extractive (recall path)."
+                )
 
         st.divider()
         st.subheader("🌐 LLM Provider (Teacher & Synthesis)")
@@ -225,7 +254,7 @@ tab_chat, tab_teach, tab_memory, tab_logs, tab_weights = st.tabs([
 
 # --- TAB 1: CHAT & IN-CHAT TEACHING ---
 with tab_chat:
-    st.subheader(f"Chat with {st.session_state.selected_droid_name if engine_mode.startswith('Droid') else 'Raw RTU'}")
+    st.subheader(f"Chat with {st.session_state.selected_droid_name if droid_mode else 'Raw RTU'}")
 
     col_opt1, col_opt2 = st.columns([2, 1])
     auto_teach = col_opt1.checkbox("Auto-learn new facts directly from chat", value=True)
@@ -233,7 +262,7 @@ with tab_chat:
     if st.session_state.llm_enabled:
         use_llm_synth = col_opt2.checkbox("Synthesize reply with LLM Provider", value=True)
 
-    if engine_mode.startswith("Droid"):
+    if droid_mode:
         st.caption("Tip: You can talk normally, teach concepts (e.g. 'learn: Remote sensing is...'), or ask questions. After LLM responses, expand Memory Console to select facts.")
 
     chat_container = st.container()
@@ -245,6 +274,8 @@ with tab_chat:
                 st.markdown(msg["content"])
                 if msg.get("source_label"):
                     st.caption(f"🏷️ **Source**: {msg['source_label']}")
+                if msg.get("answer_path"):
+                    st.caption(f"🧭 **Answer path**: `{msg['answer_path']}`")
                 if msg.get("facts_recalled"):
                     with st.expander(f"🔍 View {len(msg['facts_recalled'])} Recalled Facts from Plastic Memory"):
                         for idx, f in enumerate(msg["facts_recalled"]):
@@ -307,7 +338,7 @@ with tab_chat:
     if user_query:
         st.session_state.chat_history.append({"role": "user", "content": user_query})
 
-        if engine_mode.startswith("Droid"):
+        if droid_mode:
             source_label = ""
             facts_recalled = []
 
@@ -317,6 +348,7 @@ with tab_chat:
                     res = active_droid.teach(user_query, source="chat")
                     response = f"✅ Absorbed {res['propositions']} facts into plastic memory (state norm: {res['memory_norm']:.2f}). You can now ask me about this domain!"
                     source_label = f"🧠 Plastic Memory (Live conversational absorption of {res['propositions']} facts)"
+                    active_droid._set_answer_path(ANSWER_PATH_RECALL)
             else:
                 with st.spinner("Searching plastic memory..."):
                     hits = active_droid.recall(user_query, top_k=4, threshold=0.45)
@@ -340,6 +372,10 @@ with tab_chat:
                                 context=context,
                                 droid_name=st.session_state.selected_droid_name
                             )
+                            if str(meta.get("source", "")).startswith("llm"):
+                                active_droid._set_answer_path(ANSWER_PATH_LLM)
+                            else:
+                                active_droid._set_answer_path(ANSWER_PATH_RECALL)
                             if meta.get("source") == "llm_grounded_memory":
                                 max_score = hits[0]["similarity"] if hits else 0.0
                                 source_label = f"🌐 LLM ({st.session_state.llm_model}) + 🧠 Grounded in {len(hits)} Droid Facts (top match: {max_score:.2f})"
@@ -358,7 +394,10 @@ with tab_chat:
                 "role": "assistant",
                 "content": response,
                 "source_label": source_label,
-                "facts_recalled": facts_recalled
+                "facts_recalled": facts_recalled,
+                # Canonical value from the engine (recall | fused | llm), not a
+                # hardcoded string (change 1.19).
+                "answer_path": getattr(active_droid, "answer_path", "recall"),
             })
 
         else:
@@ -416,7 +455,7 @@ with tab_teach:
             use_llm_distill = st.checkbox("Distill text with LLM Teacher before learning", value=True)
 
     if start_teach and teach_text.strip():
-        if engine_mode.startswith("Droid"):
+        if droid_mode:
             with st.spinner("Processing propositions & updating plastic RTU memory..."):
                 if st.session_state.llm_enabled and use_llm_distill:
                     teacher = OpenAITeacher(
@@ -451,7 +490,7 @@ with tab_memory:
     st.subheader("🧠 Memory Console - Human-in-the-Loop Management")
     st.markdown("Browse, edit, delete facts and teach via LLM distillation workflow.")
     
-    if not engine_mode.startswith("Droid"):
+    if not droid_mode:
         st.info("Memory Console only available in Droid Lifelong Engine mode.")
     else:
         sub_tab_browse, sub_tab_teach, sub_tab_stats = st.tabs(["📖 Browse & Manage", "🤖 LLM Teach", "📊 Stats"])
@@ -459,6 +498,17 @@ with tab_memory:
         # Sub-tab 1: Browse & Manage
         with sub_tab_browse:
             st.markdown("### Fact Browser")
+            console_engine = getattr(active_droid, "engine", "droid")
+            console_checkpoint = getattr(active_droid, "byte_rtu_checkpoint", None)
+            console_anchor = "mock" if bool(getattr(active_droid.anchor, "is_mock", True)) else "real"
+            if console_engine in ("byte_rtu", "hybrid"):
+                checkpoint_label = console_checkpoint or "no checkpoint — extractive only"
+            else:
+                checkpoint_label = "no checkpoint — extractive only"
+            st.caption(
+                f"Engine: `{console_engine}` · Checkpoint: `{checkpoint_label}` · "
+                f"Anchor: `{console_anchor}`"
+            )
             
             # Search
             search_query = st.text_input("Search facts (case-insensitive substring)", key="mem_search", placeholder="e.g. remote sensing, lidar, hydrology...")
@@ -692,7 +742,7 @@ with tab_memory:
 with tab_logs:
     st.subheader(f"Audit & Training Logs for {st.session_state.selected_droid_name}")
     
-    if engine_mode.startswith("Droid"):
+    if droid_mode:
         logs = active_droid.logs
         if logs:
             import json as _json
@@ -732,7 +782,7 @@ with tab_logs:
 with tab_weights:
     st.subheader("Weights, Plastic Decay & Memory State Buffers")
 
-    if engine_mode.startswith("Droid"):
+    if droid_mode:
         mem = active_droid.memory
         try:
             decay_vals = torch.sigmoid(mem.decay).detach().cpu().numpy()
