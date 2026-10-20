@@ -6,7 +6,7 @@ Feature task references below are relative to `openspec/changes/<change>/tasks.m
 
 ## 1. Evidence and compatibility foundation
 
-- [ ] 1.1 Create a machine-readable evidence ledger from every inventory entry with disposition, implementation paths, test IDs, owner and evidence location; verify a schema/coverage guard rejects missing entries and unsupported completion claims.
+- [x] 1.1 Create a machine-readable evidence ledger from every inventory entry with disposition, implementation paths, test IDs, owner and evidence location; verify a schema/coverage guard rejects missing entries and unsupported completion claims.
 - [ ] 1.2 Reconcile the six September 29 archives task by task with current tests; deliver a gap table with each item mapped to tasks 2–8 or an explicit superseding requirement, without treating stale checkboxes as missing code.
 - [ ] 1.3 Reconcile the other archived tasks and all 114 baseline requirements, including checked fusion/product/scan tasks; verify each is evidenced, owned by follow-up implementation, or blocked with a specific missing artifact.
 - [ ] 1.4 Add legacy/default/custom adapter, profile and database migration fixtures without model weights; verify fixtures load under baseline contracts and record checksums/configurations.
@@ -14,10 +14,10 @@ Feature task references below are relative to `openspec/changes/<change>/tasks.m
 
 ## 2. Adapter contract and profile integrity
 
-- [ ] 2.1 Implement module-compatible `PlasticAdapter` lifecycle defaults for consolidation, health and snapshot operations; test a minimal concrete adapter, MRO serialization and parameter/buffer discovery, and document extension points.
-- [ ] 2.2 Make snapshots clone tensors and deep-copy metadata; test that update, branch and restore cannot mutate an existing snapshot.
-- [ ] 2.3 Introduce explicit scheduled-update capability negotiation; test built-in, original-signature custom and legacy adapters receive exactly one compatible update and truthful applied-rate reports.
-- [ ] 2.4 Replace swallowed update failures with documented failures; test an adapter that raises before/after mutation and confirm no implicit retry or success log.
+- [x] 2.1 Implement module-compatible `PlasticAdapter` lifecycle defaults for consolidation, health and snapshot operations; test a minimal concrete adapter, MRO serialization and parameter/buffer discovery, and document extension points.
+- [x] 2.2 Make snapshots clone tensors and deep-copy metadata; test that update, branch and restore cannot mutate an existing snapshot.
+- [x] 2.3 Introduce explicit scheduled-update capability negotiation; test built-in, original-signature custom and legacy adapters receive exactly one compatible update and truthful applied-rate reports.
+- [x] 2.4 Replace swallowed update failures with documented failures; test an adapter that raises before/after mutation and confirm no implicit retry or success log.
 - [ ] 2.5 Persist the registered adapter identifier instead of class-name inference; test a custom adapter whose class name differs from its registry name through create/save/load/re-save.
 - [ ] 2.6 Reject explicitly unknown adapters and invalid kwargs without default substitution; test invalid configurations and legacy manifests lacking the field, documenting the compatibility distinction.
 - [ ] 2.7 Add versioned non-tensor metadata alongside safetensors for capacity, eviction count, key registry, schedule and constructor config; compare next-update/eviction/retrieval behavior against an uninterrupted reference after restart.
@@ -105,3 +105,17 @@ Feature task references below are relative to `openspec/changes/<change>/tasks.m
 
 - Review and archive the three feature dependencies only after their own requirements and evidence are satisfied.
 - Sync this change's approved deltas and archive this umbrella last; verify the main specs and ledger describe the actual release.
+
+## Implementation progress (2026-10-20)
+
+Tasks 1.1 and 2.1–2.4 have executable coverage in `tests/test_release_evidence.py`
+and `tests/test_adapter_lifecycle.py`; see `docs/release-evidence.md` and
+`docs/adapter-contract.md`. Ledger schema coverage is NOT release readiness.
+In-memory plastic snapshot independence is implemented; complete persistent
+database snapshots/rollback (4.4–4.5) remain unchecked. Update failures propagate
+without retry and can leave partial state, explicitly documented.
+
+All other tasks and the three feature dependencies remain open. Real ONNX/GGUF,
+a hookable decoder, trained RTU and matched-budget 1B/8B evaluation artifacts
+are not supplied in this sandbox; do not mark their gates passed or merge this
+umbrella as complete without the required evidence.
