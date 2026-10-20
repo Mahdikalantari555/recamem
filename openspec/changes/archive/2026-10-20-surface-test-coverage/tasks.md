@@ -50,3 +50,11 @@ Recorded on completion (2026-10-20); the tests themselves live in `tests/`.
      trace re-raises instead of returning the documented prompt fallback.
   5. `RetrievalPolicy.classify_query`'s `ambiguous` branch is unreachable for any query
      containing `?` (the `specific_fact` rule catches those first).
+
+## Integration note (2026-10-20)
+
+PRs #5 and #9 were reconciled together, retaining complementary suites.
+The associative-state, legacy-trace and MCP-width expected failures mentioned
+above are now fixed and run as ordinary tests. Parallel scan is mapped by the
+coverage guard. See `reports/2026-10-20-pr-integration.md` for current validation;
+original counts and pre-existing-defect notes above are historical.

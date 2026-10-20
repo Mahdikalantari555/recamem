@@ -34,3 +34,11 @@ descriptive so the validator does not read them as a second numbering scheme.
 - [x] 2.15 Add `psutil` and `numpy` to `requirements.txt`. `scripts/verify_reproduction.py` imports `psutil`. Pin lower bounds consistent with the existing file and confirm a fresh install can import both.
 - [x] 2.16 Correct the README test count. The README states 43 tests. The suite has 68. Replace the number with the collected count and state the command used to collect it.
 - [x] 2.17 Correct every other README claim that the code does not support. Review at minimum: "zero catastrophic collapse" (no forgetting measurement exists), "sub-15ms CPU" (not measured here), and "22 MB on disk" (cache-dependent). Remove or qualify each unsupported claim; do not add new performance numbers without a recorded measurement.
+
+## Integration note (2026-10-20)
+
+The historical completion checkboxes above record this PR's original scope,
+not certification of every adapter/backend. Integration with fusion preserves
+its activated weights and lexical definitional prior rather than reverting to
+the proposed zero-weight scorer. See `reports/2026-10-20-pr-integration.md` for
+combined validation and residual adapter/persistence gaps requiring follow-up.

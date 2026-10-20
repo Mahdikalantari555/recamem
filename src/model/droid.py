@@ -723,9 +723,10 @@ class DroidEngine(nn.Module):
             m["confidence_score"] = confidence
             m["contextual_alignment"] = contextual
             m["original_similarity"] = dense
+            m["dense_gate_pass"] = passed_gate
             if final_score >= threshold:
                 hits.append(m)
-        hits.sort(key=lambda x: x.get("similarity",0), reverse=True)
+        hits.sort(key=lambda x: (x["dense_gate_pass"], x["similarity"]), reverse=True)
         hits = hits[:top_k]
         if self.test_time_training and self.ttt_steps_this_session < self.max_ttt_steps:
             try:

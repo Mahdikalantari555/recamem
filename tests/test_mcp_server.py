@@ -162,15 +162,6 @@ def test_call_decide_action_returns_json(server):
     assert payload["prototype_names"] == ["radar", "lidar"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "_tool_decide_action builds DecisionHead(prototypes=...) without passing dim, so the head "
-        "keeps its 384 default while P has the anchor width; torch.mv then raises a size mismatch "
-        "for any anchor whose embedding dim is not 384. Pre-existing defect in src/mcp_server.py; "
-        "reported to the owning change instead of patched here (this change is tests-only)."
-    ),
-)
 def test_call_decide_action_with_non_384_anchor_embeddings(server):
     class NarrowAnchor:
         def embed(self, text):

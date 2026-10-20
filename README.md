@@ -221,7 +221,8 @@ path is opt-in per query.
 
 ## Verification & Tests
 
-Run the complete test suite (contract, unit, fusion, and lifelong learning tests):
+Run the complete test suite (contract, unit, fusion, and lifelong learning tests).
+Obtain the current test count with `python -m pytest --collect-only -q`:
 
 ```bash
 pytest tests

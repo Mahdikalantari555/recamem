@@ -98,7 +98,7 @@ class DecisionHead:
         if max_sim < threshold:
             action = "ambiguous"
             # For ambiguous, confidence should be low
-            confidence = min(confidence, max_sim / threshold * 0.5)
+            confidence = max(0.0, min(confidence, max_sim / threshold * 0.5)) if threshold > 0 else 0.0
         
         latency_ms = (time.perf_counter() - t0) * 1000.0
         

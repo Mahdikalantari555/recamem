@@ -1,13 +1,12 @@
 import pytest
-from src.model.droid import score_candidate, RECALL_SCORE_WEIGHTS
+from src.model.droid import score_candidate, RECALL_SCORE_WEIGHTS, _lexical_score
 
 def test_definitional_beats_higher_dense_non_definitional():
     """Definitional fact beats higher-dense non-definitional when dense gate passed for both."""
     # Both pass gate (>=0.48), but non-definitional has higher dense
     signals_def = {
         "dense": 0.50,
-        "lexical": 0.0,
-        "definitional": 0.25,  # definitional match
+        "lexical": _lexical_score("What is hydrology?", "Hydrology is the study of water.", "definitional"),
         "associative": 0.0,
         "recency": 0.0,
         "confidence": 0.0,
@@ -100,17 +99,16 @@ def test_below_gate_never_outranks_gated():
 def test_signals_are_auditable():
     """Each signal states its weight, source, and whether additive or multiplicative."""
     # Check RECALL_SCORE_WEIGHTS contains all expected signals
-    expected = {"dense", "lexical", "definitional", "associative", "recency", "confidence", "contextual"}
+    expected = {"dense", "lexical", "associative", "recency", "confidence", "contextual"}
     assert set(RECALL_SCORE_WEIGHTS.keys()) == expected
     # Check weights are as documented
     assert RECALL_SCORE_WEIGHTS["dense"] == 1.0
-    assert RECALL_SCORE_WEIGHTS["definitional"] == 0.25
-    assert RECALL_SCORE_WEIGHTS["associative"] == 0.0
-    assert RECALL_SCORE_WEIGHTS["recency"] == 0.0
-    assert RECALL_SCORE_WEIGHTS["confidence"] == 0.0
+    assert RECALL_SCORE_WEIGHTS["associative"] == 0.15
+    assert RECALL_SCORE_WEIGHTS["recency"] == 0.02
+    assert RECALL_SCORE_WEIGHTS["confidence"] == 0.05
     assert RECALL_SCORE_WEIGHTS["contextual"] == 0.2
     # lexical capped at 0.5
-    assert RECALL_SCORE_WEIGHTS["lexical"] == 0.5
+    assert RECALL_SCORE_WEIGHTS["lexical"] == 0.70
 
 def test_gate_authoritative():
     """Dense gate is applied to dense signal before any other signal contributes."""
@@ -131,3 +129,19 @@ def test_gate_authoritative():
     # Score should be computed (not None) even for below-gate; gate handling is outside scorer
     assert score > 0
     # Public result fields remain populated (checked in integration test)
+
+
+def test_recall_gate_order_is_enforced_by_engine(monkeypatch):
+    """Exercise production recall, not a locally simulated sort."""
+    from src.model.droid import DroidEngine
+    engine = DroidEngine(test_time_training=False)
+    monkeypatch.setattr(engine.knowledge, "total_count", lambda: 2)
+    monkeypatch.setattr(engine.knowledge, "recall", lambda *a, **kw: [
+        {"id": 1, "text": "remote sensing remote sensing", "dense_similarity": 0.30},
+        {"id": 2, "text": "unrelated wording", "dense_similarity": 0.50},
+    ])
+    hits = engine.recall("remote sensing", threshold=0.0, top_k=2)
+    assert hits[0]["id"] == 2
+    assert hits[0]["dense_gate_pass"] is True
+    assert hits[1]["dense_gate_pass"] is False
+    assert hits[1]["associative_bonus"] == 0.0

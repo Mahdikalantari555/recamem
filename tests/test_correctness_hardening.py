@@ -98,13 +98,14 @@ def test_applied_lr_recorded():
     assert "effective_lr" in details
 
 # 2.3: retrieve called from recall, guarded, weight 0.0, zero behavior change
-def test_retrieve_called_with_weight_zero():
+def test_associative_weight_can_be_disabled(monkeypatch):
     droid = DroidEngine(name="test-retrieve")
     # Check retrieve exists and is callable
     assert hasattr(droid.memory, 'retrieve')
     assert callable(getattr(droid.memory, 'retrieve'))
     # Ensure weight is 0.0 in RECALL_SCORE_WEIGHTS
-    assert RECALL_SCORE_WEIGHTS["associative"] == 0.0
+    assert RECALL_SCORE_WEIGHTS["associative"] == 0.15
+    monkeypatch.setitem(RECALL_SCORE_WEIGHTS, "associative", 0.0)
     # Test that recall still works with associative signal weight 0
     droid.teach("Remote sensing is the acquisition of information about Earth without contact.")
     hits = droid.recall("What is remote sensing?")
@@ -225,7 +226,8 @@ def test_scorer_replaces_hardcoded_boosts():
     # Ensure scorer exists and uses documented weights
     assert "dense" in RECALL_SCORE_WEIGHTS
     assert "lexical" in RECALL_SCORE_WEIGHTS
-    assert "definitional" in RECALL_SCORE_WEIGHTS
+    # Fusion incorporates the definitional prior in the lexical signal.
+    assert "definitional" not in RECALL_SCORE_WEIGHTS
     assert "associative" in RECALL_SCORE_WEIGHTS
     assert "recency" in RECALL_SCORE_WEIGHTS
     assert "confidence" in RECALL_SCORE_WEIGHTS
@@ -370,7 +372,7 @@ def test_requirements_contain_deps():
 # 2.16: README test count
 def test_readme_test_count():
     readme = open("README.md").read()
-    assert "90 tests" in readme
+    assert "pytest --collect-only -q" in readme
     assert "43 tests" not in readme  # old number should be gone
     assert "pytest --collect-only" in readme or "collect-only" in readme
 

@@ -192,3 +192,11 @@ def test_to_json_reports_architecture():
         "dim": 8,
         "K": len(DEFAULT_NAMES),
     }
+
+
+@pytest.mark.parametrize("threshold", [0.35, 0.0, -0.5])
+def test_antipodal_query_has_bounded_confidence(threshold):
+    head = DecisionHead(prototypes={"a": [1.0, 0.0], "b": [1.0, 0.0]}, dim=2)
+    result = head.decide(torch.tensor([-1.0, 0.0]), threshold=threshold)
+    assert result["action"] == "ambiguous"
+    assert 0.0 <= result["confidence"] <= 1.0

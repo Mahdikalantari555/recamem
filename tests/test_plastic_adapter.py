@@ -139,15 +139,6 @@ def test_legacy_adapter_state_round_trip_restores_parameters():
     assert torch.allclose(target.rtu.states, source.rtu.states)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "LegacyRTUAdapter.load_state_dict copies the 'states' entry into h_trace and ignores "
-        "the 'h_trace' entry it exported, so a trace advanced by update() (which does not write "
-        "rtu.states) is lost on reload. Pre-existing defect in src/model/plastic_adapter.py; "
-        "reported to the owning change instead of patched here (this change is tests-only)."
-    ),
-)
 def test_legacy_adapter_state_round_trip_preserves_trace():
     source = get_adapter("legacy_rtu", dim=8)
     source.update(_vector(8, seed=2))
