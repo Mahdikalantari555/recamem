@@ -14,6 +14,8 @@ from src.model.rtu import Model, Layer, Encoder, Decoder
 
 class Runtime:
     def __init__(self, path: str, threshold: float, **kwargs):
+        self.parallel_scan = bool(kwargs.pop('parallel_scan', False))
+        self.scan_chunk = int(kwargs.pop('scan_chunk', 128))
         self.model = Model(**kwargs)
         self.path = path
         self.threshold = threshold
@@ -24,8 +26,9 @@ class Runtime:
         if self.step % 500 == 0:
             self.model.save(self.path)
 
-    def call(self, c: int, n: int | None, end: bool, save: bool, frozen: bool, ce_only: bool):
-        outputs = self.model(c, n, end, frozen, ce_only)
+    def call(self, c: int, n: int | None, end: bool, save: bool, frozen: bool, ce_only: bool,
+             planned_states: list[torch.Tensor] | None = None):
+        outputs = self.model.forward_planned(c, n, end, frozen, ce_only, planned_states=planned_states)
         if save:
             self.save()
         return outputs
@@ -57,6 +60,32 @@ class Runtime:
                     print()
                     break
 
+    def train_sequential(self, data: bytes, save: bool, frozen: bool, ce_only: bool):
+        for i, (c, n) in enumerate(itertools.pairwise(data)):
+            b, _ = self.call(c, n, i == len(data) - 2, save, frozen, ce_only)
+            self.write(b)
+
+    def train_parallel(self, data: bytes, save: bool, frozen: bool, ce_only: bool):
+        """Training path where each chunk's state trajectory comes from the scan.
+
+        The pairwise token loop, losses, trace-buffer commits and optimizer
+        steps are the same calls the sequential path makes; only the
+        state-trajectory computation is replaced by
+        ``Model.scan_states`` (``associative_scan``) once per chunk.
+        """
+        last = len(data) - 2
+        for start in range(0, len(data) - 1, self.scan_chunk):
+            stop = min(start + self.scan_chunk, len(data) - 1)
+            chunk = torch.tensor(list(data[start:stop]), dtype=torch.long).unsqueeze(0)
+            trajectories = self.model.scan_states(chunk, chunk=self.scan_chunk)
+
+            for offset, i in enumerate(range(start, stop)):
+                # The chunk is (1, C); the per-token path carries (D,) state.
+                planned = [trajectory[0, offset] for trajectory in trajectories]
+                b, _ = self.call(data[i], data[i + 1], i == last, save, frozen, ce_only,
+                                 planned_states=planned)
+                self.write(b)
+
     def train(self, save: bool, frozen: bool, dataset: str, ce_only: bool):
         files = glob.glob(dataset, recursive=True)
 
@@ -75,9 +104,10 @@ class Runtime:
                         if len(data) < 2:
                             continue
 
-                        for i, (c, n) in enumerate(itertools.pairwise(data)):
-                            b, _ = self.call(c, n, i == len(data) - 2, save, frozen, ce_only)
-                            self.write(b)
+                        if self.parallel_scan:
+                            self.train_parallel(data, save, frozen, ce_only)
+                        else:
+                            self.train_sequential(data, save, frozen, ce_only)
 
     def now(self):
         return datetime.now().strftime('%d/%m/%Y, %H:%M:%S')
@@ -96,7 +126,7 @@ class Runtime:
                 self.model.save(self.path)
 
 
-if __name__ == '__main__':
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='test-model-thing')
     parser.add_argument('path')
     parser.add_argument('mode', choices=['train', 'chat'])
@@ -105,11 +135,19 @@ if __name__ == '__main__':
     parser.add_argument('--ce-only', action='store_true')
     parser.add_argument('--no-save', action='store_false')
     parser.add_argument('--dataset', default='wikipedia_clean/**/wiki_*')
+    parser.add_argument('--parallel-scan', action='store_true',
+                        help='Compute each training chunk state trajectory with the associative scan (default: off).')
+    parser.add_argument('--scan-chunk', type=int, default=128,
+                        help='Tokens per chunk for --parallel-scan (default: 128).')
+    return parser
 
-    args = parser.parse_args()
+
+if __name__ == '__main__':
+    args = build_parser().parse_args()
 
     Runtime(
         path=args.path, threshold=0.35,
         dim=512, layers=16, spread=32, temp=0.75,
-        rate=5e-4, bound=(40000, 120000)
+        rate=5e-4, bound=(40000, 120000),
+        parallel_scan=args.parallel_scan, scan_chunk=args.scan_chunk,
     )(args.mode, args.dataset, args.no_save, args.frozen, args.ce_only)

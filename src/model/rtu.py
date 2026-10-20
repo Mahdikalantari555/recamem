@@ -6,6 +6,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from safetensors.torch import save_file, load_file
 from typing import Tuple, Dict, Any, Optional
+
+try:
+    from src.model.parallel_scan import associative_scan
+except ImportError:  # pragma: no cover - package-relative fallback
+    from .parallel_scan import associative_scan
 # Avoid circular import: define a minimal PlasticAdapter base if needed
 # We will try to import the real one, but if it fails (circular), use a dummy that will be replaced later
 try:
@@ -127,11 +132,22 @@ class Layer(nn.Module):
         self.weights = nn.Linear(dim, dim, bias=False)
         self.silu = nn.SiLU()
 
-    def forward(self, enc: torch.Tensor, x: torch.Tensor, dummy: torch.Tensor | None = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, enc: torch.Tensor, x: torch.Tensor, dummy: torch.Tensor | None = None,
+                planned: torch.Tensor | None = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         if dummy is None:
             dummy = torch.zeros(self.dim, dtype=torch.float32, device=enc.device)
         decay = torch.sigmoid(self.decay)
-        state = (decay * self.states) + enc + dummy
+        if planned is None:
+            state = (decay * self.states) + enc + dummy
+        else:
+            # `planned` is the state trajectory sample produced by
+            # parallel_scan.associative_scan. It already contains this token's
+            # `enc` and the decayed history, so the value must not add `enc`
+            # again. Subtracting the detached value keeps the forward value
+            # unchanged while preserving the direct encoder gradient that the
+            # sequential step has (the history itself is detached, exactly like
+            # the `self.states` buffer).
+            state = planned.detach() + (enc - enc.detach()) + dummy
         x_out = x + self.silu(self.weights(self.norm(state)))
         return x_out, state, decay
 
@@ -232,7 +248,8 @@ class Model(nn.Module):
         dist = torch.distributions.Categorical(logits=output / temp)
         return int(dist.sample().item())
 
-    def step(self, c: torch.Tensor | int, dummies: list[torch.Tensor] | None = None, frozen: bool = False):
+    def step(self, c: torch.Tensor | int, dummies: list[torch.Tensor] | None = None, frozen: bool = False,
+             planned_states: list[torch.Tensor] | None = None):
         if dummies is None:
             dummies = [torch.zeros(self.dim, dtype=torch.float32, device=self.device) for _ in range(self.layers)]
 
@@ -241,7 +258,8 @@ class Model(nn.Module):
         states, decays = [], []
 
         for i, layer in enumerate(self.blocks):
-            x, state, decay = layer(enc, x, dummies[i])
+            planned = planned_states[i] if planned_states is not None else None
+            x, state, decay = layer(enc, x, dummies[i], planned=planned)
             if frozen:
                 layer.states.copy_(state.detach())
             states.append(state)
@@ -249,6 +267,66 @@ class Model(nn.Module):
 
         logits, stop = self.decoder(x)
         return (x, states, decays), (logits, stop)
+
+    def _scan_layer_stack(self, tokens: torch.Tensor, chunk: int = 128):
+        """Scan all layers as one batch of sequences.
+
+        Every layer's recurrence consumes the same encoder output, so the
+        layers are stacked on the batch axis and scanned in a single call.
+        Returns ``(enc, trajectories)`` with ``enc`` shaped ``(B, L, D)`` and
+        ``trajectories`` shaped ``(layers, B, L, D)``.
+        """
+        if tokens.dim() != 2:
+            raise ValueError(f"tokens must be a (B, L) tensor, got {tokens.dim()}-D")
+        tokens = tokens.to(dtype=torch.long, device=self.device)
+        enc = self.encoder(tokens)
+        batch, length, dim = enc.shape
+        layers = len(self.blocks)
+        if layers == 0:
+            return enc, enc.new_zeros(0, batch, length, dim)
+
+        decays = torch.stack([torch.sigmoid(layer.decay) for layer in self.blocks], dim=0)
+        initial = torch.stack([layer.states for layer in self.blocks], dim=0)
+        inputs = enc.unsqueeze(0).expand(layers, batch, length, dim).reshape(layers * batch, length, dim)
+        decay = decays.unsqueeze(1).expand(layers, batch, dim).reshape(layers * batch, dim)
+        h0 = initial.unsqueeze(1).expand(layers, batch, dim).reshape(layers * batch, dim)
+
+        scanned, _ = associative_scan(decay, inputs, h0=h0, chunk=chunk)
+        return enc, scanned.view(layers, batch, length, dim)
+
+    def scan_states(self, tokens: torch.Tensor, chunk: int = 128) -> list[torch.Tensor]:
+        """Per-layer state trajectories for a ``(B, L)`` token chunk.
+
+        Each trajectory is ``(B, L, D)`` and is produced by
+        :func:`src.model.parallel_scan.associative_scan` from the layer's
+        current ``states`` buffer. The trajectories are detached plans: the
+        caller feeds them back through the unchanged per-token output and
+        trace-buffer path. No buffer is mutated here.
+        """
+        with torch.no_grad():
+            _, trajectories = self._scan_layer_stack(tokens, chunk)
+        return [trajectories[i] for i in range(trajectories.shape[0])]
+
+    def forward_chunk(self, tokens: torch.Tensor, chunk: int = 128):
+        """Vectorized forward over a ``(B, L)`` token chunk.
+
+        The state trajectory of every layer comes from the associative scan and
+        the per-token output transform is applied to the scanned states as a
+        single vectorized operation. Returns ``(x, states, (logits, stop))``
+        with ``x`` and each entry of ``states`` shaped ``(B, L, D)`` and
+        ``logits`` shaped ``(B, L, vocab_size)``. Buffers are not mutated.
+
+        Run under ``torch.no_grad()`` (or inference mode) to take the in-place
+        scan path; with gradients enabled the scan uses the out-of-place
+        composition and is slower.
+        """
+        enc, trajectories = self._scan_layer_stack(tokens, chunk)
+        x = enc
+        for i, layer in enumerate(self.blocks):
+            x = x + layer.silu(layer.weights(layer.norm(trajectories[i])))
+        logits, stop = self.decoder(x)
+        states = [trajectories[i] for i in range(trajectories.shape[0])]
+        return x, states, (logits, stop)
 
     def lr_at_step(self, step: int) -> float:
         b0, b1 = float(self.bound[0]), float(self.bound[1])
@@ -258,10 +336,27 @@ class Model(nn.Module):
     def forward(self, currb: int | torch.Tensor, nextb: int | torch.Tensor | None = None,
                 end: bool = False, frozen: bool = False,
                 ce_only: bool = False) -> Tuple[int, float]:
+        return self._forward(currb, nextb, end, frozen, ce_only, planned_states=None)
+
+    def forward_planned(self, currb: int | torch.Tensor, nextb: int | torch.Tensor | None = None,
+                        end: bool = False, frozen: bool = False, ce_only: bool = False,
+                        planned_states: list[torch.Tensor] | None = None) -> Tuple[int, float]:
+        """Same contract as :meth:`forward`, with scanned states for one token.
+
+        ``planned_states`` is a list of per-layer ``(B, D)`` state samples from
+        :meth:`scan_states` (one token slice of the chunk trajectory). Output,
+        loss, trace-buffer and optimizer code are the unchanged ``forward``
+        code path.
+        """
+        return self._forward(currb, nextb, end, frozen, ce_only, planned_states=planned_states)
+
+    def _forward(self, currb: int | torch.Tensor, nextb: int | torch.Tensor | None,
+                 end: bool, frozen: bool, ce_only: bool,
+                 planned_states: list[torch.Tensor] | None) -> Tuple[int, float]:
         if frozen:
             with torch.no_grad():
                 c = torch.tensor(currb, dtype=torch.long, device=self.device) if not isinstance(currb, torch.Tensor) else currb
-                (_, states, _), (output, stop) = self.step(c, frozen=True)
+                (_, states, _), (output, stop) = self.step(c, frozen=True, planned_states=planned_states)
                 return self.sample(output), float(stop.item())
 
         c = torch.tensor(currb, dtype=torch.long, device=self.device) if not isinstance(currb, torch.Tensor) else currb
@@ -275,7 +370,7 @@ class Model(nn.Module):
             with torch.no_grad():
                 tgt = self.encoder(n).detach()
 
-        (x, states, decays), (output, stop) = self.step(c, dummies=dummies, frozen=False)
+        (x, states, decays), (output, stop) = self.step(c, dummies=dummies, frozen=False, planned_states=planned_states)
         total_loss, _ = compute_losses(x, output, stop, tgt=tgt, nextb=nextb, end=end, ce_only=ce_only)
         self.last_loss = float(total_loss.item())
         if total_loss.requires_grad:
