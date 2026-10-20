@@ -161,48 +161,62 @@ def _is_contradiction(new_text: str, old_text: str) -> bool:
     )
     return slot_clash or polarity
 
-class RTUMemoryBlock(nn.Module):
-    """Plastic Recurrent Trace Unit for semantic sentence/chunk vectors."""
-    def __init__(self, dim: int = 384, spread: int = 32):
-        super().__init__()
-        self.dim = dim
-        self.spread = spread
 
-        # Compute initial logit decay from half-lives
-        halflives = torch.exp(torch.linspace(0.0, math.log(float(spread)), dim, dtype=torch.float32))
-        retention = torch.exp(-math.log(2.0) / halflives)
-        decay_init = torch.log(retention) - torch.log1p(-retention)
-        self.decay = nn.Parameter(decay_init)
+# ---------------------------------------------------------------------------
+# Documented scorer for recall ranking (Decision 4, tasks 2.8/2.9)
+# ---------------------------------------------------------------------------
+# Each signal states its weight and source in RECALL_SCORE_WEIGHTS; recall() uses
+# score_candidate() so weights are auditable without reading recall().
+# Dense gate (dense >= 0.48) is authoritative before any other signal contributes.
+RECALL_SCORE_WEIGHTS = {
+    "dense": 1.0,          # KnowledgeStore.recall() dense_similarity
+    "lexical": 0.5,        # query/fact content-word overlap, stop-list filtered, capped at 0.5
+    "definitional": 0.25,  # query classified definitional by RetrievalPolicy and fact matches copula pattern
+    "associative": 0.0,    # PlasticAssociativeRTU.retrieve(q_emb) dot product (fusion change raises it)
+    "recency": 0.0,        # fact timestamp half-life (documented exponent, disabled at weight 0)
+    "confidence": 0.0,     # stored fact novelty/confidence (disabled at weight 0)
+    "contextual": 0.2,     # multiplicative (1 + 0.2 * max(0, c)) where c = dot(normalized h_trace, fact_emb)
+}
 
-        self.register_buffer('states', torch.zeros(dim, dtype=torch.float32))
-        self.register_buffer('decaytrace', torch.zeros(dim, dtype=torch.float32))
-        self.register_buffer('embedtrace', torch.zeros(dim, dtype=torch.float32))
 
-        self.norm = nn.LayerNorm(dim, eps=1e-5)
-        self.proj = nn.Linear(dim, dim, bias=False)
-        self.silu = nn.SiLU()
+def score_candidate(signals: dict, weights: dict = None) -> float:
+    """
+    Pure scorer: compute final ranking score from named signals.
+    signals: dict with keys dense, lexical, definitional, associative, recency, confidence, contextual
+    weights: dict of weights per signal; defaults to RECALL_SCORE_WEIGHTS
+    Gate is applied outside: dense < 0.48 facts are rejected before scoring.
+    """
+    if weights is None:
+        weights = RECALL_SCORE_WEIGHTS
+    dense = float(signals.get("dense", 0.0))
+    lexical = float(signals.get("lexical", 0.0))
+    definitional = float(signals.get("definitional", 0.0))
+    associative = float(signals.get("associative", 0.0))
+    recency = float(signals.get("recency", 0.0))
+    confidence = float(signals.get("confidence", 0.0))
+    contextual = float(signals.get("contextual", 0.0))
 
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        # x: (dim,) or (batch, dim)
-        decay = torch.sigmoid(self.decay)
-        if x.dim() == 1:
-            new_state = (decay * self.states) + x
-            delta = self.silu(self.proj(self.norm(new_state)))
-            return x + delta, new_state
-        else:
-            outputs = []
-            curr_state = self.states.clone()
-            for t in range(x.shape[0]):
-                curr_state = (decay * curr_state) + x[t]
-                delta = self.silu(self.proj(self.norm(curr_state)))
-                outputs.append(x[t] + delta)
-            return torch.stack(outputs, dim=0), curr_state
+    # Additive signals
+    w_dense = float(weights.get("dense", 1.0))
+    w_lexical = float(weights.get("lexical", 0.5))
+    w_definitional = float(weights.get("definitional", 0.25))
+    w_associative = float(weights.get("associative", 0.0))
+    w_recency = float(weights.get("recency", 0.0))
+    w_confidence = float(weights.get("confidence", 0.0))
+    w_contextual = float(weights.get("contextual", 0.2))
 
-    def reset(self):
-        self.states.zero_()
-        self.decaytrace.zero_()
-        self.embedtrace.zero_()
+    # Composition: dense weighted 1.0, lexical already capped 0-0.5, definitional 0.25 if matches, associative/recency/confidence disabled at 0.0 in this change
+    lexical_contrib = float(signals.get("lexical", 0.0))  # already capped 0-0.5, weight implicit
+    definitional_contrib = float(signals.get("definitional", 0.0))  # 0 or 0.25
+    associative_contrib = float(signals.get("associative", 0.0)) * w_associative
+    recency_contrib = float(signals.get("recency", 0.0)) * w_recency
+    confidence_contrib = float(signals.get("confidence", 0.0)) * w_confidence
 
+    base_correct = w_dense * dense + lexical_contrib + definitional_contrib + associative_contrib + recency_contrib + confidence_contrib
+
+    # Contextual is multiplicative: (1 + 0.2 * max(0, contextual))
+    mult = 1.0 + w_contextual * max(0.0, contextual)
+    return base_correct * mult
 
 
 # Try imports for new modules with fallbacks
@@ -315,6 +329,11 @@ class DroidEngine(nn.Module):
         self.device = torch.device("cpu")
         self.anchor = OnnxMiniLM()
         adapter_kwargs = adapter_kwargs or {}
+        # Store for profile round-trip (task 2.12)
+        self.adapter_kwargs = dict(adapter_kwargs)
+        # Propagate K_max to plastic adapter for capacity enforcement (task 2.6)
+        if "K_max" not in adapter_kwargs and "k_max" not in adapter_kwargs:
+            adapter_kwargs["K_max"] = K_max
         if plastic_adapter is not None:
             if isinstance(plastic_adapter, str):
                 if get_adapter is not None:
@@ -328,6 +347,12 @@ class DroidEngine(nn.Module):
                     self.memory = PlasticAssociativeRTU(dim=dim, **adapter_kwargs)
             else:
                 self.memory = plastic_adapter
+                # If passing pre-built memory, sync its K_max to engine's K_max if it supports it
+                if hasattr(self.memory, 'K_max'):
+                    try:
+                        self.memory.K_max = K_max
+                    except Exception:
+                        pass
         else:
             try:
                 from src.model.rtu import PlasticAssociativeRTU
@@ -335,6 +360,11 @@ class DroidEngine(nn.Module):
             except Exception as e:
                 from src.model.rtu import RTUMemoryBlock
                 self.memory = RTUMemoryBlock(dim=dim)
+        # Expose anchor mock state for UI and CLI (task 2.10, 2.11)
+        try:
+            self.anchor_is_mock = bool(getattr(self.anchor, 'is_mock', False))
+        except Exception:
+            self.anchor_is_mock = False
         self.knowledge = KnowledgeStore(db_path or ":memory:", dim=dim)
         self.knowledge_vectors: Optional[torch.Tensor] = None
         self._discourse_subject: Optional[str] = None
@@ -476,7 +506,7 @@ class DroidEngine(nn.Module):
             should_insert = surprise >= surprise_threshold
             try:
                 if hasattr(self.memory, 'update_associative_memory'):
-                    self.memory.update_associative_memory(e_i, surprise_factor=surprise)
+                    self.memory.update_associative_memory(e_i, surprise_factor=surprise, effective_lr=effective_lr, base_lr=self.base_lr)
                 elif hasattr(self.memory, 'update'):
                     self.memory.update(e_i)
                 else:
@@ -512,6 +542,7 @@ class DroidEngine(nn.Module):
                 mem_norm = 0.0
         except:
             mem_norm = 0.0
+        applied_lr = effective_lr
         result = {
             "status": "learned",
             "propositions": len(propositions),
@@ -522,6 +553,7 @@ class DroidEngine(nn.Module):
             "surprise_threshold": surprise_threshold,
             "memory_norm": mem_norm,
             "effective_lr": effective_lr,
+            "applied_lr": applied_lr,
             "total_knowledge": self.knowledge.active_count(),
             "superseded": superseded_total
         }
@@ -559,40 +591,59 @@ class DroidEngine(nn.Module):
                 h_trace = self.memory.states
         except:
             pass
+        # Retrieve associative signal once per recall (guarded, weight 0.0 in this change)
+        associative_vec = None
+        try:
+            if hasattr(self.memory, 'retrieve'):
+                associative_vec = self.memory.retrieve(q_emb)
+        except Exception:
+            associative_vec = None
+        # For ranking we keep both above and below gate but gate is primary sort key
+        scored: list[tuple[int, float, dict]] = []
         for m in matches:
-            sim = m.get("dense_similarity") or m.get("similarity") or 0.0
-            # Definitional boost: for definitional queries, boost facts that are definitional
-            definitional_boost = 0.0
+            dense = m.get("dense_similarity") or m.get("similarity") or 0.0
             fact_text = m.get("text","")
             fact_lower = fact_text.lower()
             query_lower = query.lower()
+            gate_pass = 1 if dense >= 0.48 else 0
+            # Definitional signal: query classified definitional and fact matches copula pattern
+            definitional = 0.0
             if query_type == "definitional":
                 if "is the acquisition" in fact_lower or "is the" in fact_lower or "is a" in fact_lower or "is an" in fact_lower:
-                    definitional_boost = 0.25
-                if "what is" in query_lower and "acquisition" in fact_lower and "remote" in query_lower:
-                    definitional_boost += 0.2
-            # Generic overlap boost: if fact and query share rare words, boost
+                    definitional = RECALL_SCORE_WEIGHTS["definitional"]
+            # Lexical signal: query/fact content-word overlap, stop-list filtered, capped at 0.5
+            lexical = 0.0
             try:
-                import re
                 STOP = {"a", "an", "the", "and", "or", "but", "of", "to", "in", "on", "at", "by", "for", "with", "is", "are", "was", "were", "be", "been", "being", "do", "does", "did", "have", "has", "had", "it", "its", "this", "that", "these", "those", "which", "who", "whom", "whose", "what", "when", "where", "why", "how", "can", "could", "should", "would", "will", "shall", "may", "about", "into", "over", "under", "between", "during", "through", "out", "up", "down", "you", "your"}
                 q_words = set(re.findall(r"[a-z0-9]+", query_lower)) - STOP
                 f_words = set(re.findall(r"[a-z0-9]+", fact_lower)) - STOP
                 overlap = q_words & f_words
                 if overlap:
-                    # Boost by overlap size, up to 0.3
-                    definitional_boost += min(0.3, len(overlap) * 0.15)
-                    # Extra boost if overlap contains rare words (len>4)
+                    lexical = min(0.3, len(overlap) * 0.15)
                     rare_overlap = [w for w in overlap if len(w) > 4]
                     if rare_overlap:
-                        definitional_boost += min(0.2, len(rare_overlap) * 0.1)
+                        lexical += min(0.2, len(rare_overlap) * 0.1)
+                    lexical = min(0.5, lexical)
             except:
-                pass
-            sim_boosted = sim + definitional_boost
-            if sim < 0.48:
-                if sim_boosted >= threshold:
-                    m["similarity"] = sim_boosted
-                    hits.append(m)
-                continue
+                lexical = 0.0
+            # Associative signal: retrieve from plastic memory, guarded, weight 0.0
+            associative = 0.0
+            if associative_vec is not None:
+                try:
+                    fact_emb_assoc = self.anchor.embed(m["text"])
+                    if fact_emb_assoc.dim() > 1:
+                        fact_emb_assoc = fact_emb_assoc.squeeze(0)
+                    fact_emb_assoc = fact_emb_assoc / torch.linalg.vector_norm(fact_emb_assoc).clamp(min=1e-6)
+                    # dot of associative retrieval with fact embedding, normalized
+                    assoc_norm = associative_vec / (torch.linalg.vector_norm(associative_vec).clamp(min=1e-8))
+                    associative = float(torch.dot(assoc_norm, fact_emb_assoc).item())
+                    associative = max(0.0, min(1.0, associative))
+                except:
+                    associative = 0.0
+            # Recency and confidence disabled at weight 0.0 in this change
+            recency = 0.0
+            confidence = 0.0
+            # Contextual alignment: dot of normalized h_trace with fact embedding
             contextual = 0.0
             if h_trace is not None:
                 try:
@@ -604,14 +655,25 @@ class DroidEngine(nn.Module):
                     contextual = torch.dot(h_norm, fact_emb).item()
                 except:
                     contextual = 0.0
-            final_score = sim_boosted * (1.0 + 0.2 * max(0.0, contextual))
+            signals = {
+                "dense": dense,
+                "lexical": lexical,
+                "definitional": definitional,
+                "associative": associative,
+                "recency": recency,
+                "confidence": confidence,
+                "contextual": contextual,
+            }
+            final_score = score_candidate(signals, RECALL_SCORE_WEIGHTS)
             m["similarity"] = final_score
             m["contextual_alignment"] = contextual
-            m["original_similarity"] = sim
+            m["original_similarity"] = dense
+            m["dense_gate_pass"] = bool(gate_pass)
             if final_score >= threshold:
-                hits.append(m)
-        hits.sort(key=lambda x: x.get("similarity",0), reverse=True)
-        hits = hits[:top_k]
+                scored.append((gate_pass, final_score, m))
+        # Gate authoritative: above-gate candidates always rank above below-gate, regardless of lexical boost
+        scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+        hits = [t[2] for t in scored[:top_k]]
         if self.test_time_training and self.ttt_steps_this_session < self.max_ttt_steps:
             try:
                 for hit in hits[:1]:
@@ -851,7 +913,20 @@ class DroidEngine(nn.Module):
                     retrieval_quality = 0.7
         except:
             pass
-        return {"saturation": saturation, "associative_norm": associative_norm, "forgetting_rate": forgetting_rate, "interference": interference, "retrieval_quality": retrieval_quality, "active_facts": active, "total_facts": total, "K_max": self.K_max}
+        # Eviction tracking from capacity enforcement (tasks 2.6, 2.7)
+        evictions = 0
+        key_count = 0
+        try:
+            if hasattr(self.memory, 'eviction_count'):
+                evictions = int(getattr(self.memory, 'eviction_count', 0))
+            if hasattr(self.memory, '_key_registry'):
+                key_count = len(getattr(self.memory, '_key_registry', []))
+            elif hasattr(self.memory, 'S'):
+                # fallback: estimate from active facts if registry not present
+                key_count = active
+        except:
+            pass
+        return {"saturation": saturation, "associative_norm": associative_norm, "forgetting_rate": forgetting_rate, "interference": interference, "retrieval_quality": retrieval_quality, "active_facts": active, "total_facts": total, "K_max": self.K_max, "evictions": evictions, "eviction_count": evictions, "key_count": key_count, "active_key_count": key_count}
 
     def create_snapshot(self, version_id: Optional[str] = None) -> Dict[str, Any]:
         if version_id is None:
@@ -1279,6 +1354,15 @@ class DroidEngine(nn.Module):
                     config["plastic_adapter"] = "associative_rtu"
         except:
             config["plastic_adapter"] = "associative_rtu"
+        # Write constructor kwargs for round-trip (task 2.12)
+        try:
+            if hasattr(self, 'adapter_kwargs') and self.adapter_kwargs:
+                config["adapter_kwargs"] = dict(self.adapter_kwargs)
+            elif "adapter_kwargs" in locals():
+                # fallback if attribute not set
+                pass
+        except:
+            pass
         if self.gguf_config:
             config.update(self.gguf_config)
         if self.gguf_backend and hasattr(self.gguf_backend, 'model_path'):

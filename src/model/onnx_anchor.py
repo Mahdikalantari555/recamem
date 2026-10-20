@@ -1,5 +1,6 @@
 
 import os
+import warnings
 from pathlib import Path
 from typing import Union, List
 import numpy as np
@@ -70,7 +71,7 @@ class OnnxMiniLM:
         self.tokenizer = None
         self.session = None
         self.input_names = []
-        self.use_mock = False
+        self.is_mock = False
         
         try:
             self.model_path = self._locate_or_fetch_model()
@@ -98,7 +99,8 @@ class OnnxMiniLM:
             else:
                 raise FileNotFoundError("Model not found, using mock")
         except Exception as e:
-            self.use_mock = True
+            warnings.warn(f"OnnxMiniLM fallback to mock embeddings: {e}", UserWarning)
+            self.is_mock = True
             try:
                 from transformers import AutoTokenizer
                 self.tokenizer = AutoTokenizer.from_pretrained(
@@ -108,6 +110,14 @@ class OnnxMiniLM:
                 )
             except:
                 self.tokenizer = None
+
+    @property
+    def use_mock(self) -> bool:
+        return self.is_mock
+
+    @use_mock.setter
+    def use_mock(self, value: bool):
+        self.is_mock = bool(value)
 
     def _locate_or_fetch_model(self) -> str:
         candidates = list(Path(self.cache_dir).glob("**/model_quantized.onnx"))
@@ -239,6 +249,8 @@ class OnnxMiniLM:
                 return torch.from_numpy(pooled).float()
             return pooled
         except Exception as e:
+            warnings.warn(f"OnnxMiniLM inference fallback to mock embeddings: {e}", UserWarning)
+            self.is_mock = True
             pooled = self._mock_embed(texts)
             if to_torch:
                 return torch.from_numpy(pooled).float()

@@ -111,8 +111,27 @@ with st.sidebar:
 
         st.divider()
         st.subheader("Base Model & Anchor")
-        st.success("🟢 ONNX MiniLM (INT8, 22MB) Active")
-        st.caption("Cached in `~/.cache/huggingface` (Zero GPU RAM, sub-15ms CPU).")
+        # Task 2.11: badge reads is_mock flag instead of hardcoded string
+        _is_mock = False
+        _mock_reason = "mock embeddings active"
+        try:
+            _is_mock = bool(getattr(active_droid.anchor, 'is_mock', False) or getattr(active_droid, 'anchor_is_mock', False))
+            if _is_mock:
+                # try to get reason from warning or fallback path
+                if getattr(active_droid.anchor, 'model_path', None) is None:
+                    _mock_reason = "model not found, using mock embeddings"
+                elif getattr(active_droid.anchor, 'session', None) is None:
+                    _mock_reason = "ONNX session not loaded, using mock embeddings"
+                else:
+                    _mock_reason = "inference fallback to mock embeddings"
+        except Exception:
+            pass
+        if _is_mock:
+            st.warning(f"🟡 ONNX MiniLM mock active — {_mock_reason}")
+            st.caption("Running on hashed mock embeddings; real ONNX model not loaded.")
+        else:
+            st.success("🟢 ONNX MiniLM (INT8, 22MB) Active")
+            st.caption("Cached in `~/.cache/huggingface` (Zero GPU RAM, sub-15ms CPU).")
 
         st.divider()
         st.subheader("🌐 LLM Provider (Teacher & Synthesis)")
