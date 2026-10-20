@@ -121,6 +121,8 @@ def _register_builtins():
                     if "states" in state:
                         self.rtu.states.copy_(state["states"].to(self.rtu.states.device))
                         self.h_trace.copy_(state["states"].to(self.h_trace.device))
+                    if "h_trace" in state:
+                        self.h_trace.copy_(state["h_trace"].to(self.h_trace.device))
                     if "decay" in state:
                         self.rtu.decay.copy_(state["decay"].to(self.rtu.decay.device))
                     if "proj_weight" in state:

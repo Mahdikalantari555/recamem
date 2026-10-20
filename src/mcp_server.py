@@ -234,9 +234,9 @@ class MCPServer:
                             except:
                                 pass
                         if option_embs:
-                            dh = DecisionHead(prototypes=option_embs)
+                            dh = DecisionHead(prototypes=option_embs, dim=q_emb.numel())
                         else:
-                            dh = DecisionHead(prototype_names=options)
+                            dh = DecisionHead(prototype_names=options, dim=q_emb.numel())
                         # Embed query
                         if q_emb.dim() > 1:
                             q_emb = q_emb.squeeze(0)

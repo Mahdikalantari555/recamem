@@ -2,7 +2,7 @@
 
 [Original YouTube Demo](https://youtu.be/9UERVVwpNew) | [Original MLX Repo](https://github.com/jrz97619761/test-model-thing)
 
-This repository provides a 1:1, contract-verified **PyTorch** implementation of Test-Model-Thing (TMT) alongside the **Droid Lifelong Engine** — an ultra-lightweight (< 30 MB) continual learning system that combines a frozen ONNX semantic anchor with plastic Recurrent Trace Units (RTUs) for conversational domain teaching without catastrophic forgetting.
+This repository provides a 1:1, contract-verified **PyTorch** implementation of Test-Model-Thing (TMT) alongside the **Droid Lifelong Engine** — a lightweight continual learning system that combines a frozen ONNX semantic anchor with plastic Recurrent Trace Units (RTUs) for conversational domain teaching while retaining prior domain facts in sequential-teaching tests.
 
 ---
 
@@ -14,9 +14,9 @@ This repository provides a 1:1, contract-verified **PyTorch** implementation of 
    - Preserves original MLX scripts as `main_mlx.py` and `benchmark_mlx.py`.
 
 2. **Droid Lifelong Learning Engine**:
-   - **Semantic Anchor**: Quantized INT8 `all-MiniLM-L6-v2` via ONNX Runtime (~22 MB on disk, sub-15ms CPU inference, cached in `~/.cache/huggingface`).
+   - **Semantic Anchor**: Quantized INT8 `all-MiniLM-L6-v2` via ONNX Runtime (model files cached in `~/.cache/huggingface`; disk usage varies by environment and quantization).
    - **Plastic RTU Memory**: Recurrent trace unit accumulating proposition vectors with automatic learning rate decay $\eta = \eta_0 / \sqrt{1 + \text{steps}/20}$.
-   - **Zero Catastrophic Collapse**: Base language syntax is anchored; learning specialized domain paragraphs (e.g. Remote Sensing, Hydrology, Medicine) adapts episodic memory instantly without corrupting previous knowledge.
+   - **Retention in Sequential Teaching**: Lifelong-learning tests teach multiple domains and verify prior facts remain recallable; no general forgetting metric is claimed beyond those tests.
    - **In-Chat Conversational Teaching**: Teach the model simply by chatting, sending text paragraphs, or using `learn: <text>`.
 
 3. **Interactive Streamlit WebUI**:
@@ -187,7 +187,7 @@ path is opt-in per query.
                                      |
                                      v
                +-------------------------------------------+
-               |  ONNX MiniLM Anchor (~22 MB, INT8)        |
+               |  ONNX MiniLM Anchor (INT8)                |
                |  (Frozen Base Semantic Feature Extractor) |
                +---------------------+---------------------+
                                      |
@@ -204,7 +204,7 @@ path is opt-in per query.
                +-------------------------------------------+
                |  Episodic Knowledge Bank & Dual Recall    |
                |  -> Grounded domain synthesis             |
-               |  -> Zero catastrophic collapse            |
+               |  -> Prior facts retained in tests            |
                +---------------------+---------------------+
                                      |
                      recalled facts, query last (prompt stuffing)
@@ -221,7 +221,8 @@ path is opt-in per query.
 
 ## Verification & Tests
 
-Run the complete test suite (contract, unit, fusion, and lifelong learning tests):
+Run the complete test suite (contract, unit, fusion, and lifelong learning tests).
+Obtain the current test count with `python -m pytest --collect-only -q`:
 
 ```bash
 pytest tests
