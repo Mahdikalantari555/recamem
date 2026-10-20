@@ -306,6 +306,38 @@ Guardrails:
 - Any measured latency/quality number is written into this file before the plan
   is marked implemented.
 
+## Parallel-scan benchmark (2026-10-20)
+
+Measured for change `parallel-scan-training` (task 4.6). Command:
+
+```
+PYTHONPATH=. python scripts/bench_parallel_scan.py --lengths 128 512 1024 --runs 3 --threads 2
+```
+
+Fixed corpus: a deterministic byte slice of `README.md` + this file. Both paths
+run the same `Model(dim=384, layers=8, spread=32, vocab_size=256)` weights. The
+sequential path advances the recurrence token by token; the chunked path scans
+all layers in one `associative_scan` call (`chunk=128`) and applies the output
+transform vectorized. `seconds` is the median of three runs; `factor` is
+sequential/chunked.
+
+Hardware: x86_64 Linux sandbox, 2 vCPU, 3 GB RAM, torch 2.14.1+cu130 (CPU),
+2 threads, Python 3.11.2. These are sandbox numbers, not the target laptop's;
+re-measure and replace this block when the plan closes on the target machine.
+
+| path | L | seconds | factor | CV |
+|---|---|---|---|---|
+| sequential | 128 | 0.061152 | 1.00 | 0.6% |
+| parallel-scan | 128 | 0.006210 | 9.85 | 3.1% |
+| sequential | 512 | 0.241048 | 1.00 | 0.9% |
+| parallel-scan | 512 | 0.017836 | **13.51** | 1.8% |
+| sequential | 1024 | 0.487045 | 1.00 | 1.3% |
+| parallel-scan | 1024 | 0.038970 | 12.50 | 6.0% |
+
+Logit equivalence at `L=512`: max absolute difference `2.027e-06` against the
+sequential path. The 10x gate at `L=512` is asserted by
+`tests/test_parallel_scan.py::test_chunked_forward_is_at_least_10x_faster_at_512`.
+
 ## Open questions
 
 1. `max_prompt_bytes` 1024 vs 512 — depends on the E3 measurement; a 1024-byte
