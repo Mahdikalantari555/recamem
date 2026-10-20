@@ -8,6 +8,8 @@ Enables creating, selecting, saving, and switching between named Droid instances
 ### Requirement: Named Droid Isolation
 The system SHALL support creating and switching between multiple Droid instances stored under `droids/<droid-name>/`. Each profile SHALL declare an `engine` of `droid`, `byte_rtu`, or `hybrid`, the relative path of its byte-RTU checkpoint when it owns one, and a `fusion_mode`. Every artifact a profile requires SHALL live inside that profile's directory; no artifact SHALL be shared between profiles. The system SHALL write all artifacts before writing `config.json`, and SHALL write the manifest atomically. Loading a profile whose manifest declares an artifact that is absent, or whose `config.json` is missing or corrupt, SHALL raise a named error and SHALL NOT fall back to random initialization or an empty profile.
 
+The system SHALL support creating and switching between multiple Droid instances stored under `droids/<droid-name>/`. Each profile SHALL record the plastic adapter type it was constructed with in `config.json`, and loading a profile SHALL read that recorded value rather than inferring the adapter from whatever class happens to be live. A profile without the field SHALL load with the current default adapter, preserving older profiles.
+
 #### Scenario: Switching active Droid
 - **WHEN** user selects a different Droid (e.g. `droid-remote-sensing`) from the profile selector
 - **THEN** the active RTU memory state, logs, and metadata SHALL switch cleanly to the target profile without cross-contamination
@@ -42,3 +44,12 @@ The system SHALL support creating and switching between multiple Droid instances
 - **WHEN** a profile is saved
 - **THEN** the knowledge store, the plastic state, and the byte-RTU checkpoint SHALL be written before `config.json`
 - **THEN** a profile interrupted before the manifest write SHALL NOT claim an artifact that is absent
+
+#### Scenario: Adapter type survives a round trip
+- **WHEN** a Droid constructed with a non-default plastic adapter is saved and loaded into a fresh engine
+- **THEN** the loaded engine's adapter class SHALL match the saved `plastic_adapter` value
+- **THEN** the loader SHALL read the field that the saver writes, and SHALL NOT read a field that no saver writes
+
+#### Scenario: Legacy profile without the adapter field
+- **WHEN** a profile's `config.json` has no `plastic_adapter` field
+- **THEN** loading SHALL succeed with the default adapter and SHALL NOT raise

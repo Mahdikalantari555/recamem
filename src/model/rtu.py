@@ -575,6 +575,17 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
         self.head_dim = dim // heads
         self.spread = spread
         self.momentum_decay = momentum_decay
+        # Capacity enforcement: K_max bounds the key register; weakest-key eviction uses projection norm
+        _kmax = kwargs.pop("K_max", None)
+        if _kmax is None:
+            _kmax = kwargs.pop("k_max", None)
+        if _kmax is None:
+            _kmax = 5000
+        self.K_max = int(_kmax)
+        if self.K_max < 1:
+            self.K_max = 1
+        self.eviction_count = 0
+        self._key_registry = []  # list of (norm, k_hat) for weakest-key tracking
 
         # Associative state S in R^{H x Dh x Dh}
         self.register_buffer('S', torch.zeros(heads, self.head_dim, self.head_dim, dtype=torch.float32))
@@ -653,22 +664,18 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
         # Clamp to [0,2] per spec
         surprise = max(0.0, min(2.0, surprise))
         
-        error_vec = e_t - hat_e * torch.linalg.vector_norm(e_t).clamp(min=1e-8)
-        # Or simple: e_t - hat_e scaled?
-        # Use e_t - pred (unnormalized?) For simplicity: e_t - hat_e * ||e_t||
-        # Actually error vector should be e_t - hat_e_t (both normalized? spec says error_vector)
-        # We'll return e_t - hat_e (with e_t normalized equivalent)
+        # Use normalized residual so surprise is scale-invariant and comparable across inputs
         error_vec = e_norm - hat_e
         
         return error_vec, surprise
 
-    def update_associative_memory(self, x: torch.Tensor, surprise_factor: float = 1.0) -> torch.Tensor:
+    def update_associative_memory(self, x: torch.Tensor, surprise_factor: float = 1.0, effective_lr: float = None, base_lr: float = 0.05) -> torch.Tensor:
         """
         Update associative state using momentum-augmented surprise:
-        M_t = eta M_{t-1} + grad * s_t, then S_t = S_{t-1} G_t + M_t
+        M_t = eta M_{t-1} + grad * s_t * (effective_lr / base_lr), then S_t = S_{t-1} G_t + M_t
         where G_t is Householder-like erasure operator.
         
-        Also updates 1D trace: h_t = 0.9 h_{t-1} + 0.1 (1+0.5 s_t) e_t
+        Also updates 1D trace: h_t = 0.9 h_{t-1} + 0.1 (1+0.5 s_t) e_t (trace keeps 0.9/0.1, not rescaled)
         Returns adapted output (for PlasticAdapter interface)
         """
         e_t = x.detach().float().reshape(-1)
@@ -677,12 +684,18 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
                 e_t = e_t[:self.dim]
             else:
                 e_t = F.pad(e_t, (0, self.dim - e_t.shape[0]))
-        
-        # Compute projections
+
+        # Reject non-finite updates without consuming capacity (task 2.6)
+        if not torch.isfinite(e_t).all():
+            return e_t
+        # Also check if computed projections would be non-finite later, but early gate on e_t suffices for now
+        # Capacity and norm check: use key projection norm as strength measure
+        # Compute k early to get norm for eviction decision
+        # Compute projections (need for registry and update)
         k = self.W_K(e_t)  # dim
         v = self.W_V(e_t)  # dim
-        # q not needed for update, but for completeness
-        # q = self.W_Q(e_t)
+        if not torch.isfinite(k).all() or not torch.isfinite(v).all():
+            return e_t
         
         # Reshape to heads
         k_heads = k.view(self.heads, self.head_dim)  # H x Dh
@@ -691,6 +704,37 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
         # Normalize keys per head for erasure operator
         k_norms = torch.linalg.vector_norm(k_heads, dim=1, keepdim=True).clamp(min=1e-8)
         k_hat = k_heads / k_norms  # H x Dh, normalized
+        # Overall key strength: projection norm (scalar) for capacity ordering
+        k_strength = float(torch.linalg.vector_norm(k).item())
+
+        # Capacity enforcement: evict weakest key when at K_max before writing new association
+        # Use existing attenuation operator for removal (Householder-like)
+        if len(self._key_registry) >= self.K_max:
+            # Find weakest key (smallest projection norm)
+            weakest_idx = min(range(len(self._key_registry)), key=lambda i: self._key_registry[i][0])
+            weakest_norm, weakest_k_hat = self._key_registry.pop(weakest_idx)
+            # Attenuate S along weakest direction using Householder erasure
+            # For each head, apply G_evict = (I - alpha_evict * k_hat_weak k_hat_weak^T) with alpha_evict=1.0
+            with torch.no_grad():
+                for h in range(self.heads):
+                    # weakest_k_hat is stored as full k_hat (H x Dh); slice per head
+                    if isinstance(weakest_k_hat, torch.Tensor) and weakest_k_hat.dim() == 2:
+                        kh_weak = weakest_k_hat[h]  # Dh
+                    else:
+                        # fallback: use current k_hat if registry format unexpected
+                        kh_weak = k_hat[h]
+                    I = torch.eye(self.head_dim, device=self.S.device, dtype=self.S.dtype)
+                    G_evict = I - 1.0 * torch.outer(kh_weak, kh_weak)
+                    self.S[h] = self.S[h] @ G_evict
+            self.eviction_count += 1
+
+        # Determine learning-rate scaling for momentum write
+        lr_scale = 1.0
+        if effective_lr is not None:
+            try:
+                lr_scale = float(effective_lr) / float(base_lr) if float(base_lr) != 0 else 1.0
+            except Exception:
+                lr_scale = 1.0
         
         # Compute alpha_h (erasure rate) and w_h (retention) per head
         alpha_logits = self.W_alpha(e_t)  # heads
@@ -698,16 +742,16 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
         alpha_h = torch.sigmoid(alpha_logits)  # [0,1]
         w_h = torch.sigmoid(w_logits)  # [0,1], retention weight
         
-        # Momentum update: M_t = eta * M_{t-1} + outer(k_h, v_h) * s_t
+        # Momentum update: M_t = eta * M_{t-1} + outer(k_h, v_h) * s_t * lr_scale
         # outer product per head: k_h outer v_h -> Dh x Dh
         with torch.no_grad():
             # Decay momentum
             self.momentum.mul_(self.momentum_decay)
             
-            # Add new gradient scaled by surprise
+            # Add new gradient scaled by surprise and learning-rate
             for h in range(self.heads):
                 outer = torch.outer(k_heads[h], v_heads[h])  # Dh x Dh
-                self.momentum[h].add_(outer * surprise_factor)
+                self.momentum[h].add_(outer * surprise_factor * lr_scale)
             
             # Householder-like erasure: G_h = (I - alpha_h * k_hat k_hat^T) * diag(w_h)
             # For simplicity, w_h is scalar per head controlling overall retention
@@ -728,9 +772,15 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
             
             self.S.copy_(new_S)
             
-            # Update 1D trace: h_t = 0.9 h_{t-1} + 0.1 (1+0.5 s_t) e_t
+            # Update 1D trace: h_t = 0.9 h_{t-1} + 0.1 (1+0.5 s_t) e_t (not rescaled by lr, per Decision 1)
             trace_coeff = 0.1 * (1.0 + 0.5 * surprise_factor)
             self.h_trace.mul_(0.9).add_(e_t * trace_coeff)
+
+            # Register new key for capacity tracking (store copy detached)
+            try:
+                self._key_registry.append((k_strength, k_hat.detach().clone()))
+            except Exception:
+                pass
 
         # Return adapted output: e_t + SiLU(proj(norm(h_trace))) like old RTU
         with torch.no_grad():
@@ -806,6 +856,16 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
         sd["_adapter_version"] = 1
         sd["dim"] = self.dim
         sd["heads"] = self.heads
+        sd["K_max"] = int(getattr(self, 'K_max', 5000))
+        sd["eviction_count"] = int(getattr(self, 'eviction_count', 0))
+        # Store key registry norms and k_hat for persistence (as tensors)
+        try:
+            if hasattr(self, '_key_registry') and self._key_registry:
+                sd["_key_registry_norms"] = torch.tensor([n for n, _ in self._key_registry], dtype=torch.float32)
+                # Stack k_hats: each is H x Dh, registry list of (norm, k_hat) -> stack to N x H x Dh
+                sd["_key_registry_khats"] = torch.stack([k for _, k in self._key_registry], dim=0)
+        except Exception:
+            pass
         return sd
 
     def load_state_dict(self, state: Dict[str, Any], strict: bool = True):
@@ -847,6 +907,28 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
             if "norm_pred_bias" in state:
                 self.norm_pred.bias.copy_(state["norm_pred_bias"].to(self.norm_pred.bias.device))
             
+            if "K_max" in state:
+                try:
+                    self.K_max = int(state["K_max"])
+                except Exception:
+                    pass
+            if "eviction_count" in state:
+                try:
+                    self.eviction_count = int(state["eviction_count"])
+                except Exception:
+                    pass
+            if "_key_registry_norms" in state and "_key_registry_khats" in state:
+                try:
+                    norms = state["_key_registry_norms"]
+                    khats = state["_key_registry_khats"]
+                    self._key_registry = []
+                    for i in range(norms.shape[0]):
+                        n = float(norms[i].item())
+                        kh = khats[i].detach().clone()
+                        self._key_registry.append((n, kh))
+                except Exception:
+                    pass
+            
             # Also try to load via parent for any remaining keys
             try:
                 # Filter to only keys that are in parent's state_dict
@@ -861,6 +943,8 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
         self.S.zero_()
         self.momentum.zero_()
         self.h_trace.zero_()
+        self.eviction_count = 0
+        self._key_registry = []
 
     def get_memory_health(self) -> Dict[str, float]:
         """Basic health metrics for this module alone."""
@@ -871,4 +955,8 @@ class PlasticAssociativeRTU(PlasticAdapter, nn.Module):
                 "associative_norm": assoc_norm,
                 "trace_norm": trace_norm,
                 "saturation": min(1.0, assoc_norm / 100.0),  # heuristic
+                "evictions": int(getattr(self, 'eviction_count', 0)),
+                "eviction_count": int(getattr(self, 'eviction_count', 0)),
+                "key_count": len(getattr(self, '_key_registry', [])),
+                "K_max": int(getattr(self, 'K_max', 5000)),
             }

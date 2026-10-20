@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import sqlite3
+import threading
 import time
 import json
 from pathlib import Path
@@ -65,6 +66,7 @@ class KnowledgeStore:
         self.conn.execute("PRAGMA synchronous=NORMAL")
         self._create_schema()
         self._migrate_schema()
+        self._write_lock = threading.RLock()
         # Cached dense matrix, rebuilt only on insert. Per-query recall reuses it.
         self._vec_cache: Optional[torch.Tensor] = None
         self._id_cache: Optional[List[int]] = None
@@ -192,30 +194,31 @@ class KnowledgeStore:
         feedback: Optional[str] = None,
         needs_review: int = 0,
     ) -> int:
-        v = vec.detach().float().reshape(-1)
-        norm = torch.linalg.vector_norm(v).clamp(min=1e-8)
-        v = v / norm
-        self.conn.execute("BEGIN")
-        try:
-            cur = self.conn.execute(
-                "INSERT INTO facts(text, source, timestamp, step, novelty, access_count, last_retrieved, version_id, feedback, needs_review)"
-                " VALUES (?,?,?,?,?,?,?,?,?,?)",
-                (text, source, float(timestamp), int(step), float(novelty), 1, float(timestamp), version_id, feedback, int(needs_review)),
-            )
-            fid = cur.lastrowid
-            self.conn.execute(
-                "INSERT INTO facts_vecs(id, vec) VALUES (?,?)",
-                (fid, v.cpu().contiguous().numpy().tobytes()),
-            )
-            self.conn.execute(
-                "INSERT INTO facts_fts(rowid, text) VALUES (?,?)", (fid, text)
-            )
-            self.conn.execute("COMMIT")
-        except Exception:
-            self.conn.execute("ROLLBACK")
-            raise
-        self._vec_cache = None
-        return fid
+        with self._write_lock:
+            v = vec.detach().float().reshape(-1)
+            norm = torch.linalg.vector_norm(v).clamp(min=1e-8)
+            v = v / norm
+            self.conn.execute("BEGIN")
+            try:
+                cur = self.conn.execute(
+                    "INSERT INTO facts(text, source, timestamp, step, novelty, access_count, last_retrieved, version_id, feedback, needs_review)"
+                    " VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    (text, source, float(timestamp), int(step), float(novelty), 1, float(timestamp), version_id, feedback, int(needs_review)),
+                )
+                fid = cur.lastrowid
+                self.conn.execute(
+                    "INSERT INTO facts_vecs(id, vec) VALUES (?,?)",
+                    (fid, v.cpu().contiguous().numpy().tobytes()),
+                )
+                self.conn.execute(
+                    "INSERT INTO facts_fts(rowid, text) VALUES (?,?)", (fid, text)
+                )
+                self.conn.execute("COMMIT")
+            except Exception:
+                self.conn.execute("ROLLBACK")
+                raise
+            self._vec_cache = None
+            return fid
 
     def insert_semantic_fact(
         self,
@@ -224,36 +227,38 @@ class KnowledgeStore:
         confidence: float,
         vec: torch.Tensor,
     ) -> int:
-        v = vec.detach().float().reshape(-1)
-        norm = torch.linalg.vector_norm(v).clamp(min=1e-8)
-        v = v / norm
-        self.conn.execute("BEGIN")
-        try:
-            cur = self.conn.execute(
-                "INSERT INTO semantic_facts(text, source_cluster_ids, confidence, created_at, access_count)"
-                " VALUES (?,?,?,?,?)",
-                (text, json.dumps(source_cluster_ids), float(confidence), time.time(), 1),
-            )
-            fid = cur.lastrowid
-            self.conn.execute(
-                "INSERT INTO semantic_vecs(id, vec) VALUES (?,?)",
-                (fid, v.cpu().contiguous().numpy().tobytes()),
-            )
-            self.conn.execute(
-                "INSERT INTO semantic_fts(rowid, text) VALUES (?,?)", (fid, text)
-            )
-            self.conn.execute("COMMIT")
-        except Exception:
-            self.conn.execute("ROLLBACK")
-            raise
-        return fid
+        with self._write_lock:
+            v = vec.detach().float().reshape(-1)
+            norm = torch.linalg.vector_norm(v).clamp(min=1e-8)
+            v = v / norm
+            self.conn.execute("BEGIN")
+            try:
+                cur = self.conn.execute(
+                    "INSERT INTO semantic_facts(text, source_cluster_ids, confidence, created_at, access_count)"
+                    " VALUES (?,?,?,?,?)",
+                    (text, json.dumps(source_cluster_ids), float(confidence), time.time(), 1),
+                )
+                fid = cur.lastrowid
+                self.conn.execute(
+                    "INSERT INTO semantic_vecs(id, vec) VALUES (?,?)",
+                    (fid, v.cpu().contiguous().numpy().tobytes()),
+                )
+                self.conn.execute(
+                    "INSERT INTO semantic_fts(rowid, text) VALUES (?,?)", (fid, text)
+                )
+                self.conn.execute("COMMIT")
+            except Exception:
+                self.conn.execute("ROLLBACK")
+                raise
+            return fid
 
     def log_feedback(self, fact_id: int, action: str, correction_text: Optional[str] = None, strategy_used: Optional[str] = None):
-        self.conn.execute(
-            "INSERT INTO feedback_log(fact_id, action, correction_text, timestamp, strategy_used) VALUES (?,?,?,?,?)",
-            (int(fact_id), action, correction_text, time.time(), strategy_used),
-        )
-        self.conn.commit()
+        with self._write_lock:
+            self.conn.execute(
+                "INSERT INTO feedback_log(fact_id, action, correction_text, timestamp, strategy_used) VALUES (?,?,?,?,?)",
+                (int(fact_id), action, correction_text, time.time(), strategy_used),
+            )
+            self.conn.commit()
 
     def get_feedback_log(self, fact_id: Optional[int] = None) -> List[Dict[str, Any]]:
         if fact_id is not None:
@@ -346,18 +351,19 @@ class KnowledgeStore:
         )
         dense_vals = top_dense.values.tolist()
         dense_idx = top_dense.indices.tolist()
-        self.conn.execute("DROP TABLE IF EXISTS _dense_cands")
-        self.conn.execute(
-            "CREATE TEMPORARY TABLE _dense_cands ("
-            "id INTEGER PRIMARY KEY, score REAL, drank INTEGER)"
-        )
-        self.conn.executemany(
-            "INSERT INTO _dense_cands(id, score, drank) VALUES (?,?,?)",
-            [
-                (ids[idx], dense_vals[rank], rank + 1)
-                for rank, idx in enumerate(dense_idx)
-            ],
-        )
+        with self._write_lock:
+            self.conn.execute("DROP TABLE IF EXISTS _dense_cands")
+            self.conn.execute(
+                "CREATE TEMPORARY TABLE _dense_cands ("
+                "id INTEGER PRIMARY KEY, score REAL, drank INTEGER)"
+            )
+            self.conn.executemany(
+                "INSERT INTO _dense_cands(id, score, drank) VALUES (?,?,?)",
+                [
+                    (ids[idx], dense_vals[rank], rank + 1)
+                    for rank, idx in enumerate(dense_idx)
+                ],
+            )
 
         lex_match = _tokenize(query_text.split())
         has_lex = bool(lex_match)
@@ -505,17 +511,19 @@ class KnowledgeStore:
         # Update access_count and last_retrieved
         if results:
             now = time.time()
-            for entry in results:
-                try:
-                    self.conn.execute(
-                        "UPDATE facts SET access_count = COALESCE(access_count,0)+1, last_retrieved=? WHERE id=?",
-                        (now, entry["id"]),
-                    )
-                except Exception:
-                    pass
-            self.conn.commit()
+            with self._write_lock:
+                for entry in results:
+                    try:
+                        self.conn.execute(
+                            "UPDATE facts SET access_count = COALESCE(access_count,0)+1, last_retrieved=? WHERE id=?",
+                            (now, entry["id"]),
+                        )
+                    except Exception:
+                        pass
+                self.conn.commit()
 
-        self.conn.execute("DROP TABLE IF EXISTS _dense_cands")
+        with self._write_lock:
+            self.conn.execute("DROP TABLE IF EXISTS _dense_cands")
         return results
 
     def recall_semantic(
@@ -556,15 +564,16 @@ class KnowledgeStore:
                     "fused_score": score,
                 })
         if results:
-            for entry in results:
-                try:
-                    self.conn.execute(
-                        "UPDATE semantic_facts SET access_count = COALESCE(access_count,0)+1 WHERE id=?",
-                        (entry["id"],),
-                    )
-                except:
-                    pass
-            self.conn.commit()
+            with self._write_lock:
+                for entry in results:
+                    try:
+                        self.conn.execute(
+                            "UPDATE semantic_facts SET access_count = COALESCE(access_count,0)+1 WHERE id=?",
+                            (entry["id"],),
+                        )
+                    except:
+                        pass
+                self.conn.commit()
         return results
 
     def _to_dict(self, row) -> Dict[str, Any]:
@@ -599,39 +608,41 @@ class KnowledgeStore:
             }
 
     def supersede(self, old_id: int, new_id: Optional[int], now: Optional[float] = None) -> int:
-        """Mark ``old_id`` superseded by ``new_id``.
+        with self._write_lock:
+            """Mark ``old_id`` superseded by ``new_id``.
 
-        ``new_id`` must be the id of a stored fact (the replacement) or ``None``
-        when the fact is superseded with no successor. Sentinels such as ``0``
-        are rejected: they would otherwise be written to ``superseded_by`` and
-        point at a fact that does not exist.
-        """
-        if new_id is None:
-            return self.mark_superseded(old_id, now)
-        new_id = int(new_id)
-        if new_id <= 0:
-            raise ValueError(
-                "superseded_by must be a stored fact id or None; "
-                f"got {new_id!r} (sentinels are not allowed)"
+            ``new_id`` must be the id of a stored fact (the replacement) or ``None``
+            when the fact is superseded with no successor. Sentinels such as ``0``
+            are rejected: they would otherwise be written to ``superseded_by`` and
+            point at a fact that does not exist.
+            """
+            if new_id is None:
+                return self.mark_superseded(old_id, now)
+            new_id = int(new_id)
+            if new_id <= 0:
+                raise ValueError(
+                    "superseded_by must be a stored fact id or None; "
+                    f"got {new_id!r} (sentinels are not allowed)"
+                )
+            exists = self.conn.execute("SELECT 1 FROM facts WHERE id = ?", (new_id,)).fetchone()
+            if exists is None:
+                raise ValueError(f"superseded_by must reference an existing fact; id {new_id} not found")
+            cur = self.conn.execute(
+                "UPDATE facts SET superseded = 1, valid_until = ?,"
+                " superseded_by = ? WHERE id = ? AND superseded = 0",
+                (now if now is not None else time.time(), new_id, old_id),
             )
-        exists = self.conn.execute("SELECT 1 FROM facts WHERE id = ?", (new_id,)).fetchone()
-        if exists is None:
-            raise ValueError(f"superseded_by must reference an existing fact; id {new_id} not found")
-        cur = self.conn.execute(
-            "UPDATE facts SET superseded = 1, valid_until = ?,"
-            " superseded_by = ? WHERE id = ? AND superseded = 0",
-            (now if now is not None else time.time(), new_id, old_id),
-        )
-        return cur.rowcount
+            return cur.rowcount
 
     def mark_superseded(self, fact_id: int, now: Optional[float] = None) -> int:
-        """Mark a fact superseded with no successor: ``superseded_by`` is NULL."""
-        cur = self.conn.execute(
-            "UPDATE facts SET superseded = 1, valid_until = ?,"
-            " superseded_by = NULL WHERE id = ? AND superseded = 0",
-            (now if now is not None else time.time(), int(fact_id)),
-        )
-        return cur.rowcount
+        with self._write_lock:
+            """Mark a fact superseded with no successor: ``superseded_by`` is NULL."""
+            cur = self.conn.execute(
+                "UPDATE facts SET superseded = 1, valid_until = ?,"
+                " superseded_by = NULL WHERE id = ? AND superseded = 0",
+                (now if now is not None else time.time(), int(fact_id)),
+            )
+            return cur.rowcount
 
     def get_audit_trail(self) -> List[Dict[str, Any]]:
         rows = self.conn.execute(
@@ -662,83 +673,85 @@ class KnowledgeStore:
 
     def update_fact(self, fact_id: int, new_text: str, new_vec: Optional[torch.Tensor] = None) -> int:
         """Update fact text and re-embed vector. Invalidates caches."""
-        fact_id = int(fact_id)
-        # Check exists
-        existing = self.conn.execute("SELECT id FROM facts WHERE id = ?", (fact_id,)).fetchone()
-        if existing is None:
-            return 0
-        
-        # Embed if vec not provided
-        if new_vec is None:
-            try:
-                # Try to import anchor and embed
-                from src.model.onnx_anchor import OnnxMiniLM
-                anchor = OnnxMiniLM()
-                new_vec = anchor.embed(new_text, to_torch=True)
-            except Exception:
+        with self._write_lock:
+            fact_id = int(fact_id)
+            # Check exists
+            existing = self.conn.execute("SELECT id FROM facts WHERE id = ?", (fact_id,)).fetchone()
+            if existing is None:
+                return 0
+            
+            # Embed if vec not provided
+            if new_vec is None:
                 try:
-                    from .onnx_anchor import OnnxMiniLM
+                    # Try to import anchor and embed
+                    from src.model.onnx_anchor import OnnxMiniLM
                     anchor = OnnxMiniLM()
                     new_vec = anchor.embed(new_text, to_torch=True)
-                except Exception as e:
-                    # Fallback: keep old vector if embedding fails
-                    row = self.conn.execute("SELECT vec FROM facts_vecs WHERE id = ?", (fact_id,)).fetchone()
-                    if row:
-                        import numpy as np
-                        vec_np = np.frombuffer(row[0], dtype=np.float32)
-                        new_vec = torch.from_numpy(vec_np)
-                    else:
-                        new_vec = torch.randn(self.dim)
+                except Exception:
+                    try:
+                        from .onnx_anchor import OnnxMiniLM
+                        anchor = OnnxMiniLM()
+                        new_vec = anchor.embed(new_text, to_torch=True)
+                    except Exception as e:
+                        # Fallback: keep old vector if embedding fails
+                        row = self.conn.execute("SELECT vec FROM facts_vecs WHERE id = ?", (fact_id,)).fetchone()
+                        if row:
+                            import numpy as np
+                            vec_np = np.frombuffer(row[0], dtype=np.float32)
+                            new_vec = torch.from_numpy(vec_np)
+                        else:
+                            new_vec = torch.randn(self.dim)
 
-        v = new_vec.detach().float().reshape(-1)
-        norm = torch.linalg.vector_norm(v).clamp(min=1e-8)
-        v = v / norm
+            v = new_vec.detach().float().reshape(-1)
+            norm = torch.linalg.vector_norm(v).clamp(min=1e-8)
+            v = v / norm
 
-        self.conn.execute("BEGIN")
-        try:
-            # Update facts table
-            self.conn.execute(
-                "UPDATE facts SET text = ?, timestamp = ? WHERE id = ?",
-                (new_text, time.time(), fact_id),
-            )
-            # Update vec
-            self.conn.execute(
-                "UPDATE facts_vecs SET vec = ? WHERE id = ?",
-                (v.cpu().contiguous().numpy().tobytes(), fact_id),
-            )
-            # Rebuild FTS - simplest: delete and insert
-            self.conn.execute("DELETE FROM facts_fts WHERE rowid = ?", (fact_id,))
-            self.conn.execute(
-                "INSERT INTO facts_fts(rowid, text) VALUES (?,?)", (fact_id, new_text)
-            )
-            self.conn.execute("COMMIT")
-        except Exception:
-            self.conn.execute("ROLLBACK")
-            raise
-        
-        self._vec_cache = None
-        self._id_cache = None
-        return 1
+            self.conn.execute("BEGIN")
+            try:
+                # Update facts table
+                self.conn.execute(
+                    "UPDATE facts SET text = ?, timestamp = ? WHERE id = ?",
+                    (new_text, time.time(), fact_id),
+                )
+                # Update vec
+                self.conn.execute(
+                    "UPDATE facts_vecs SET vec = ? WHERE id = ?",
+                    (v.cpu().contiguous().numpy().tobytes(), fact_id),
+                )
+                # Rebuild FTS - simplest: delete and insert
+                self.conn.execute("DELETE FROM facts_fts WHERE rowid = ?", (fact_id,))
+                self.conn.execute(
+                    "INSERT INTO facts_fts(rowid, text) VALUES (?,?)", (fact_id, new_text)
+                )
+                self.conn.execute("COMMIT")
+            except Exception:
+                self.conn.execute("ROLLBACK")
+                raise
+            
+            self._vec_cache = None
+            self._id_cache = None
+            return 1
 
     def delete_fact(self, fact_id: int) -> int:
         """Delete fact entirely from all tables. Invalidates caches."""
-        fact_id = int(fact_id)
-        self.conn.execute("BEGIN")
-        try:
-            cur = self.conn.execute("DELETE FROM facts WHERE id = ?", (fact_id,))
-            deleted = cur.rowcount
-            self.conn.execute("DELETE FROM facts_vecs WHERE id = ?", (fact_id,))
-            self.conn.execute("DELETE FROM facts_fts WHERE rowid = ?", (fact_id,))
-            # Also clean feedback log? Keep for audit, but optional
-            # self.conn.execute("DELETE FROM feedback_log WHERE fact_id = ?", (fact_id,))
-            self.conn.execute("COMMIT")
-        except Exception:
-            self.conn.execute("ROLLBACK")
-            raise
-        
-        self._vec_cache = None
-        self._id_cache = None
-        return deleted
+        with self._write_lock:
+            fact_id = int(fact_id)
+            self.conn.execute("BEGIN")
+            try:
+                cur = self.conn.execute("DELETE FROM facts WHERE id = ?", (fact_id,))
+                deleted = cur.rowcount
+                self.conn.execute("DELETE FROM facts_vecs WHERE id = ?", (fact_id,))
+                self.conn.execute("DELETE FROM facts_fts WHERE rowid = ?", (fact_id,))
+                # Also clean feedback log? Keep for audit, but optional
+                # self.conn.execute("DELETE FROM feedback_log WHERE fact_id = ?", (fact_id,))
+                self.conn.execute("COMMIT")
+            except Exception:
+                self.conn.execute("ROLLBACK")
+                raise
+            
+            self._vec_cache = None
+            self._id_cache = None
+            return deleted
 
     def total_count(self) -> int:
         row = self.conn.execute("SELECT COUNT(*) FROM facts").fetchone()
@@ -780,16 +793,17 @@ class KnowledgeStore:
         return dest
 
     def clear_all(self):
-        self.conn.execute("DELETE FROM facts")
-        self.conn.execute("DELETE FROM facts_vecs")
-        self.conn.execute("DELETE FROM facts_fts")
-        self.conn.execute("DELETE FROM semantic_facts")
-        self.conn.execute("DELETE FROM semantic_vecs")
-        self.conn.execute("DELETE FROM semantic_fts")
-        self.conn.execute("DELETE FROM feedback_log")
-        self.conn.commit()
-        self._vec_cache = None
-        self._id_cache = None
+        with self._write_lock:
+            self.conn.execute("DELETE FROM facts")
+            self.conn.execute("DELETE FROM facts_vecs")
+            self.conn.execute("DELETE FROM facts_fts")
+            self.conn.execute("DELETE FROM semantic_facts")
+            self.conn.execute("DELETE FROM semantic_vecs")
+            self.conn.execute("DELETE FROM semantic_fts")
+            self.conn.execute("DELETE FROM feedback_log")
+            self.conn.commit()
+            self._vec_cache = None
+            self._id_cache = None
 
     def close(self):
         try:
