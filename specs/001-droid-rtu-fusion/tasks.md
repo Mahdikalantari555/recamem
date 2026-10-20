@@ -2,6 +2,12 @@
 
 **Input**: Design documents from `/specs/001-droid-rtu-fusion/`
 
+> **Moved to OpenSpec.** T001–T011 stay here as the historical record. T012–T027 are
+> tracked in the OpenSpec change `openspec/changes/droid-rtu-fusion-completion/` as
+> tasks 1.11–1.30 (the mapping table is in that change's `tasks.md`). The T012–T027
+> entries below stay unchecked on purpose; tick boxes in the OpenSpec change and in
+> `plans/10_droid_rtu_fusion.md`, not here.
+
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
 **Tests**: Included. The feature specification and plan 10 explicitly name the test file `tests/test_droid_rtu_fusion.py` and its six tests, so test tasks are part of this list and are written before their implementation.
