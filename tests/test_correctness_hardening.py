@@ -365,7 +365,26 @@ def test_concurrent_writes():
 
 # 2.15: requirements contain psutil and numpy
 def test_requirements_contain_deps():
-    req = open("requirements.txt").read()
+    # requirements.txt may split core/optional via `-r` includes; expand them
+    # so this contract still checks the effective dependency set.
+    from pathlib import Path
+
+    root = Path("requirements.txt").parent
+    seen = set()
+
+    def expand(path):
+        text = path.read_text()
+        for line in text.splitlines():
+            line = line.strip()
+            if line.startswith("-r "):
+                target = (path.parent / line[3:].strip()).resolve()
+                if target not in seen:
+                    seen.add(target)
+                    yield from expand(target)
+            elif line and not line.startswith("#"):
+                yield line
+
+    req = "\n".join(expand(root / "requirements.txt"))
     assert "psutil" in req
     assert "numpy" in req
 
