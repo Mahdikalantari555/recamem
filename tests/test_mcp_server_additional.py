@@ -191,7 +191,7 @@ def test_handle_initialize_returns_protocol_and_capabilities():
     assert result["serverInfo"]["name"] == "tmt-droid-mcp"
 
 
-def test_handle_tools_list_names_all_six_tools():
+def test_handle_tools_list_names_all_seven_tools():
     server = MCPServer(base_dir="droids")
     tools = server.handle_tools_list({})["tools"]
     names = [tool["name"] for tool in tools]
@@ -202,6 +202,7 @@ def test_handle_tools_list_names_all_six_tools():
         "list_droids",
         "inspect_state",
         "generate_with_memory",
+        "research_topic",
     ]
     for tool in tools:
         assert "inputSchema" in tool

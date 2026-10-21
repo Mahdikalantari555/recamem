@@ -158,6 +158,8 @@ def _args(**kwargs):
         (["eval", "--name", "demo"], "eval"),
         (["download-model", "org/model", "model.gguf"], "download-model"),
         (["generate", "what is radar?"], "generate"),
+        (["bench", "--tokens", "8"], "bench"),
+        (["research", "what is radar"], "research"),
     ],
 )
 def test_main_dispatches_each_subcommand(monkeypatch, argv, expected_command):
@@ -171,7 +173,7 @@ def test_main_dispatches_each_subcommand(monkeypatch, argv, expected_command):
         return handler
 
     for name in ("cmd_chat", "cmd_teach", "cmd_decide", "cmd_serve", "cmd_package",
-                 "cmd_eval", "cmd_download_model", "cmd_generate"):
+                 "cmd_eval", "cmd_download_model", "cmd_generate", "cmd_bench", "cmd_research"):
         monkeypatch.setattr(cli, name, recorder(name.replace("cmd_", "").replace("_", "-")))
 
     monkeypatch.setattr(sys, "argv", ["tmt-droid", *argv])
@@ -476,3 +478,176 @@ def test_eval_self_recall_reports_key_value_metrics(fake_manager, tmp_path, caps
     assert out["top_k"] == "2"
     for metric in ("precision_at_k", "recall_at_k", "mrr"):
         assert 0.0 <= float(out[metric]) <= 1.0
+
+
+# --------------------------------------------------------------------------- #
+# bench (edge-performance-and-grammar-evals)
+# --------------------------------------------------------------------------- #
+def _bench_checkpoint(tmp_path, dim=8, layers=1):
+    from src.model.rtu import Model
+
+    torch.manual_seed(0)
+    model = Model(dim=dim, layers=layers, spread=4, vocab_size=256)
+    path = tmp_path / "rtu.safetensors"
+    model.save(str(path))
+    return path
+
+
+def _bench_args(tmp_path, **overrides):
+    defaults = dict(
+        profile=None,
+        checkpoint=None,
+        corpus=None,
+        tokens=16,
+        probes=None,
+        report=str(tmp_path / "report.json"),
+        runs=2,
+        dim=8,
+        layers=1,
+        vocab=256,
+        seed=0,
+        held_out_fraction=0.5,
+    )
+    defaults.update(overrides)
+    return SimpleNamespace(**defaults)
+
+
+def _parse_key_values(output):
+    parsed = {}
+    for line in output.splitlines():
+        if "=" in line and not line.startswith("#"):
+            key, value = line.split("=", 1)
+            parsed[key] = value
+    return parsed
+
+
+def test_bench_measures_tokens_params_and_rss(tmp_path, capsys):
+    checkpoint = _bench_checkpoint(tmp_path)
+    corpus = tmp_path / "corpus.txt"
+    corpus.write_text("alpha beta gamma delta " * 40, encoding="utf-8")
+    report_path = tmp_path / "bench-report.json"
+
+    exit_code = cli.main([
+        "bench", "--checkpoint", str(checkpoint), "--dim", "8", "--layers", "1",
+        "--tokens", "16", "--runs", "2", "--corpus", str(corpus),
+        "--report", str(report_path),
+    ])
+    assert exit_code == 0
+    out = capsys.readouterr().out
+    parsed = _parse_key_values(out)
+    assert "tokens_per_second=" in out
+    assert float(parsed["tokens_per_second"]) > 0
+    assert int(parsed["params"]) > 0
+    assert float(parsed["rss_mb"]) > 0
+    assert parsed["report"] == str(report_path)
+
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    for field in ("commit", "command", "dependencies", "config", "hardware",
+                  "measurements", "outcome"):
+        assert field in report
+    assert report["config"]["seed"] == 0
+
+
+def test_bench_without_a_checkpoint_prints_a_skip_and_no_value(tmp_path, capsys):
+    exit_code = cli.main([
+        "bench", "--dim", "8", "--layers", "1", "--tokens", "16",
+        "--report", str(tmp_path / "report.json"),
+    ])
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert "tokens_per_second=" not in out
+    assert "tokens_per_second_skipped=" in out
+    assert "no checkpoint supplied" in out
+    report = json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))
+    throughput = report["measurements"]["throughput"]
+    assert throughput["status"] == "skipped"
+    assert "value" not in throughput
+    assert "params" in report["measurements"]
+
+
+def test_bench_prints_per_phenomenon_accuracy_beside_the_aggregate(tmp_path, capsys):
+    checkpoint = _bench_checkpoint(tmp_path)
+    probe_path = tmp_path / "probes.jsonl"
+    rows = [
+        {"id": "a", "phenomenon": "subject_verb_agreement", "context": "The dog ",
+         "correct": "barks.", "incorrect": ["bark."]},
+        {"id": "b", "phenomenon": "passive_voice", "context": "The meal ",
+         "correct": "was cooked.", "incorrect": ["cooked."]},
+    ]
+    probe_path.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+
+    exit_code = cli.main([
+        "bench", "--checkpoint", str(checkpoint), "--dim", "8", "--layers", "1",
+        "--tokens", "8", "--runs", "1", "--probes", str(probe_path),
+        "--report", str(tmp_path / "report.json"),
+    ])
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert "grammar_accuracy.subject_verb_agreement=" in out
+    assert "grammar_accuracy.passive_voice=" in out
+    assert "grammar_accuracy=" in out
+
+
+# --------------------------------------------------------------------------- #
+# research (web-grounded-learning 6.1)
+# --------------------------------------------------------------------------- #
+def _install_research_manager(monkeypatch, result):
+    class ResearchDroid:
+        name = "droid-alpha"
+
+        def __init__(self):
+            self.calls = []
+
+        def research(self, topic):
+            self.calls.append(topic)
+            return dict(result, topic=topic)
+
+    droid = ResearchDroid()
+
+    class ResearchManager:
+        def __init__(self, base_dir="droids"):
+            self.base_dir = base_dir
+
+        def get_droid(self, name):
+            return droid
+
+    monkeypatch.setattr("src.model.droid_manager.DroidManager", ResearchManager)
+    return droid
+
+
+def test_research_prints_parseable_key_values(monkeypatch, capsys):
+    droid = _install_research_manager(monkeypatch, {
+        "searched": True,
+        "queries": ["what is radar"],
+        "sources": ["https://example.test/radar", "https://example.test/lidar"],
+        "facts_learned": 3,
+        "available": True,
+        "reason": None,
+    })
+    exit_code = cli.main(["research", "what is radar", "--name", "droid-alpha"])
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    parsed = _parse_key_values(out)
+    assert parsed["topic"] == "what is radar"
+    assert parsed["profile"] == "droid-alpha"
+    assert parsed["searched"] == "true"
+    assert parsed["facts_learned"] == "3"
+    assert parsed["sources"] == "https://example.test/radar,https://example.test/lidar"
+    assert droid.calls == ["what is radar"]
+
+
+def test_research_without_a_provider_exits_non_zero_and_prints_no_sources(monkeypatch, capsys):
+    _install_research_manager(monkeypatch, {
+        "searched": False,
+        "queries": [],
+        "sources": [],
+        "facts_learned": 0,
+        "available": False,
+        "reason": "no provider configured",
+    })
+    exit_code = cli.main(["research", "radar"])
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "sources=" not in captured.out
+    assert "facts_learned=" not in captured.out
+    assert "external acquisition is unavailable" in captured.err

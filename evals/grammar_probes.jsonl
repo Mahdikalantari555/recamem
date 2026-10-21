@@ -1,0 +1,32 @@
+{"id": "sva-01", "phenomenon": "subject_verb_agreement", "context": "The dog ", "correct": "barks loudly.", "incorrect": ["bark loudly.", "barking loudly."]}
+{"id": "sva-02", "phenomenon": "subject_verb_agreement", "context": "The cats ", "correct": "sleep on the mat.", "incorrect": ["sleeps on the mat.", "sleeping on the mat."]}
+{"id": "sva-03", "phenomenon": "subject_verb_agreement", "context": "She ", "correct": "writes every morning.", "incorrect": ["write every morning.", "writing every morning."]}
+{"id": "sva-04", "phenomenon": "subject_verb_agreement", "context": "The students ", "correct": "study for the exam.", "incorrect": ["studies for the exam.", "studying for the exam."]}
+{"id": "sva-05", "phenomenon": "subject_verb_agreement", "context": "The engine ", "correct": "runs smoothly.", "incorrect": ["run smoothly.", "running smoothly."]}
+{"id": "sva-06", "phenomenon": "subject_verb_agreement", "context": "The birds ", "correct": "sing at dawn.", "incorrect": ["sings at dawn.", "singing at dawn."]}
+{"id": "sva-07", "phenomenon": "subject_verb_agreement", "context": "He ", "correct": "fixes the radio.", "incorrect": ["fix the radio.", "fixing the radio."]}
+{"id": "sva-08", "phenomenon": "subject_verb_agreement", "context": "The water ", "correct": "flows downhill.", "incorrect": ["flow downhill.", "flowing downhill."]}
+{"id": "act-01", "phenomenon": "active_voice", "context": "The chef ", "correct": "cooked the meal.", "incorrect": ["was cooked the meal.", "cooking the meal."]}
+{"id": "act-02", "phenomenon": "active_voice", "context": "The engineer ", "correct": "designed the bridge.", "incorrect": ["was designed the bridge.", "designing the bridge."]}
+{"id": "act-03", "phenomenon": "active_voice", "context": "The storm ", "correct": "destroyed the shed.", "incorrect": ["was destroyed the shed.", "destroying the shed."]}
+{"id": "act-04", "phenomenon": "active_voice", "context": "The teacher ", "correct": "explained the rule.", "incorrect": ["was explained the rule.", "explaining the rule."]}
+{"id": "act-05", "phenomenon": "active_voice", "context": "The company ", "correct": "launched the satellite.", "incorrect": ["was launched the satellite.", "launching the satellite."]}
+{"id": "act-06", "phenomenon": "active_voice", "context": "The farmer ", "correct": "planted the seeds.", "incorrect": ["was planted the seeds.", "planting the seeds."]}
+{"id": "act-07", "phenomenon": "active_voice", "context": "The nurse ", "correct": "bandaged the wound.", "incorrect": ["was bandaged the wound.", "bandaging the wound."]}
+{"id": "act-08", "phenomenon": "active_voice", "context": "The author ", "correct": "wrote the novel.", "incorrect": ["was written the novel.", "writing the novel."]}
+{"id": "pas-01", "phenomenon": "passive_voice", "context": "The bridge ", "correct": "was designed by the engineer.", "incorrect": ["designed the engineer.", "was designing the engineer."]}
+{"id": "pas-02", "phenomenon": "passive_voice", "context": "The meal ", "correct": "was cooked by the chef.", "incorrect": ["cooked the chef.", "was cooking the chef."]}
+{"id": "pas-03", "phenomenon": "passive_voice", "context": "The shed ", "correct": "was destroyed by the storm.", "incorrect": ["destroyed the storm.", "was destroying the storm."]}
+{"id": "pas-04", "phenomenon": "passive_voice", "context": "The rule ", "correct": "was explained by the teacher.", "incorrect": ["explained the teacher.", "was explaining the teacher."]}
+{"id": "pas-05", "phenomenon": "passive_voice", "context": "The satellite ", "correct": "was launched by the company.", "incorrect": ["launched the company.", "was launching the company."]}
+{"id": "pas-06", "phenomenon": "passive_voice", "context": "The seeds ", "correct": "were planted by the farmer.", "incorrect": ["planted the farmer.", "were planting the farmer."]}
+{"id": "pas-07", "phenomenon": "passive_voice", "context": "The novel ", "correct": "was written by the author.", "incorrect": ["wrote the author.", "was writing the author."]}
+{"id": "pas-08", "phenomenon": "passive_voice", "context": "The wound ", "correct": "was bandaged by the nurse.", "incorrect": ["bandaged the nurse.", "was bandaging the nurse."]}
+{"id": "que-01", "phenomenon": "question_formation", "context": "The cat is sleeping. ", "correct": "Is the cat sleeping?", "incorrect": ["The cat is sleeping?", "Is sleeping the cat?"]}
+{"id": "que-02", "phenomenon": "question_formation", "context": "She can swim. ", "correct": "Can she swim?", "incorrect": ["She can swim?", "Can swim she?"]}
+{"id": "que-03", "phenomenon": "question_formation", "context": "They have finished. ", "correct": "Have they finished?", "incorrect": ["They have finished?", "Have finished they?"]}
+{"id": "que-04", "phenomenon": "question_formation", "context": "He will travel. ", "correct": "Will he travel?", "incorrect": ["He will travel?", "Will travel he?"]}
+{"id": "que-05", "phenomenon": "question_formation", "context": "The train has left. ", "correct": "Has the train left?", "incorrect": ["The train has left?", "Has left the train?"]}
+{"id": "que-06", "phenomenon": "question_formation", "context": "You are ready. ", "correct": "Are you ready?", "incorrect": ["You are ready?", "Are ready you?"]}
+{"id": "que-07", "phenomenon": "question_formation", "context": "The dogs were barking. ", "correct": "Were the dogs barking?", "incorrect": ["The dogs were barking?", "Were barking the dogs?"]}
+{"id": "que-08", "phenomenon": "question_formation", "context": "It could work. ", "correct": "Could it work?", "incorrect": ["It could work?", "Could work it?"]}

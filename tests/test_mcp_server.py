@@ -31,6 +31,7 @@ EXPECTED_TOOLS = {
     "list_droids",
     "inspect_state",
     "generate_with_memory",
+    "research_topic",
 }
 
 
@@ -69,6 +70,19 @@ class FakeDroid:
 
     def generate_with_memory(self, query, strategy="auto"):
         return {"text": f"slow answer for {query}", "strategy": strategy}
+
+    def research(self, topic):
+        return {
+            "topic": topic,
+            "searched": True,
+            "queries": [topic],
+            "sources": ["https://example.test/page"],
+            "facts_learned": 2,
+            "answer": "researched answer",
+            "answer_path": "researched",
+            "available": True,
+            "reason": None,
+        }
 
     def get_memory_health(self):
         return {"norm": 5.0}
@@ -125,6 +139,7 @@ def test_handle_tools_list_name_set_and_schemas(server):
     assert required["teach_fact"] == ["text"]
     assert required["decide_action"] == ["query"]
     assert required["generate_with_memory"] == ["query"]
+    assert required["research_topic"] == ["query"]
     assert required["list_droids"] == []
 
 
@@ -228,6 +243,50 @@ def test_call_generate_with_memory(server):
     assert payload == {"text": "slow answer for explain radar", "strategy": "prompt"}
 
 
+def test_call_research_topic_reports_search_outcome(server):
+    result = server.handle_tools_call(
+        {"name": "research_topic", "arguments": {"query": "radar history"}}
+    )
+    payload = json.loads(_texts(result)[0])
+    assert payload["searched"] is True
+    assert payload["facts_learned"] == 2
+    assert payload["sources"] == ["https://example.test/page"]
+    assert "isError" not in result
+
+
+def test_call_research_topic_without_a_provider_is_a_result_not_an_error(server):
+    server._manager = SimpleNamespace(
+        get_droid=lambda name: SimpleNamespace(
+            research=lambda topic: {
+                "topic": topic, "searched": False, "sources": [], "facts_learned": 0,
+                "available": False, "reason": "no search provider configured",
+            }
+        ),
+        save_droid=lambda name: None,
+    )
+    result = server.handle_tools_call(
+        {"name": "research_topic", "arguments": {"query": "radar"}}
+    )
+    payload = json.loads(_texts(result)[0])
+    assert payload["available"] is False
+    assert payload["searched"] is False
+    assert "isError" not in result
+
+
+def test_call_research_topic_failure_stays_inside_the_result(server):
+    def boom(name):
+        raise RuntimeError("provider exploded")
+
+    server._manager = SimpleNamespace(get_droid=boom, save_droid=lambda name: None)
+    result = server.handle_tools_call(
+        {"name": "research_topic", "arguments": {"query": "radar"}}
+    )
+    payload = json.loads(_texts(result)[0])
+    assert payload["available"] is False
+    assert "provider exploded" in payload["error"]
+    assert "isError" not in result
+
+
 def test_call_generate_with_memory_falls_back_to_chat(server):
     server._manager = SimpleNamespace(
         get_droid=lambda name: SimpleNamespace(chat=lambda q: f"fallback {q}"),
@@ -259,7 +318,8 @@ def test_call_wraps_tool_exceptions(server):
 def test_tools_report_missing_manager(monkeypatch, tmp_path):
     srv = MCPServer(base_dir=str(tmp_path))
     monkeypatch.setattr(srv, "_get_manager", lambda: None)
-    for tool in ("recall_memory", "teach_fact", "list_droids", "inspect_state", "generate_with_memory"):
+    for tool in ("recall_memory", "teach_fact", "list_droids", "inspect_state",
+                 "generate_with_memory", "research_topic"):
         result = srv.handle_tools_call({"name": tool, "arguments": {}})
         assert _texts(result)[0] == "DroidManager not available"
 
