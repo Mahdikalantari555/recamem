@@ -65,7 +65,16 @@ UPDATE_FIXTURE_MANIFEST=1 PYTHONPATH=. pytest tests/test_migration_fixtures.py
 
 ## CI
 
-`.github/workflows/offline-contracts.yml` runs, on every push and pull request:
-the offline suite, the evidence-ledger schema/coverage guard and the OpenSpec
-structure validator. Model-dependent tiers are not part of that job because no
-weights exist in CI.
+`.github/workflows/offline-contracts.yml` runs, on every push and pull request,
+in two configurations (core-only and core + optional extras):
+
+1. the offline suite;
+2. the evidence-ledger schema/coverage guard and the "release gate must still
+   report unresolved work" check;
+3. the OpenSpec structure validator.
+
+The gate is the documented offline configuration: `streamlit`/`pandas` are
+console-only and `hnswlib` is excluded because a native approximate index
+changes candidate ranking. An extra *informational* step builds `hnswlib` when
+the runner can and re-runs the HNSW/ranking subset; it does not gate the build.
+Model-dependent tiers are not part of the job because no weights exist in CI.
