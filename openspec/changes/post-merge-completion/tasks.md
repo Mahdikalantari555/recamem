@@ -18,8 +18,8 @@ Feature task references below are relative to `openspec/changes/<change>/tasks.m
 - [x] 2.2 Make snapshots clone tensors and deep-copy metadata; test that update, branch and restore cannot mutate an existing snapshot.
 - [x] 2.3 Introduce explicit scheduled-update capability negotiation; test built-in, original-signature custom and legacy adapters receive exactly one compatible update and truthful applied-rate reports.
 - [x] 2.4 Replace swallowed update failures with documented failures; test an adapter that raises before/after mutation and confirm no implicit retry or success log.
-- [ ] 2.5 Persist the registered adapter identifier instead of class-name inference; test a custom adapter whose class name differs from its registry name through create/save/load/re-save.
-- [ ] 2.6 Reject explicitly unknown adapters and invalid kwargs without default substitution; test invalid configurations and legacy manifests lacking the field, documenting the compatibility distinction.
+- [x] 2.5 Persist the registered adapter identifier instead of class-name inference; test a custom adapter whose class name differs from its registry name through create/save/load/re-save.
+- [x] 2.6 Reject explicitly unknown adapters and invalid kwargs without default substitution; test invalid configurations and legacy manifests lacking the field, documenting the compatibility distinction.
 - [ ] 2.7 Add versioned non-tensor metadata alongside safetensors for capacity, eviction count, key registry, schedule and constructor config; compare next-update/eviction/retrieval behavior against an uninterrupted reference after restart.
 - [ ] 2.8 Stage profile loads and validate all declared state before activation; test missing/corrupt artifacts, incompatible shapes, interrupted saves and unchanged prior active state after failure.
 - [ ] 2.9 Implement reversible metadata migration and document rollback; verify old associative/legacy checkpoints and fused profiles still load and no profile artifacts are shared.

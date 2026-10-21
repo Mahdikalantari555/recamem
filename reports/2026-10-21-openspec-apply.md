@@ -13,14 +13,14 @@ This run implements the pending tasks of four active changes:
 
 | Area | Code | Tests |
 | --- | --- | --- |
-| Delta adapter, sparse coding, registry | `src/model/delta_memory.py`, `src/model/plastic_adapter.py` | `tests/test_delta_memory.py` (36) |
+| Delta adapter, sparse coding, registry | `src/model/delta_memory.py`, `src/model/plastic_adapter.py` | `tests/test_delta_memory.py` (37) |
 | 20-task benchmark + EWC reference | `src/model/continual_bench.py`, `scripts/bench_continual_learning.py` | `tests/test_continual_bench.py` (11) |
 | Sleep, MAS, decreasing backprop, worker | `src/model/sleep_consolidation.py`, `src/model/droid.py`, `src/model/droid_manager.py`, `src/cli.py` | `tests/test_sleep_consolidation.py` (37) |
 | Dense index, reranking, Matryoshka | `src/model/hybrid_retrieval.py`, `src/model/knowledge_store.py` | `tests/test_hybrid_retrieval.py` (18) |
 | Edge catalog + recommendation | `src/model/edge_slm.py` | `tests/test_edge_slm.py` (14) |
 | Test-time compute | `src/model/test_time_compute.py` | `tests/test_test_time_compute.py` (14) |
 
-Full suite: **621 passed, 1 skipped**.
+Full suite: **622 passed, 1 skipped**.
 
 ## Measurements (this sandbox, mock embeddings)
 

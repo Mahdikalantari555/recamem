@@ -417,3 +417,39 @@ def test_teach_and_recall_route_through_delta_adapter(tmp_path):
     hits = droid.recall("What is the capital of Germany?")
     assert hits
     assert any("Berlin" in hit["text"] for hit in hits)
+
+
+def test_custom_adapter_registry_name_survives_create_save_load_resave(tmp_path):
+    """post-merge 2.5: persist the registry id, never the class name."""
+    import json
+    from src.model import plastic_adapter as registry_module
+    from src.model.rtu import PlasticAssociativeRTU
+
+    class InheritedAssociation(PlasticAssociativeRTU):
+        """Class name differs from the registry name on purpose."""
+
+    registry_name = "renamed-association"
+    registry_module.register_adapter(registry_name, InheritedAssociation)
+    try:
+        droid = DroidEngine(name="custom", plastic_adapter=registry_name,
+                            db_path=str(tmp_path / "k.db"))
+        assert droid.adapter_name == registry_name
+        droid.teach("The renamed adapter stores this fact.")
+
+        first = tmp_path / "first"
+        droid.save_profile(str(first))
+        manifest = json.loads((first / "config.json").read_text())
+        assert manifest["plastic_adapter"] == registry_name
+
+        loaded = DroidEngine(name="custom")
+        loaded.load_profile(str(first))
+        assert loaded.adapter_name == registry_name
+        assert type(loaded.memory).__name__ == "InheritedAssociation"
+
+        # Re-saving keeps the registry identity, not the inferred class name.
+        second = tmp_path / "second"
+        loaded.save_profile(str(second))
+        resaved = json.loads((second / "config.json").read_text())
+        assert resaved["plastic_adapter"] == registry_name
+    finally:
+        registry_module._ADAPTER_REGISTRY.pop(registry_name, None)
