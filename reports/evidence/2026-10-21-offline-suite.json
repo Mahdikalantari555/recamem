@@ -1,5 +1,5 @@
 {
-  "commit": "f31b00cec57e481306b5b37a72f3362b2cf8e614",
+  "commit": "d9fc1fdfda08f2f341b4f80601e5c8bd1e84da64",
   "tier": "offline",
   "command": "PYTHONPATH=. python -m pytest tests -q",
   "environment": {
@@ -17,7 +17,7 @@
   },
   "outcome": "passed",
   "details": {
-    "passed": 621,
+    "passed": 622,
     "skipped": 1,
     "failed": 0,
     "note": "one skip is the pre-existing optional-dependency skip"

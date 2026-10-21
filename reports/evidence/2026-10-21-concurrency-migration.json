@@ -1,5 +1,5 @@
 {
-  "commit": "f31b00cec57e481306b5b37a72f3362b2cf8e614",
+  "commit": "d9fc1fdfda08f2f341b4f80601e5c8bd1e84da64",
   "tier": "concurrency-migration",
   "command": "PYTHONPATH=. python -m pytest tests/test_sleep_consolidation.py tests/test_delta_memory.py tests/test_droid_engine.py tests/test_cli.py -q",
   "environment": {
@@ -21,13 +21,14 @@
   },
   "outcome": "passed",
   "details": {
-    "passed": 115,
+    "passed": 116,
     "failed": 0,
     "covered_tests": [
       "tests/test_sleep_consolidation.py::test_single_worker_and_bounded_stop",
       "tests/test_sleep_consolidation.py::test_worker_restarts_and_shutdown_stops_all",
       "tests/test_sleep_consolidation.py::test_delete_droid_cancels_worker",
       "tests/test_delta_memory.py::test_profile_round_trip_keeps_selected_adapter",
+      "tests/test_delta_memory.py::test_custom_adapter_registry_name_survives_create_save_load_resave",
       "tests/test_delta_memory.py::test_legacy_profile_still_loads_associative_adapter",
       "tests/test_delta_memory.py::test_incompatible_profile_dimension_fails_without_corruption",
       "tests/test_sleep_consolidation.py::test_sleep_reports_survive_profile_round_trip"
