@@ -116,3 +116,101 @@ def test_clear_all(store):
     assert store.active_count() == 0
     assert store.recall(_vec(1), top_k=3, query_text="fact") == []
     assert store.get_audit_trail() == []
+
+
+# --------------------------------------------------------------------------- #
+# Provenance (adaptation/web-grounded-learning)
+# --------------------------------------------------------------------------- #
+import sqlite3
+
+import pytest
+import torch
+
+from src.model.knowledge_store import ORIGINS, KnowledgeStore, validate_origin
+
+
+def _vec(seed: int = 0, dim: int = 8):
+    generator = torch.Generator().manual_seed(seed)
+    return torch.randn(dim, generator=generator)
+
+
+def test_an_existing_database_gains_the_provenance_columns_and_keeps_its_rows(tmp_path):
+    db_path = tmp_path / "legacy.db"
+    conn = sqlite3.connect(db_path)
+    conn.executescript(
+        """
+        CREATE TABLE facts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            text TEXT NOT NULL,
+            source TEXT,
+            timestamp REAL,
+            step INTEGER,
+            novelty REAL,
+            superseded INTEGER DEFAULT 0,
+            valid_until REAL,
+            superseded_by INTEGER
+        );
+        INSERT INTO facts(text, source, timestamp, step, novelty)
+        VALUES ('Legacy row about radar.', 'user_text', 1.0, 0, 0.5);
+        """
+    )
+    conn.commit()
+    conn.close()
+
+    store = KnowledgeStore(str(db_path), dim=8)
+    columns = {row[1] for row in store.conn.execute("PRAGMA table_info(facts)")}
+    assert {"origin", "source_url", "source_query"} <= columns
+    fact = store.get_fact(1)
+    assert fact["text"] == "Legacy row about radar."
+    assert fact["origin"] == "user_text"
+    assert fact["source_url"] is None
+    store.close()
+
+
+def test_origin_vocabulary_is_closed_and_an_unknown_origin_is_rejected():
+    assert ORIGINS == ("user_text", "chat", "continuous_stream", "web")
+    with pytest.raises(ValueError) as excinfo:
+        validate_origin("scraped")
+    assert "scraped" in str(excinfo.value)
+
+    store = KnowledgeStore(":memory:", dim=8)
+    with pytest.raises(ValueError) as excinfo:
+        store.insert_fact("x", "user_text", 1.0, 0, 0.5, _vec(), origin="scraped")
+    assert "scraped" in str(excinfo.value)
+    store.close()
+
+
+def test_a_web_fact_reports_url_query_and_retrieval_timestamp():
+    store = KnowledgeStore(":memory:", dim=8)
+    fact_id = store.insert_fact(
+        "Radar uses radio waves.", "web", 1234.5, 3, 0.8, _vec(1),
+        origin="web", source_url="https://example.test/radar",
+        source_query="what is radar",
+    )
+    fact = store.get_fact(fact_id)
+    assert fact["origin"] == "web"
+    assert fact["source_url"] == "https://example.test/radar"
+    assert fact["source_query"] == "what is radar"
+    assert fact["retrieved_at"] == 1234.5
+
+    taught_id = store.insert_fact("Lidar uses lasers.", "user_text", 2.0, 1, 0.5, _vec(2))
+    taught = store.get_fact(taught_id)
+    assert taught["origin"] == "user_text"
+    assert taught["source_url"] is None
+    store.close()
+
+
+def test_recall_returns_the_origin_and_url_of_each_hit():
+    store = KnowledgeStore(":memory:", dim=8)
+    store.insert_fact(
+        "Radar uses radio waves.", "web", 10.0, 0, 0.9, _vec(3),
+        origin="web", source_url="https://example.test/radar", source_query="radar",
+    )
+    store.insert_fact("Lidar uses lasers.", "user_text", 11.0, 1, 0.5, _vec(4))
+    hits = store.recall(_vec(3), top_k=5, query_text="radar radio waves")
+    by_text = {hit["text"]: hit for hit in hits}
+    assert by_text["Radar uses radio waves."]["origin"] == "web"
+    assert by_text["Radar uses radio waves."]["source_url"] == "https://example.test/radar"
+    assert by_text["Lidar uses lasers."]["origin"] == "user_text"
+    assert by_text["Lidar uses lasers."]["source_url"] is None
+    store.close()

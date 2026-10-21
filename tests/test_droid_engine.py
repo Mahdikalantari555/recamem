@@ -130,3 +130,100 @@ def result_superseded(engine, old_text: str) -> bool:
     trail = engine.knowledge.get_audit_trail()
     old = [t for t in trail if old_text in t["text"]]
     return bool(old) and old[0]["superseded"] is True
+
+
+# --------------------------------------------------------------------------- #
+# Web-grounded learning (adaptation/web-grounded-learning)
+# --------------------------------------------------------------------------- #
+from src.model.web_teacher import FetchResult, SearchResult
+
+
+class _FakeProvider:
+    name = "fake"
+
+    def __init__(self, results=None, error=None):
+        self.results = results or [
+            SearchResult("Radar", "https://example.test/radar", "radio detection"),
+        ]
+        self.error = error
+        self.calls = 0
+
+    def search(self, query, limit=5):
+        self.calls += 1
+        if self.error:
+            raise self.error
+        return self.results[:limit]
+
+
+def _research_engine(text="Radar is a detection system that uses radio waves. Lidar measures distance with laser light."):
+    engine = DroidEngine(name="research-droid")
+    engine.configure_research({"enabled": True, "provider": "duckduckgo"})
+    engine.search_learner.provider = _FakeProvider()
+    engine.search_learner.fetcher = lambda url, **kwargs: FetchResult(
+        ok=True, url=url, text=text, status=200, bytes_read=len(text)
+    )
+    engine.search_learner.teacher = None
+    return engine
+
+
+def test_research_returns_the_documented_contract_and_sets_the_path():
+    engine = _research_engine()
+    result = engine.research("radar")
+    assert set(result) >= {
+        "topic", "searched", "queries", "sources", "facts_learned", "answer",
+        "answer_path",
+    }
+    assert result["searched"] is True
+    assert result["facts_learned"] >= 1
+    assert result["sources"] == ["https://example.test/radar"]
+    assert result["answer_path"] == "researched"
+    assert engine.answer_path == "researched"
+    assert engine.legacy_answer_path == "extractive"
+    assert engine.last_research_sources == ["https://example.test/radar"]
+
+
+def test_web_facts_are_recallable_with_their_origin():
+    engine = _research_engine()
+    engine.research("radar")
+    hits = engine.recall("radar radio waves", threshold=0.0)
+    assert hits
+    web_hits = [hit for hit in hits if hit.get("origin") == "web"]
+    assert web_hits
+    assert web_hits[0]["source_url"] == "https://example.test/radar"
+    assert web_hits[0]["source_query"] == "radar"
+
+
+def test_a_profile_without_a_provider_reports_unavailable_without_raising():
+    engine = DroidEngine(name="no-provider")
+    result = engine.research("radar")
+    assert result["available"] is False
+    assert result["searched"] is False
+    assert result["facts_learned"] == 0
+    assert engine.research_config.get("enabled") is False
+
+
+def test_a_failed_research_returns_the_no_information_fallback():
+    engine = DroidEngine(name="research-droid")
+    engine.configure_research({"enabled": True, "provider": "duckduckgo"})
+    engine.search_learner.provider = _FakeProvider(error=RuntimeError("offline"))
+    reply = engine.chat("What is the population of the moon?")
+    assert "do not have information" in reply
+    assert engine.answer_path == "recall"
+
+
+def test_chat_researches_an_unanswerable_question_and_answers_from_facts():
+    engine = _research_engine()
+    reply = engine.chat("What is radar detection?")
+    assert "radio waves" in reply
+    assert engine.answer_path == "researched"
+
+
+def test_chat_on_a_profile_with_research_disabled_performs_no_network_call():
+    engine = DroidEngine(name="disabled-droid")
+    provider = _FakeProvider()
+    engine.search_learner = None
+    engine.research_config = {}
+    reply = engine.chat("What is the population of the moon?")
+    assert "do not have information" in reply
+    assert provider.calls == 0
+    assert engine.answer_path == "recall"

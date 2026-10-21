@@ -30,6 +30,7 @@ def test_capacity_eviction_and_policy_survive_restart(tmp_path):
     engine = _engine(tmp_path, K_max=3)
     for i in range(5):
         engine.teach(f"Fact number {i} about the site")
+    engine.retrieval_policy.epsilon = 0.0
     engine.retrieval_policy.update("specific_fact", "episodic_only", reward=1.0)
     engine.retrieval_policy.update("specific_fact", "episodic_only", reward=1.0)
     evictions = int(getattr(engine.memory, "eviction_count", 0))
@@ -48,7 +49,11 @@ def test_capacity_eviction_and_policy_survive_restart(tmp_path):
     assert int(getattr(reloaded.memory, "eviction_count", 0)) == evictions
     assert len(getattr(reloaded.memory, "_key_registry", [])) == registry
     assert reloaded.lr_schedule.state_dict() == schedule
+    # Exploration is separate (tested in test_adaptive_retrieval); pin it off so
+    # this asserts the persisted preference, not a seeded coin flip.
+    reloaded.retrieval_policy.epsilon = 0.0
     assert reloaded.retrieval_policy.select_strategy("specific_fact") == "episodic_only"
+    assert reloaded.retrieval_policy.rewards["specific_fact"]["episodic_only"]
 
     # Behavioural parity: the next update behaves like the uninterrupted engine.
     reference = engine

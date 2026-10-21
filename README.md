@@ -4,6 +4,8 @@
 
 This repository provides a 1:1, contract-verified **PyTorch** implementation of Test-Model-Thing (TMT) alongside the **Droid Lifelong Engine** — a lightweight continual learning system that combines a frozen ONNX semantic anchor with plastic Recurrent Trace Units (RTUs) for conversational domain teaching while retaining prior domain facts in sequential-teaching tests.
 
+It is not a finished work.
+
 ---
 
 ## Key Features
@@ -56,6 +58,9 @@ python main.py <checkpoint.safetensors> chat
 
 # Inference only (frozen weights)
 python main.py <checkpoint.safetensors> chat --frozen
+
+# only use crossentropy loss
+python main.py <checkpoint.safetensors> chat --ce-only
 
 # Benchmark with CoLA
 python benchmark.py <checkpoint.safetensors> <epochs> <slice>
@@ -216,6 +221,78 @@ path is opt-in per query.
                |  no autograd, no optimizer step           |
                +-------------------------------------------+
 ```
+
+---
+
+## Benchmarks and grammar probes
+
+One command produces the numbers this project argues about — throughput,
+parameter count, resident memory, held-out perplexity, the chunked-path speed
+factor, and grammar-probe accuracy — in one JSON report with its provenance:
+
+```bash
+PYTHONPATH=. python scripts/bench_edge.py \
+    --checkpoint droids/droid-rs/rtu.safetensors \
+    --corpus README.md VISION.md --tokens 2000 \
+    --probes evals/grammar_probes.jsonl \
+    --report reports/bench-edge.json
+```
+
+```bash
+# The same metrics through the headless CLI, as key=value lines
+PYTHONPATH=. python -m src.cli bench \
+    --checkpoint droids/droid-rs/rtu.safetensors \
+    --corpus README.md,VISION.md --tokens 2000 \
+    --probes evals/grammar_probes.jsonl
+```
+
+The probe suite (`evals/grammar_probes.jsonl`) is a **project-authored regression
+suite**, not an independent benchmark: it scores the correct continuation against
+distractors and reports accuracy per phenomenon (`subject_verb_agreement`,
+`active_voice`, `passive_voice`, `question_formation`). It is small, hermetic, and
+deterministic, and it is a regression signal rather than a capability certificate.
+
+A measurement that could not be taken is printed as `<metric>_skipped=<reason>`
+and never as a value. **Any quoted figure must name the machine and the commit it
+came from** — both are in the report. See [`docs/benchmarks.md`](docs/benchmarks.md)
+for the report schema, the thresholds, and the skip rules.
+
+---
+
+## Researching a topic (web-grounded learning)
+
+A Droid can look things up instead of only learning what it is handed. Research
+is opt-in through the profile manifest:
+
+```json
+{
+  "research": {
+    "enabled": true,
+    "provider": "duckduckgo",
+    "confidence_threshold": 0.55,
+    "max_pages_per_search": 3,
+    "max_queries_per_minute": 3
+  }
+}
+```
+
+```bash
+# Search, fetch, distill and teach a topic; then report what was learned
+PYTHONPATH=. python -m src.cli research "what is a lidar bathymetry system" --name droid-alpha
+# -> topic=... profile=... searched=true facts_learned=... sources=https://...
+
+# The same loop through MCP: research_topic(query, droid_name)
+# A guarded live smoke check (never runs in the test suite):
+TMT_ALLOW_NETWORK=1 PYTHONPATH=. python scripts/smoke_web_research.py "lidar bathymetry"
+```
+
+Every fact learned this way records its source URL, the query that found it, and
+the retrieval timestamp; recall reports the origin (`user_text`, `chat`,
+`continuous_stream`, or `web`), and an answer built from web-sourced facts is
+reported as `researched` with its sources rather than as a memory answer. With
+no provider configured, the system reports that external acquisition is
+unavailable and never fails. See [`docs/research.md`](docs/research.md) for the
+configuration keys, the bounds, and the safety limits.
 
 ---
 

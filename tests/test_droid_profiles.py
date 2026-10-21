@@ -48,3 +48,47 @@ def test_droid_delete(temp_manager):
     deleted = temp_manager.delete_droid("temp-bot")
     assert deleted is True
     assert "temp-bot" not in temp_manager.list_droids()
+
+
+# --------------------------------------------------------------------------- #
+# Research configuration in the manifest (web-grounded-learning 5.4)
+# --------------------------------------------------------------------------- #
+import json
+
+
+def test_a_profile_without_a_research_block_loads_disabled(temp_manager):
+    droid = temp_manager.create_droid("plain-profile")
+    temp_manager.save_droid("plain-profile")
+    manifest = json.loads((temp_manager.base_dir and __import__("pathlib").Path(
+        temp_manager.base_dir) / "plain-profile" / "config.json").read_text())
+    assert "research" not in manifest
+    assert droid.research_config["enabled"] is False
+    assert droid.search_learner is None
+
+    loaded = DroidManager(base_dir=temp_manager.base_dir).get_droid("plain-profile")
+    assert loaded.research_enabled is False
+    assert loaded.research("radar")["available"] is False
+
+
+def test_a_profile_with_a_research_block_loads_its_provider_and_bounds(temp_manager):
+    droid = temp_manager.create_droid("research-profile")
+    droid.configure_research({
+        "enabled": True,
+        "provider": "duckduckgo",
+        "max_pages_per_search": 2,
+        "max_queries_per_session": 4,
+        "suppression_window_seconds": 60,
+    })
+    temp_manager.save_droid("research-profile")
+
+    manifest = json.loads((__import__("pathlib").Path(temp_manager.base_dir)
+                           / "research-profile" / "config.json").read_text())
+    assert manifest["research"]["provider"] == "duckduckgo"
+    assert manifest["research"]["max_pages_per_search"] == 2
+
+    loaded = DroidManager(base_dir=temp_manager.base_dir).get_droid("research-profile")
+    assert loaded.research_enabled is True
+    assert loaded.research_config["max_queries_per_session"] == 4
+    assert loaded.research_config["suppression_window_seconds"] == 60.0
+    assert loaded.search_learner is not None
+    assert loaded.search_learner.available is True

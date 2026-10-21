@@ -62,10 +62,11 @@
 ## Upstream / Fork Policy
 - `origin` = `Mahdikalantari555/test-model-thing-torch` (this fork).
 - `upstream` = `jrz97619761/test-model-thing` — the parent fork. Note the README's clone URL is wrong (has a spurious `-torch`).
-- `main` is **19 commits ahead** of `upstream/main`, which is **5 ahead** of `main`; they diverged at `0a47782`. A straight merge conflicts on `README.md` and `main.py`.
+- `main` is **55 commits ahead** of `upstream/main`; `upstream/main` is **5 commits** past the divergence point `0a47782` (as of upstream tip `9867867`). A straight merge conflicts on `README.md` and `main.py`.
 - Pull from upstream **selectively**, never as a blanket merge. Files in this fork are not the same as upstream's (`main.py` is the PyTorch port; the MLX original lives in `main_mlx.py`).
 - Known-good procedure: cherry-pick upstream commits, rewrite paths (`main.py` → `main_mlx.py`), then verify with `git diff --no-index <(git show upstream/main:main.py) main_mlx.py` so the only diff is an intended divergence.
 - Do **not** adopt upstream's removal of `state.i`/`decaytrace.i`/`embedtrace.i` from `save`/`load` — `tests/test_checkpoint.py` and `docs/rtu.md` depend on that persistence.
+- Upstream commits after `0a47782` and their status here: `2c846b7` (drop trace persistence) **rejected** on purpose; `8eb4f94` (`--ce-only`) ported in `780accb`; `5aa3fef` (`VISION.md`) ported in `94c42cf`; `348203a`/`9867867` (README prose) ported in the fork's own README wording.
 
 ## Critical Implementation Quirks & Gotchas
 - **PyTorch In-Place Parameter Edits**: When updating `nn.Parameter` values (e.g. `decay`) from disk or buffers, wrap in `with torch.no_grad():` or write to `.data` to prevent autograd leaf Variable runtime errors.

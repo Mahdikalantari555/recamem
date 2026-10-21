@@ -11,3 +11,5 @@
 # Runtime droid profiles (generated state)
 /droids/
 /exports/
+.memdb/
+/reports/

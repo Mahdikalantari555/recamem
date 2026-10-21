@@ -358,10 +358,14 @@ RECENCY_HALF_LIFE_SECONDS = 30.0 * 24.0 * 60.0 * 60.0
 ANSWER_PATH_RECALL = "recall"
 ANSWER_PATH_FUSED = "fused"
 ANSWER_PATH_LLM = "llm"
+ANSWER_PATH_RESEARCHED = "researched"
 _LEGACY_ANSWER_PATH = {
     ANSWER_PATH_RECALL: "extractive",
     ANSWER_PATH_FUSED: "generative",
     ANSWER_PATH_LLM: "generative",
+    # A researched answer is extractive in the legacy vocabulary: it is built
+    # from facts, not free generation.
+    ANSWER_PATH_RESEARCHED: "extractive",
 }
 
 _STOP_WORDS = {
@@ -571,6 +575,16 @@ class DroidEngine(nn.Module):
         self._last_retrieval_strategy = "hybrid_rrf"
         self._retrieval_history: List[Dict] = []
         self._last_answer_path = ANSWER_PATH_RECALL
+        # External acquisition (adaptation/web-grounded-learning). Disabled
+        # until a profile manifest configures it, so an unconfigured profile
+        # behaves exactly as it did before the capability existed.
+        self.research_config: Dict[str, Any] = {}
+        self.search_learner = None
+        self.last_research_result: Optional[Dict[str, Any]] = None
+        self.last_research_sources: List[str] = []
+        # Normalise the defaults so an unconfigured engine reports "disabled"
+        # rather than "unknown", and selects no provider.
+        self.configure_research({})
         # Manifest fields (change 1.1-1.2). A fresh engine infers its engine
         # from the attached backend; load_profile() overwrites these.
         if isinstance(self.gguf_backend, ByteRtuBackend):
@@ -647,14 +661,27 @@ class DroidEngine(nn.Module):
         return resolved
 
     def teach(self, text: str, source: str = "user_text",
-              surprise_threshold: Optional[float] = None) -> Dict[str, Any]:
-        """Teach under the shared engine lock (serialised with sleep/recall)."""
+              surprise_threshold: Optional[float] = None, *,
+              origin: Optional[str] = None,
+              source_url: Optional[str] = None,
+              source_query: Optional[str] = None) -> Dict[str, Any]:
+        """Teach under the shared engine lock (serialised with sleep/recall).
+
+        ``origin``/``source_url``/``source_query`` carry provenance for facts
+        acquired from an external source; ordinary teaching leaves them unset.
+        """
         with self._engine_lock:
             self.last_activity = time.time()
-            return self._teach_impl(text, source, surprise_threshold)
+            return self._teach_impl(
+                text, source, surprise_threshold,
+                origin=origin, source_url=source_url, source_query=source_query,
+            )
 
     def _teach_impl(self, text: str, source: str = "user_text",
-                    surprise_threshold: Optional[float] = None) -> Dict[str, Any]:
+                    surprise_threshold: Optional[float] = None, *,
+                    origin: Optional[str] = None,
+                    source_url: Optional[str] = None,
+                    source_query: Optional[str] = None) -> Dict[str, Any]:
         t0 = time.perf_counter()
         if surprise_threshold is None:
             surprise_threshold = self.surprise_threshold
@@ -698,7 +725,10 @@ class DroidEngine(nn.Module):
                 except:
                     pass
                 try:
-                    new_id = self.knowledge.insert_fact(prop, source, time.time(), self.step_count + i, float(surprise), e_i)
+                    new_id = self.knowledge.insert_fact(
+                        prop, source, time.time(), self.step_count + i, float(surprise), e_i,
+                        origin=origin, source_url=source_url, source_query=source_query,
+                    )
                     episodic_absorbed += 1
                     for old_id in conflicts:
                         self.knowledge.supersede(old_id, new_id)
@@ -940,6 +970,9 @@ class DroidEngine(nn.Module):
                 return f"{synthesized}"
             else:
                 self.log("No relevant facts found above threshold.")
+                researched = self._research_chat_answer(query)
+                if researched:
+                    return researched
                 self._set_answer_path(ANSWER_PATH_RECALL)
                 return NO_INFORMATION_MESSAGE
         if mode == "slow":
@@ -991,6 +1024,9 @@ class DroidEngine(nn.Module):
             self._set_answer_path(ANSWER_PATH_RECALL)
             return f"{synthesized}"
         self.log("No relevant facts found above threshold.")
+        researched = self._research_chat_answer(query)
+        if researched:
+            return researched
         self._set_answer_path(ANSWER_PATH_RECALL)
         return NO_INFORMATION_MESSAGE
 
@@ -2189,6 +2225,95 @@ class DroidEngine(nn.Module):
                 "confidence_tier": tier, "injection_info": injection_info,
                 "capabilities": caps.to_dict(), "prompt": prompt}
 
+    # ------------------------------------------------------------------
+    # External knowledge acquisition (adaptation/web-grounded-learning)
+    # ------------------------------------------------------------------
+    @property
+    def research_enabled(self) -> bool:
+        return bool(self.research_config.get("enabled"))
+
+    def configure_research(self, config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Apply a research block: enabled flag, provider, and bounds."""
+        from src.model.search_learn import SearchLearner, normalize_research_config
+
+        self.research_config = normalize_research_config(config)
+        self.search_learner = None
+        if self.research_config.get("enabled"):
+            self.search_learner = SearchLearner(self, self.research_config)
+        status = {
+            "enabled": self.research_enabled,
+            "provider": self.research_config.get("provider"),
+            "available": bool(self.search_learner and self.search_learner.available),
+        }
+        if self.search_learner is not None and not self.search_learner.available:
+            status["reason"] = self.search_learner.unavailable_reason()
+        return status
+
+    def research(self, topic: str) -> Dict[str, Any]:
+        """Acquire knowledge about ``topic`` from the configured provider.
+
+        Returns the documented contract: the topic, whether a search happened,
+        the queries issued, the sources consulted, the facts learned, the
+        answer, and the answer path. With no provider configured it returns the
+        unavailable result and raises nothing.
+        """
+        with self._engine_lock:
+            if self.search_learner is None and self.research_enabled:
+                self.configure_research(self.research_config)
+            learner = self.search_learner
+            if learner is None or not learner.available:
+                reason = (
+                    learner.unavailable_reason()
+                    if learner is not None
+                    else "external acquisition is disabled for this profile"
+                )
+                result = {
+                    "topic": topic,
+                    "query": topic,
+                    "searched": False,
+                    "queries": [],
+                    "sources": [],
+                    "facts_learned": 0,
+                    "facts": [],
+                    "results": [],
+                    "answer": None,
+                    "answer_path": self._last_answer_path,
+                    "available": False,
+                    "bounded": False,
+                    "reason": reason,
+                }
+                self.last_research_result = result
+                return result
+
+            result = learner.research(topic, force=True)
+            self.last_research_result = result
+            if result.get("facts_learned"):
+                self._set_answer_path(ANSWER_PATH_RESEARCHED)
+                self.last_research_sources = list(result.get("sources") or [])
+                result["answer_path"] = ANSWER_PATH_RESEARCHED
+            else:
+                result["answer_path"] = self._last_answer_path
+            self.log(
+                f"Research on '{topic}': searched={result['searched']} "
+                f"facts={result['facts_learned']} sources={len(result['sources'])}",
+                details={"research": {key: result[key] for key in
+                                      ("searched", "facts_learned", "sources", "reason")}},
+            )
+            return result
+
+    def _research_chat_answer(self, query: str) -> Optional[str]:
+        """Research an unanswerable question when the profile allows it.
+
+        Returns ``None`` — and makes no network call — when acquisition is
+        disabled, unavailable, bounded, or yielded nothing usable.
+        """
+        if not self.research_enabled:
+            return None
+        result = self.research(query)
+        if result.get("facts_learned"):
+            return result.get("answer")
+        return None
+
     def estimate_confidence(self, retrieval_conf: float, generation_conf: float) -> float:
         return fuse_confidence(retrieval_conf, generation_conf)
 
@@ -2378,6 +2503,14 @@ class DroidEngine(nn.Module):
             "test_time_training": self.test_time_training,
             "current_version": self.current_version,
         }
+        # A configured research block is part of the profile: the provider name,
+        # the bounds and the enabled flag round-trip. An unconfigured profile
+        # writes no block, which loads as disabled.
+        if self.research_config and (
+            self.research_config.get("enabled")
+            or self.research_config.get("provider")
+        ):
+            config["research"] = dict(self.research_config)
         # Explicit registered identity, never a class-name substring guess.
         identity = self.adapter_name or identify_adapter(self.memory)
         config["plastic_adapter"] = identity or "associative_rtu"
@@ -2650,6 +2783,17 @@ class DroidEngine(nn.Module):
         self.K_max = config.get("K_max", self.K_max)
         self.test_time_training = config.get("test_time_training", self.test_time_training)
         self.current_version = config.get("current_version", self.current_version)
+        # External acquisition is read from the manifest and defaults to
+        # disabled when the block is absent (web-grounded-learning 5.4).
+        research_block = config.get("research")
+        if research_block is None:
+            self.configure_research({})
+        elif not isinstance(research_block, dict):
+            raise InvalidProfileError(
+                f"Profile manifest {config_file} declares a non-object research block"
+            )
+        else:
+            self.configure_research(research_block)
         # Keep the pinned injection strategy: it is a profile setting, not a
         # GGUF-prefixed one, and dropping it re-enables the hidden/kv stubs.
         self.gguf_config = {k: v for k, v in config.items() if k.startswith("gguf_")}

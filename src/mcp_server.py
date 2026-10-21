@@ -124,6 +124,18 @@ class MCPServer:
                     },
                     "required": ["query"]
                 }
+            },
+            {
+                "name": "research_topic",
+                "description": "Acquire knowledge about a topic from an external web source and learn it into the named Droid",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Topic to research"},
+                        "droid_name": {"type": "string", "default": "droid-alpha"}
+                    },
+                    "required": ["query"]
+                }
             }
         ]
         return {"tools": tools}
@@ -145,6 +157,8 @@ class MCPServer:
                 return self._tool_inspect_state(arguments)
             elif name == "generate_with_memory":
                 return self._tool_generate_with_memory(arguments)
+            elif name == "research_topic":
+                return self._tool_research_topic(arguments)
             else:
                 return {
                     "content": [{"type": "text", "text": f"Unknown tool: {name}"}],
@@ -322,6 +336,31 @@ class MCPServer:
                 return {"content": [{"type": "text", "text": reply}]}
         except Exception as e:
             return {"content": [{"type": "text", "text": f"Generate failed: {e}"}], "isError": True}
+
+    def _tool_research_topic(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        query = args.get("query", "")
+        droid_name = args.get("droid_name", "droid-alpha")
+
+        mgr = self._get_manager()
+        if mgr is None:
+            return {"content": [{"type": "text", "text": "DroidManager not available"}]}
+
+        try:
+            droid = mgr.get_droid(droid_name)
+            result = droid.research(query)
+            # A profile with no provider is a result, not an error: the caller
+            # learns that external acquisition is unavailable.
+            return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
+        except Exception as e:
+            # Report the failure inside the result and keep the server alive.
+            return {
+                "content": [{"type": "text", "text": json.dumps({
+                    "topic": query,
+                    "searched": False,
+                    "available": False,
+                    "error": f"{type(e).__name__}: {e}",
+                })}]
+            }
 
     def run_stdio(self):
         """Main stdio loop - JSON-RPC 2.0 over stdin/stdout, logging to stderr."""

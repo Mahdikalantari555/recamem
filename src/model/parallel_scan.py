@@ -39,7 +39,7 @@ from typing import Optional, Tuple
 
 import torch
 
-__all__ = ["associative_scan", "sequential_scan"]
+__all__ = ["associative_scan", "sequential_scan", "reverse_decay_scan"]
 
 
 def _broadcast_decays(decays: torch.Tensor, inputs: torch.Tensor) -> torch.Tensor:
@@ -252,6 +252,32 @@ def sequential_scan(
     return torch.stack(pieces, dim=1), state
 
 
+def reverse_decay_scan(
+    decays: torch.Tensor,
+    inputs: torch.Tensor,
+    h_last: Optional[torch.Tensor] = None,
+    chunk: Optional[int] = 128,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Reverse decay-weighted suffix sums.
+
+    Evaluates ``R_t = decay ⊙ R_{t+1} + v_t`` with ``R_{L-1} = decay ⊙ h_last + v_{L-1}``
+    (equivalently ``h_last`` as the value carried past the end). This is the
+    suffix-sum matrix the chunked gradient-hook accumulation needs: for a state
+    gradient ``g_t`` at chunk position ``t``, ``R_{t+1}`` is exactly
+    ``sum_{u>t} g_u ⊙ decay**(u-t-1)``, the weight the trace-buffer contribution
+    of token ``t`` carries.
+
+    The recurrence is the same affine family as the forward scan, so it is
+    evaluated by reversing the sequence, running :func:`associative_scan`, and
+    reversing the result. It is exact at chunk boundaries for the same reason.
+    """
+    if inputs.dim() != 3:
+        raise ValueError(f"inputs must be a (B, L, D) tensor, got {inputs.dim()}-D")
+    reversed_inputs = torch.flip(inputs, dims=[1])
+    suffix, final = associative_scan(decays, reversed_inputs, h0=h_last, chunk=chunk)
+    return torch.flip(suffix, dims=[1]), final
+
+
 def _self_check(dim: int = 16, length: int = 40, chunk: int = 16, seed: int = 0) -> None:
     """Small executable check; ``python -m src.model.parallel_scan`` runs it."""
     generator = torch.Generator().manual_seed(seed)
@@ -261,6 +287,13 @@ def _self_check(dim: int = 16, length: int = 40, chunk: int = 16, seed: int = 0)
     slow, slow_final = sequential_scan(decays, inputs)
     torch.testing.assert_close(fast, slow, rtol=1e-4, atol=1e-6)
     torch.testing.assert_close(fast_final, slow_final, rtol=1e-4, atol=1e-6)
+    suffix, _ = reverse_decay_scan(decays, inputs, chunk=chunk)
+    expected = torch.zeros_like(inputs)
+    running = torch.zeros_like(inputs[:, 0])
+    for t in range(length - 1, -1, -1):
+        running = decays * running + inputs[:, t]
+        expected[:, t] = running
+    torch.testing.assert_close(suffix, expected, rtol=1e-4, atol=1e-6)
     print(f"parallel_scan self-check ok: L={length} chunk={chunk} dim={dim}")
 
 

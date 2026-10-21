@@ -4,6 +4,12 @@ The documented tool list lives in the main spec and, while the change is still
 active, in that change's delta. Reading both locations keeps the test correct
 before and after archive: the delta gains the sixth tool now, the main spec
 gains it at archive, and the union is unchanged.
+
+Scope rule: a delta joins the *enforced* contract only once every task in its
+change is checked, because that is when its code has landed. A change that is
+still a plan may document a tool that does not exist yet, and a plan must not
+fail the build. The "exposed" direction still reads every delta, and the
+"documented" direction is strict again the moment the change's tasks are done.
 """
 
 import json
@@ -18,6 +24,8 @@ CHANGES_DIR = REPO_ROOT / "openspec" / "changes"
 
 # "- `recall_memory(query, top_k)`: ..." -> ("recall_memory", "query, top_k")
 TOOL_LINE = re.compile(r"^\s*-\s+`([a-z_][a-z0-9_]*)\(([^)]*)\)`")
+# "- [ ] 1.1 ..." / "- [x] 1.1 ..." -> the checkbox marker
+TASK_LINE = re.compile(r"^\s*-\s*\[([ xX])\]")
 
 
 def _documented_tools(path: Path) -> dict:
@@ -29,21 +37,55 @@ def _documented_tools(path: Path) -> dict:
     return tools
 
 
-def _spec_files() -> list:
-    files = [MAIN_SPEC]
+def _change_is_implemented(change_dir: Path) -> bool:
+    """True when every task in the change is checked, i.e. its code has landed."""
+    tasks = change_dir / "tasks.md"
+    if not tasks.exists():
+        return False
+    markers = [m for m in (TASK_LINE.match(line) for line in
+                            tasks.read_text(encoding="utf-8").splitlines()) if m]
+    if not markers:
+        return False
+    return all(m.group(1) in ("x", "X") for m in markers)
+
+
+def _change_spec_files() -> list:
+    """(change_dir, delta_spec) for every active change that has an MCP delta."""
+    files = []
     if CHANGES_DIR.exists():
         for change_dir in sorted(CHANGES_DIR.iterdir()):
             if change_dir.name == "archive" or not change_dir.is_dir():
                 continue
             candidate = change_dir / "specs" / "mcp-server" / "spec.md"
             if candidate.exists():
-                files.append(candidate)
+                files.append((change_dir, candidate))
     return files
+
+
+def _spec_files() -> list:
+    """Every spec that may document a tool: the main spec plus every delta."""
+    return [MAIN_SPEC] + [spec for _, spec in _change_spec_files()]
+
+
+def _live_spec_files() -> list:
+    """The enforced contract: the main spec plus the deltas of applied changes."""
+    return [MAIN_SPEC] + [
+        spec for change_dir, spec in _change_spec_files()
+        if _change_is_implemented(change_dir)
+    ]
 
 
 def documented_tool_names() -> dict:
     names = {}
     for path in _spec_files():
+        for name, args in _documented_tools(path).items():
+            names.setdefault(name, (path, args))
+    return names
+
+
+def live_documented_tool_names() -> dict:
+    names = {}
+    for path in _live_spec_files():
         for name, args in _documented_tools(path).items():
             names.setdefault(name, (path, args))
     return names
@@ -66,13 +108,25 @@ def test_every_exposed_tool_is_documented():
 
 
 def test_every_documented_tool_is_exposed():
-    documented = documented_tool_names()
+    documented = live_documented_tool_names()
     exposed = exposed_tool_names()
     extra = sorted(set(documented) - set(exposed))
     assert not extra, (
         f"tools documented but not exposed by src/mcp_server.py: {extra}. "
-        f"Spec files checked: {[str(p) for p in _spec_files()]}"
+        f"Spec files checked: {[str(p) for p in _live_spec_files()]}"
     )
+
+
+def test_a_delta_is_enforced_only_once_its_change_is_applied(tmp_path):
+    """The scope rule: unchecked tasks mean the delta is still a plan."""
+    change = tmp_path / "planned-change"
+    change.mkdir()
+    (change / "tasks.md").write_text("- [ ] 1.1 not done yet\n", encoding="utf-8")
+    assert not _change_is_implemented(change)
+    (change / "tasks.md").write_text("- [x] 1.1 done\n", encoding="utf-8")
+    assert _change_is_implemented(change)
+    (change / "tasks.md").write_text("- [x] 1.1 done\n- [ ] 1.2 not done\n", encoding="utf-8")
+    assert not _change_is_implemented(change)
 
 
 def test_generate_with_memory_is_documented_and_exposed():
@@ -137,7 +191,7 @@ def test_handle_initialize_returns_protocol_and_capabilities():
     assert result["serverInfo"]["name"] == "tmt-droid-mcp"
 
 
-def test_handle_tools_list_names_all_six_tools():
+def test_handle_tools_list_names_all_seven_tools():
     server = MCPServer(base_dir="droids")
     tools = server.handle_tools_list({})["tools"]
     names = [tool["name"] for tool in tools]
@@ -148,6 +202,7 @@ def test_handle_tools_list_names_all_six_tools():
         "list_droids",
         "inspect_state",
         "generate_with_memory",
+        "research_topic",
     ]
     for tool in tools:
         assert "inputSchema" in tool

@@ -72,6 +72,21 @@ def _tokenize(terms: List[str]) -> str:
     return " OR ".join(f'"{t}"' for t in clean[:32])
 
 
+# The closed origin vocabulary for a stored fact (web-grounded-learning 3.2).
+# ``source`` remains free text (a domain tag at the MCP boundary); ``origin`` is
+# the machine-readable provenance class and is validated on insert.
+ORIGINS: tuple = ("user_text", "chat", "continuous_stream", "web")
+
+
+def validate_origin(origin: str) -> str:
+    """Return ``origin`` when it is documented, raise naming it otherwise."""
+    if origin not in ORIGINS:
+        raise ValueError(
+            f"unknown fact origin {origin!r}; expected one of {list(ORIGINS)}"
+        )
+    return origin
+
+
 class KnowledgeStore:
     """Persistent hybrid knowledge store: FTS5 BM25 + dense MVM, fused with RRF.
 
@@ -194,7 +209,10 @@ class KnowledgeStore:
                 version_id    TEXT,
                 feedback      TEXT,
                 needs_review  INTEGER DEFAULT 0,
-                decay_beta    REAL DEFAULT 1.0
+                decay_beta    REAL DEFAULT 1.0,
+                origin        TEXT DEFAULT 'user_text',
+                source_url    TEXT,
+                source_query  TEXT
             );
             CREATE TABLE IF NOT EXISTS facts_vecs (
                 id INTEGER PRIMARY KEY REFERENCES facts(id),
@@ -254,6 +272,9 @@ class KnowledgeStore:
                 "feedback": "ALTER TABLE facts ADD COLUMN feedback TEXT",
                 "needs_review": "ALTER TABLE facts ADD COLUMN needs_review INTEGER DEFAULT 0",
                 "decay_beta": "ALTER TABLE facts ADD COLUMN decay_beta REAL DEFAULT 1.0",
+                "origin": "ALTER TABLE facts ADD COLUMN origin TEXT DEFAULT 'user_text'",
+                "source_url": "ALTER TABLE facts ADD COLUMN source_url TEXT",
+                "source_query": "ALTER TABLE facts ADD COLUMN source_query TEXT",
             }
             for col, sql in migrations.items():
                 if col not in cols:
@@ -323,7 +344,15 @@ class KnowledgeStore:
         version_id: Optional[str] = None,
         feedback: Optional[str] = None,
         needs_review: int = 0,
+        origin: Optional[str] = None,
+        source_url: Optional[str] = None,
+        source_query: Optional[str] = None,
     ) -> int:
+        # An explicit origin is validated; an absent one is derived from the
+        # free-text source so every existing caller keeps working.
+        if origin is None:
+            origin = source if source in ORIGINS else "user_text"
+        validate_origin(origin)
         with self._write_lock:
             v = vec.detach().float().reshape(-1)
             norm = torch.linalg.vector_norm(v).clamp(min=1e-8)
@@ -331,9 +360,9 @@ class KnowledgeStore:
             self.conn.execute("BEGIN")
             try:
                 cur = self.conn.execute(
-                    "INSERT INTO facts(text, source, timestamp, step, novelty, access_count, last_retrieved, version_id, feedback, needs_review)"
-                    " VALUES (?,?,?,?,?,?,?,?,?,?)",
-                    (text, source, float(timestamp), int(step), float(novelty), 1, float(timestamp), version_id, feedback, int(needs_review)),
+                    "INSERT INTO facts(text, source, timestamp, step, novelty, access_count, last_retrieved, version_id, feedback, needs_review, origin, source_url, source_query)"
+                    " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (text, source, float(timestamp), int(step), float(novelty), 1, float(timestamp), version_id, feedback, int(needs_review), origin, source_url, source_query),
                 )
                 fid = cur.lastrowid
                 self.conn.execute(
@@ -545,7 +574,8 @@ class KnowledgeStore:
                 continue
             row = self.conn.execute(
                 "SELECT id, text, source, timestamp, step, novelty,"
-                " superseded, valid_until, superseded_by, access_count, last_retrieved, version_id, feedback, needs_review"
+                " superseded, valid_until, superseded_by, access_count, last_retrieved, version_id, feedback, needs_review,"
+                " origin, source_url, source_query"
                 " FROM facts WHERE id = ?",
                 (ids[idx],),
             ).fetchone()
@@ -710,7 +740,8 @@ class KnowledgeStore:
                        f.superseded, f.valid_until, f.superseded_by,
                        f.access_count, f.last_retrieved, f.version_id, f.feedback, f.needs_review,
                        fused.fused_score, fused.lex_part, fused.dense_part,
-                       fused.lrank, fused.drank, fused.dscore
+                       fused.lrank, fused.drank, fused.dscore,
+                       f.origin, f.source_url, f.source_query
                 FROM (
                     SELECT id,
                            (lex_part + dense_part) AS fused_score,
@@ -770,7 +801,8 @@ class KnowledgeStore:
                        f.superseded, f.valid_until, f.superseded_by,
                        f.access_count, f.last_retrieved, f.version_id, f.feedback, f.needs_review,
                        fused.fused_score, fused.lex_part, fused.dense_part,
-                       fused.lrank, fused.drank, fused.dscore
+                       fused.lrank, fused.drank, fused.dscore,
+                       f.origin, f.source_url, f.source_query
                 FROM (
                     SELECT id,
                            (lex_part + dense_part) AS fused_score,
@@ -815,6 +847,10 @@ class KnowledgeStore:
                 "dense_rank": r[18],
                 "dense_similarity": r[19] if r[19] is not None else 0.0,
                 "similarity": r[19] if r[19] is not None else 0.0,
+                "origin": r[20] if len(r) > 20 and r[20] is not None else "user_text",
+                "source_url": r[21] if len(r) > 21 else None,
+                "source_query": r[22] if len(r) > 22 else None,
+                "retrieved_at": r[3],
             }
             results.append(entry)
 
@@ -959,8 +995,9 @@ class KnowledgeStore:
         return results
 
     def _to_dict(self, row) -> Dict[str, Any]:
+        entry: Dict[str, Any]
         if len(row) >= 14:
-            return {
+            entry = {
                 "id": row[0],
                 "text": row[1],
                 "source": row[2],
@@ -975,9 +1012,13 @@ class KnowledgeStore:
                 "version_id": row[11] if len(row) > 11 else None,
                 "feedback": row[12] if len(row) > 12 else None,
                 "needs_review": bool(row[13]) if len(row) > 13 and row[13] is not None else False,
+                "origin": row[14] if len(row) > 14 and row[14] is not None else "user_text",
+                "source_url": row[15] if len(row) > 15 else None,
+                "source_query": row[16] if len(row) > 16 else None,
+                "retrieved_at": row[3],
             }
         else:
-            return {
+            entry = {
                 "id": row[0],
                 "text": row[1],
                 "source": row[2],
@@ -987,7 +1028,12 @@ class KnowledgeStore:
                 "superseded": bool(row[6]),
                 "valid_until": row[7],
                 "superseded_by": row[8],
+                "origin": "user_text",
+                "source_url": None,
+                "source_query": None,
+                "retrieved_at": row[3],
             }
+        return entry
 
     def supersede(self, old_id: int, new_id: Optional[int], now: Optional[float] = None) -> int:
         with self._write_lock:
@@ -1029,7 +1075,8 @@ class KnowledgeStore:
     def get_audit_trail(self) -> List[Dict[str, Any]]:
         rows = self.conn.execute(
             "SELECT id, text, source, timestamp, step, novelty,"
-            " superseded, valid_until, superseded_by, access_count, last_retrieved, version_id, feedback, needs_review FROM facts ORDER BY id"
+            " superseded, valid_until, superseded_by, access_count, last_retrieved, version_id, feedback, needs_review,"
+            " origin, source_url, source_query FROM facts ORDER BY id"
         ).fetchall()
         return [self._to_dict(r) for r in rows]
 
@@ -1039,14 +1086,14 @@ class KnowledgeStore:
 
     def get_active_facts(self):
         rows = self.conn.execute(
-            "SELECT id, text, source, timestamp, step, novelty, superseded, valid_until, superseded_by, access_count, last_retrieved, version_id, feedback, needs_review FROM facts WHERE superseded=0 ORDER BY id"
+            "SELECT id, text, source, timestamp, step, novelty, superseded, valid_until, superseded_by, access_count, last_retrieved, version_id, feedback, needs_review, origin, source_url, source_query FROM facts WHERE superseded=0 ORDER BY id"
         ).fetchall()
         return [self._to_dict(r) for r in rows]
 
     def get_fact(self, fact_id: int) -> Optional[Dict[str, Any]]:
         """Retrieve single fact by ID with all metadata."""
         row = self.conn.execute(
-            "SELECT id, text, source, timestamp, step, novelty, superseded, valid_until, superseded_by, access_count, last_retrieved, version_id, feedback, needs_review FROM facts WHERE id = ?",
+            "SELECT id, text, source, timestamp, step, novelty, superseded, valid_until, superseded_by, access_count, last_retrieved, version_id, feedback, needs_review, origin, source_url, source_query FROM facts WHERE id = ?",
             (int(fact_id),),
         ).fetchone()
         if row is None:
