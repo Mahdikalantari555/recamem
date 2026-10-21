@@ -43,6 +43,11 @@ MODULE_TESTS = {
     "src/model/onnx_anchor.py": "tests/test_onnx_anchor.py",
     "src/model/plastic_adapter.py": "tests/test_plastic_adapter.py",
     "src/model/propositions.py": "tests/test_propositions.py",
+    "src/model/benchmarks.py": "tests/test_benchmarks.py",
+    "src/model/probes.py": "tests/test_probes.py",
+    "src/model/web_teacher.py": "tests/test_web_teacher.py",
+    "src/model/search_learn.py": "tests/test_search_learn.py",
+    "src/model/edge_pretraining.py": "tests/test_edge_pretraining.py",
     "src/model/rtu.py": "tests/test_rtu.py",
     "src/model/teacher.py": "tests/test_teacher.py",
 }

@@ -519,6 +519,257 @@ def cmd_eval(args):
     print(f"mrr={rr_sum / samples:.3f}")
     return 0
 
+def cmd_research(args):
+    """Acquire knowledge about a topic from the profile's search provider."""
+    from src.model.droid_manager import DroidManager
+
+    profile_name = (args.name or "").strip().lower().replace(" ", "-")
+    if not profile_name:
+        return _eval_error("--name is required")
+    try:
+        mgr = DroidManager(base_dir=args.base_dir)
+        droid = mgr.get_droid(profile_name)
+    except Exception as exc:
+        print(f"error: research failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 1
+
+    result = droid.research(args.topic)
+    print(f"topic={args.topic}")
+    print(f"profile={profile_name}")
+    print(f"searched={'true' if result.get('searched') else 'false'}")
+    if result.get("facts_learned"):
+        print(f"facts_learned={int(result['facts_learned'])}")
+    else:
+        reason = result.get("reason") or "no facts were learned"
+        print(f"facts_learned_skipped={reason}")
+    if result.get("searched"):
+        sources = ",".join(result.get("sources") or [])
+        print(f"sources={sources}")
+    if not result.get("available", True):
+        print(
+            "error: external acquisition is unavailable: "
+            f"{result.get('reason') or 'no search provider configured'}",
+            file=sys.stderr,
+        )
+        return 1
+    return 0
+
+
+def _bench_resolve_checkpoint(args) -> Optional[Path]:
+    """Explicit checkpoint, or the one a profile manifest declares."""
+    if getattr(args, "checkpoint", None):
+        return Path(args.checkpoint)
+    profile = getattr(args, "profile", None)
+    if profile:
+        manifest = Path(profile) / "config.json"
+        if manifest.is_file():
+            try:
+                config = json.loads(manifest.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                return None
+            declared = config.get("byte_rtu_checkpoint") or config.get("rtu_checkpoint")
+            if declared:
+                return Path(profile) / str(declared)
+    return None
+
+
+def _bench_tokens(corpus: Optional[str], count: int) -> "torch.Tensor":
+    """A deterministic byte slice of the corpus (synthetic when none is given)."""
+    import torch
+
+    if corpus:
+        data = b""
+        for name in corpus.split(","):
+            path = Path(name.strip())
+            if path.is_file():
+                data += path.read_bytes() + b"\n"
+    else:
+        data = b"The quick brown fox jumps over the lazy dog. " * 32
+    if not data:
+        data = b"bench"
+    repeats = max(1, count // len(data) + 1)
+    return torch.tensor(list((data * repeats)[:count]), dtype=torch.long)
+
+
+def _bench_frozen_pass(model, tokens) -> None:
+    import torch
+
+    with torch.no_grad():
+        model.reset()
+        for byte in tokens.tolist():
+            model.step(torch.tensor(byte, dtype=torch.long), frozen=True)
+
+
+def _bench_perplexity(model, documents) -> tuple:
+    import torch
+
+    total, counted = 0.0, 0
+    with torch.no_grad():
+        for document_id in sorted(documents):
+            data = documents[document_id]
+            if len(data) < 2:
+                continue
+            model.reset()
+            logits = None
+            for index, byte in enumerate(data):
+                if logits is not None:
+                    log_probs = torch.log_softmax(logits.reshape(-1).float(), dim=-1)
+                    total += float(-log_probs[byte].item())
+                    counted += 1
+                if index + 1 < len(data):
+                    (_, _, _), (logits, _) = model.step(
+                        torch.tensor(byte, dtype=torch.long), frozen=True
+                    )
+    return total, counted
+
+
+def cmd_bench(args):
+    """Measure the documented metrics and write one machine-readable report.
+
+    A measurement that could not be taken is printed as ``<metric>_skipped=``
+    with its reason and never as a value.
+    """
+    from src.model import benchmarks
+    from src.model.probes import load_probes, score_probes
+    from src.model.rtu import Model
+
+    measurements: Dict[str, object] = {}
+    checkpoint = _bench_resolve_checkpoint(args)
+    missing_reason = None
+    model = None
+
+    if checkpoint is None:
+        missing_reason = "no checkpoint supplied (use --checkpoint or --profile)"
+    elif not checkpoint.is_file():
+        missing_reason = f"checkpoint not found: {checkpoint}"
+    if missing_reason:
+        for name in ("throughput", "perplexity", "probe_score"):
+            measurements[name] = benchmarks.skipped(missing_reason)
+    else:
+        try:
+            import torch
+
+            torch.manual_seed(args.seed)
+            model = Model(dim=args.dim, layers=args.layers, vocab_size=args.vocab)
+            model.load(str(checkpoint))
+            model.eval()
+        except Exception as exc:
+            print(f"error: benchmark failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+            return 1
+
+        tokens = _bench_tokens(args.corpus, args.tokens)
+        measurements["throughput"] = benchmarks.measure_throughput(
+            lambda: _bench_frozen_pass(model, tokens),
+            int(tokens.numel()),
+            runs=args.runs,
+            warmup=1,
+            path="sequential",
+            sequence_length=int(tokens.numel()),
+            hardware=benchmarks.hardware_description(),
+        )
+        measurements["rss"] = benchmarks.measure_resident_memory([str(checkpoint)])
+        measurements["throughput"]["checkpoint_hash"] = benchmarks.sha256_file(checkpoint)
+        documents = {}
+        if args.corpus:
+            for name in args.corpus.split(","):
+                path = Path(name.strip())
+                if path.is_file():
+                    documents[path.name] = path.read_bytes()
+        if documents:
+            measurements["perplexity"] = benchmarks.measure_held_out_perplexity(
+                lambda held: _bench_perplexity(model, held),
+                documents,
+                held_out_fraction=args.held_out_fraction,
+                seed=args.seed,
+            )
+        else:
+            measurements["perplexity"] = benchmarks.skipped(
+                "no corpus supplied for the held-out split"
+            )
+        if args.probes:
+            probe_path = Path(args.probes)
+            if probe_path.is_file():
+                probe_set = load_probes(probe_path)
+                for error in probe_set.errors:
+                    print(
+                        f"# probe line {error['line']} rejected: {error['reason']}",
+                        file=sys.stderr,
+                    )
+                measurements["probe_score"] = score_probes(
+                    model, probe_set, checkpoint_path=checkpoint, probe_path=probe_path
+                )
+            else:
+                measurements["probe_score"] = benchmarks.skipped(
+                    f"probe file not found: {probe_path}"
+                )
+        else:
+            measurements["probe_score"] = benchmarks.skipped("no probe file supplied")
+
+    # The parameter count is a property of the configuration, not of the
+    # checkpoint, so it is measurable even when no checkpoint was supplied.
+    if model is not None:
+        params = benchmarks.count_trainable_parameters(model)
+    else:
+        import torch
+
+        torch.manual_seed(args.seed)
+        params = benchmarks.count_trainable_parameters(
+            Model(dim=args.dim, layers=args.layers, vocab_size=args.vocab)
+        )
+    measurements["params"] = benchmarks.measurement(
+        params,
+        metric="params",
+        config={"dim": args.dim, "layers": args.layers, "vocab": args.vocab},
+    )
+    measurements.setdefault("rss", benchmarks.measure_resident_memory([]))
+
+    report = benchmarks.build_report(
+        command=" ".join(sys.argv),
+        config={
+            "seed": args.seed,
+            "tokens": args.tokens,
+            "runs": args.runs,
+            "dim": args.dim,
+            "layers": args.layers,
+            "vocab": args.vocab,
+            "corpus": args.corpus,
+            "probes": args.probes,
+            "checkpoint": str(checkpoint) if checkpoint else "",
+        },
+        measurements=measurements,
+        hardware=benchmarks.hardware_description(),
+        dependencies=benchmarks.dependency_versions(),
+    )
+    report_path = benchmarks.write_report(report, args.report)
+
+    throughput = measurements["throughput"]
+    if benchmarks.is_measured(throughput):
+        print(f"tokens_per_second={throughput['value']:.2f}")
+    else:
+        print(f"tokens_per_second_skipped={throughput['reason']}")
+    print(f"params={int(measurements['params']['value'])}")
+    rss = measurements["rss"]
+    if benchmarks.is_measured(rss):
+        print(f"rss_mb={rss['value']:.1f}")
+    else:
+        print(f"rss_mb_skipped={rss['reason']}")
+    perplexity = measurements["perplexity"]
+    if benchmarks.is_measured(perplexity):
+        print(f"held_out_perplexity={perplexity['value']:.3f}")
+    else:
+        print(f"held_out_perplexity_skipped={perplexity['reason']}")
+    probes = measurements["probe_score"]
+    if benchmarks.is_measured(probes):
+        for name, stats in probes.get("per_phenomenon", {}).items():
+            print(f"grammar_accuracy.{name}={stats['accuracy']:.3f}")
+        print(f"grammar_accuracy={probes['accuracy']:.3f}")
+    else:
+        print(f"grammar_accuracy_skipped={probes['reason']}")
+    print(f"outcome={report['outcome']}")
+    print(f"report={report_path}")
+    return 0
+
+
 def cmd_download_model(args):
     """Download GGUF model."""
     try:
@@ -616,6 +867,33 @@ def main(argv: Optional[List[str]] = None):
     p_eval.add_argument('--top-k', type=int, default=5, help='Cutoff k (default 5)')
     p_eval.add_argument('--sample', type=int, default=50, help='Facts sampled for the self-recall check (default 50)')
     p_eval.set_defaults(func=cmd_eval)
+
+    # research
+    p_research = subparsers.add_parser(
+        'research', help='Acquire knowledge about a topic from the web'
+    )
+    p_research.add_argument('topic', help='Topic to research')
+    p_research.add_argument('--name', default='droid-alpha', help='Droid name')
+    p_research.set_defaults(func=cmd_research)
+
+    # bench
+    p_bench = subparsers.add_parser(
+        'bench', help='Measure throughput, size, held-out perplexity and grammar probes'
+    )
+    p_bench.add_argument('--profile', help='Droid profile whose manifest names the checkpoint')
+    p_bench.add_argument('--checkpoint', help='Byte-RTU checkpoint to measure')
+    p_bench.add_argument('--corpus', help='Comma-separated corpus files for throughput and perplexity')
+    p_bench.add_argument('--tokens', type=int, default=2000, help='Tokens per timed run (default 2000)')
+    p_bench.add_argument('--probes', help='Grammar probe JSONL file')
+    p_bench.add_argument('--report', default='reports/bench-report.json', help='Report path')
+    p_bench.add_argument('--runs', type=int, default=3, help='Timed runs (default 3)')
+    p_bench.add_argument('--dim', type=int, default=64, help='Model dimension')
+    p_bench.add_argument('--layers', type=int, default=2, help='Model layer count')
+    p_bench.add_argument('--vocab', type=int, default=256, help='Vocabulary size')
+    p_bench.add_argument('--seed', type=int, default=0, help='Construction and split seed')
+    p_bench.add_argument('--held-out-fraction', type=float, default=0.25,
+                         help='Document-level held-out fraction (default 0.25)')
+    p_bench.set_defaults(func=cmd_bench)
     
     # download-model
     p_dl = subparsers.add_parser('download-model', help='Download GGUF model')

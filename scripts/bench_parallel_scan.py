@@ -31,6 +31,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:  # allow `python scripts/bench_parallel_scan.py`
     sys.path.insert(0, str(ROOT))
 
+from src.model.benchmarks import (  # noqa: E402
+    LOAD_THRESHOLD,
+    SPEED_FACTOR_THRESHOLD,
+    VARIANCE_THRESHOLD,
+    system_load,
+)
 from src.model.rtu import Model  # noqa: E402
 
 DIM = 384
@@ -112,6 +118,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--threads", type=int, default=None,
                         help="torch CPU threads; defaults to torch's own default")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--max-load", type=float, default=LOAD_THRESHOLD,
+        help="Skip a measurement when load_1m / cpu_count exceeds this ratio",
+    )
+    parser.add_argument(
+        "--max-cv", type=float, default=VARIANCE_THRESHOLD,
+        help="Skip a measurement when the run-to-run coefficient of variation exceeds this",
+    )
     args = parser.parse_args(argv)
 
     if args.threads:
@@ -122,14 +136,43 @@ def main(argv: list[str] | None = None) -> int:
     print(f"# model: dim={DIM} layers={LAYERS} spread={SPREAD} chunk={args.chunk} runs={args.runs}")
     print("path,L,seconds,factor,cv")
 
+    load = system_load()
+    loaded = load["load_ratio"] > args.max_load
+    # A uniformly loaded machine has low run-to-run variance and a slow
+    # baseline: the variance guard cannot see it, so the load guard is checked
+    # first and the comparison is skipped with the measured load rather than
+    # reported as a failed factor. The threshold is never lowered here.
+    if loaded:
+        print(
+            f"# skip: load ratio {load['load_ratio']:.3f} exceeds {args.max_load} "
+            f"(load_1m={load['load_1m']:.2f}, cpus={load['cpu_count']})"
+        )
+
     for length in args.lengths:
         tokens = build_corpus(length)
         seq_seconds, seq_cv = timed(sequential_forward, model, tokens, runs=args.runs)
         scan_seconds, scan_cv = timed(
             lambda m, t: chunked_forward(m, t, chunk=args.chunk), model, tokens, runs=args.runs
         )
+        worst_cv = max(seq_cv, scan_cv)
+        if loaded or worst_cv > args.max_cv:
+            reason = (
+                f"load_ratio={load['load_ratio']:.3f}>{args.max_load}"
+                if loaded
+                else f"cv={worst_cv:.3f}>{args.max_cv}"
+            )
+            print(f"sequential,{length},{seq_seconds:.6f},skipped,{seq_cv:.3f}")
+            print(f"parallel-scan,{length},{scan_seconds:.6f},skipped,{scan_cv:.3f}")
+            print(f"# skip L={length}: {reason}")
+            continue
+        factor = seq_seconds / scan_seconds
         print(f"sequential,{length},{seq_seconds:.6f},1.00,{seq_cv:.3f}")
-        print(f"parallel-scan,{length},{scan_seconds:.6f},{seq_seconds / scan_seconds:.2f},{scan_cv:.3f}")
+        print(f"parallel-scan,{length},{scan_seconds:.6f},{factor:.2f},{scan_cv:.3f}")
+        if length == 512 and factor < SPEED_FACTOR_THRESHOLD:
+            print(
+                f"# below threshold: factor {factor:.2f} < {SPEED_FACTOR_THRESHOLD} at L=512 "
+                "(the threshold is not lowered to pass)"
+            )
 
     tokens = build_corpus(512)
     with torch.no_grad():

@@ -8,9 +8,9 @@ from safetensors.torch import save_file, load_file
 from typing import Tuple, Dict, Any, Optional
 
 try:
-    from src.model.parallel_scan import associative_scan
+    from src.model.parallel_scan import associative_scan, reverse_decay_scan
 except ImportError:  # pragma: no cover - package-relative fallback
-    from .parallel_scan import associative_scan
+    from .parallel_scan import associative_scan, reverse_decay_scan
 # Avoid circular import: define a minimal PlasticAdapter base if needed
 # We will try to import the real one, but if it fails (circular), use a dummy that will be replaced later
 try:
@@ -30,6 +30,20 @@ except:
             from abc import ABC
             class PlasticAdapter(ABC):
                 pass
+
+# Tolerance for the chunked-vs-per-token equivalence checks. The chunked path
+# is algebraically equivalent to the per-token path for the losses, the
+# accumulated gradients and the trace buffers; floating-point reassociation is
+# the only difference, and this is the documented bound on it.
+CHUNK_EQUIVALENCE_TOLERANCE = 1e-4
+
+# Python-level token loop counters. The chunked path must not grow its count
+# with the chunk length; the per-token reference must, because it loops.
+TOKEN_LOOP_COUNTER = {"chunked": 0, "per_token": 0}
+
+# The quantities the chunked path reproduces exactly, and the one it cannot.
+CHUNK_EQUIVALENT_QUANTITIES = ("per_token_losses", "accumulated_gradients", "trace_buffers")
+CHUNK_NON_EQUIVALENT_QUANTITIES = ("parameter_trajectory",)
 
 # ponytail: minimal RTU implementation matching MLX 0.32.2 semantics. Upgrade to batched CUDA kernel if scaling beyond 16 layers.
 
@@ -373,6 +387,7 @@ class Model(nn.Module):
                 return self.sample(output), float(stop.item())
 
         c = torch.tensor(currb, dtype=torch.long, device=self.device) if not isinstance(currb, torch.Tensor) else currb
+        TOKEN_LOOP_COUNTER["per_token"] += 1
         dummies = [torch.zeros(self.dim, dtype=torch.float32, device=self.device, requires_grad=True) for _ in range(self.layers)]
 
         self.zero_grad(set_to_none=True)
@@ -411,13 +426,537 @@ class Model(nn.Module):
             layer.decaytrace.copy_(decaytrace.detach())
             layer.embedtrace.copy_(embedtrace.detach())
 
-        lr = self.lr_at_step(self.step_count)
+        # Both training paths read the schedule as a function of bytes consumed.
+        lr = self.lr_at_bytes(self.step_count)
         for pg in self.optimizer.param_groups:
             pg['lr'] = lr
         self.optimizer.step()
         self.step_count += 1
 
         return self.sample(output.detach()), float(stop.detach().item())
+
+    # ------------------------------------------------------------------ #
+    # Chunked training pass (chunked-trace-training)
+    # ------------------------------------------------------------------ #
+    # The per-token path advances three trace buffers and injects two gradient
+    # contributions once per byte. Both are affine recurrences over the same
+    # decay, so their chunk-final values follow in closed form and the
+    # per-token gradient can be recovered with one reverse weighted scan. This
+    # pass keeps the per-token closed forms as the oracle and reproduces the
+    # losses, the accumulated gradients and the buffers; it does *not*
+    # reproduce the parameter trajectory, because it takes one optimizer step
+    # per chunk instead of one per byte.
+
+    def lr_at_bytes(self, bytes_consumed: int) -> float:
+        """The learning rate as a function of bytes consumed.
+
+        Both training paths read this one schedule, so "the learning rate at
+        byte N" means the same thing to a per-token run and a chunked run.
+        """
+        return self.lr_at_step(int(bytes_consumed))
+
+    @staticmethod
+    def _as_token_batch(tokens) -> torch.Tensor:
+        if not isinstance(tokens, torch.Tensor):
+            tokens = torch.tensor(tokens, dtype=torch.long)
+        if tokens.dim() == 1:
+            tokens = tokens.unsqueeze(0)
+        if tokens.dim() != 2:
+            raise ValueError(f"tokens must be (B, L) or (L,), got {tokens.dim()}-D")
+        return tokens.to(dtype=torch.long)
+
+    def _prepare_chunk_inputs(self, tokens, next_tokens, ends):
+        tokens = self._as_token_batch(tokens).to(self.device)
+        batch, length = tokens.shape
+        mask = torch.ones(batch, length, dtype=torch.bool, device=self.device)
+        if next_tokens is None:
+            # The last token of a chunk has no observed successor: its
+            # cross-entropy term is masked out rather than invented.
+            next_tokens = torch.cat([tokens[:, 1:], tokens[:, -1:]], dim=1)
+            mask[:, -1] = False
+        else:
+            next_tokens = self._as_token_batch(next_tokens).to(self.device)
+            if next_tokens.shape != tokens.shape:
+                raise ValueError("next_tokens must have the same (B, L) shape as tokens")
+        if ends is None:
+            ends = torch.zeros(batch, length, dtype=torch.bool, device=self.device)
+        elif not isinstance(ends, torch.Tensor):
+            ends = torch.full((batch, length), bool(ends), dtype=torch.bool, device=self.device)
+        elif ends.dim() == 0:
+            ends = ends.expand(batch, length).to(torch.bool)
+        elif ends.dim() == 1:
+            ends = ends.unsqueeze(0).expand(batch, length).to(torch.bool)
+        return tokens, next_tokens, ends.to(self.device), mask
+
+    def _batched_ce(self, logits: torch.Tensor, targets: torch.Tensor,
+                    mask: torch.Tensor) -> torch.Tensor:
+        log_probs = torch.log_softmax(logits.float(), dim=-1)
+        picked = log_probs.gather(-1, targets.unsqueeze(-1)).squeeze(-1)
+        return -picked * mask.to(log_probs.dtype)
+
+    def _batched_token_losses(self, x, logits, stop, next_tokens, ends, mask,
+                              ce_only: bool):
+        """Per-token loss terms reduced over the dimension axis.
+
+        Every term is the same expression the per-token path evaluates on one
+        ``(D,)`` vector, vectorized over ``(B, L)``; they are summed over
+        tokens, exactly like the per-token path's per-token scalars.
+        """
+        batch, length, _ = x.shape
+        terms = {}
+        total = x.new_zeros(batch, length)
+        if not ce_only:
+            var = torch.clamp(
+                1.0 - torch.sqrt(torch.var(x, dim=-1, unbiased=False) + 1e-4), min=0.0
+            )
+            terms["var"] = var
+            total = total + var
+            tgt = self.encoder(next_tokens).detach()
+            terms["pred"] = ((x - tgt) ** 2).mean(dim=-1)
+            end_targets = ends.to(dtype=stop.dtype).reshape(batch, length, 1)
+            terms["stop"] = ((stop - end_targets) ** 2).mean(dim=-1)
+            total = total + terms["pred"] + terms["stop"]
+        terms["ce"] = self._batched_ce(logits, next_tokens, mask) if next_tokens is not None \
+            else x.new_zeros(batch, length)
+        total = total + terms["ce"]
+        summed = {name: value.sum() for name, value in terms.items()}
+        summed["total"] = total.sum()
+        return total, summed
+
+    def _chunk_forward_backward(self, tokens, next_tokens, ends, mask, chunk, ce_only):
+        """One vectorized forward, one backward over the summed chunk loss."""
+        enc = self.encoder(tokens)
+        with torch.no_grad():
+            _, trajectories = self._scan_layer_stack(tokens, chunk)
+        dummies = [
+            torch.zeros(tokens.shape[0], tokens.shape[1], self.dim,
+                        dtype=enc.dtype, device=self.device, requires_grad=True)
+            for _ in self.blocks
+        ]
+        x = enc
+        states = []
+        for index, layer in enumerate(self.blocks):
+            # The scanned trajectory is the plan; the dummy carrier is the
+            # per-token handle whose gradient is dL/dstate_t, and the
+            # enc - enc.detach() term preserves the direct encoder gradient.
+            state = trajectories[index].detach() + (enc - enc.detach()) + dummies[index]
+            states.append(state)
+            x = x + layer.silu(layer.weights(layer.norm(state)))
+        logits, stop = self.decoder(x)
+        per_token, terms = self._batched_token_losses(
+            x, logits, stop, next_tokens, ends, mask, ce_only
+        )
+        total = per_token.sum()
+        self.last_loss = float(total.item())
+        if total.requires_grad:
+            total.backward()
+        return enc, trajectories, states, dummies, per_token, terms, total
+
+    def _apply_chunk_updates(self, tokens, enc, states, dummies, chunk) -> Dict[str, Any]:
+        """Vectorized trace-buffer advance and gradient-hook injection.
+
+        Closed forms (per layer, ``d = sigmoid(decay)``, ``L`` = chunk length):
+
+        * ``embedtrace_L = d**L * etrace_0 + sum_s onehot(c_s) * d**(L-1-s)``
+        * ``dtrace_L = d**L * dtrace_0 + sum_t d*(1-d) * S_{t-1} * d**(L-1-t)``
+        * ``states_L = S_{L-1}`` (the last scanned state)
+
+        Gradient hooks, with ``g_t = dL/dstate_t``:
+
+        * embedding: ``sum_t g_t (x) etrace_{t-1}``, split into the
+          buffer-initial term ``(sum_t g_t d**t) (x) etrace_0`` and the scattered
+          byte term over the reverse suffix sums ``R_{t+1}``;
+        * decay: ``sum_t g_t * dtrace_t``, which *replaces* the autograd
+          gradient exactly as the per-token path does.
+
+        Batch convention: the ``(D,)`` and ``(V, D)`` buffers hold the batch
+        mean, which is what makes a ``B > 1`` chunk well defined for a buffer
+        that has no batch axis. A ``B == 1`` chunk is the exact per-token case.
+        """
+        batch, length = tokens.shape
+        dtype = enc.dtype
+        device = self.device
+        log_decay = torch.log(torch.stack(
+            [torch.sigmoid(layer.decay).detach() for layer in self.blocks]
+        )) if self.blocks else torch.zeros(0, self.dim, device=device, dtype=dtype)
+
+        embed_weight = getattr(getattr(self.encoder, "embed", None), "weight", None)
+        info: Dict[str, Any] = {"layers": [], "embedding_hook_applied": False}
+
+        for index, layer in enumerate(self.blocks):
+            decay = torch.sigmoid(layer.decay).detach()
+            g = dummies[index].grad
+            if g is None:
+                g = torch.zeros(batch, length, self.dim, dtype=dtype, device=device)
+
+            exponents = torch.arange(length + 1, dtype=dtype, device=device)
+            powers = torch.exp(log_decay[index].unsqueeze(0) * exponents.unsqueeze(1))
+            decay_to_L = powers[-1]
+
+            # --- buffers -------------------------------------------------
+            etrace_prev = layer.embedtrace.detach().clone()
+            state_prev = layer.states.detach()
+            prev_states = torch.cat(
+                [state_prev.expand(batch, 1, self.dim), states[index].detach()[:, :-1, :]],
+                dim=1,
+            )
+
+            byte_weights = torch.exp(
+                log_decay[index].unsqueeze(0)
+                * torch.arange(length - 1, -1, -1, dtype=dtype, device=device).unsqueeze(1)
+            )
+            flat_weights = byte_weights.unsqueeze(0).expand(batch, -1, -1).reshape(-1, self.dim)
+            scatter = torch.zeros_like(etrace_prev)
+            scatter.index_add_(0, tokens.reshape(-1), flat_weights)
+            etrace_new = etrace_prev * decay_to_L + scatter / float(batch)
+
+            dtrace_inputs = (decay * (1.0 - decay)).unsqueeze(0).unsqueeze(0) * prev_states
+            with torch.no_grad():
+                dtrace_traj, _ = associative_scan(
+                    decay, dtrace_inputs,
+                    h0=layer.decaytrace.detach().expand(batch, self.dim).clone(),
+                    chunk=chunk,
+                )
+            dtrace_new = dtrace_traj[:, -1].mean(dim=0)
+
+            # --- embedding hook -----------------------------------------
+            if embed_weight is not None and embed_weight.grad is not None:
+                initial_weights = torch.exp(
+                    log_decay[index].unsqueeze(0)
+                    * torch.arange(length, dtype=dtype, device=device).unsqueeze(1)
+                )
+                initial_term = etrace_prev * (g * initial_weights.unsqueeze(0)).sum(dim=(0, 1)).unsqueeze(0)
+                with torch.no_grad():
+                    suffix, _ = reverse_decay_scan(decay, g, chunk=chunk)
+                suffix_next = torch.cat(
+                    [suffix[:, 1:, :], torch.zeros(batch, 1, self.dim, dtype=dtype, device=device)],
+                    dim=1,
+                )
+                byte_term = torch.zeros_like(etrace_prev)
+                byte_term.index_add_(0, tokens.reshape(-1), suffix_next.reshape(-1, self.dim))
+                embed_weight.grad.add_((initial_term + byte_term).to(embed_weight.dtype))
+                info["embedding_hook_applied"] = True
+
+            # --- decay hook (replaces the autograd gradient) -------------
+            layer.decay.grad = (g * dtrace_traj).sum(dim=(0, 1))
+
+            with torch.no_grad():
+                layer.states.copy_(states[index][:, -1].mean(dim=0).detach())
+                layer.decaytrace.copy_(dtrace_new.detach())
+                layer.embedtrace.copy_(etrace_new.detach())
+            info["layers"].append({
+                "layer": index,
+                "chunk_final_state_norm": float(layer.states.norm().item()),
+                "chunk_final_decaytrace_norm": float(layer.decaytrace.norm().item()),
+                "chunk_final_embedtrace_norm": float(layer.embedtrace.norm().item()),
+            })
+        return info
+
+    def train_chunk(self, tokens, next_tokens=None, ends=None, *, chunk: int = 128,
+                    ce_only: bool = False, verify_equivalence: bool = False,
+                    counter: Optional[Dict[str, int]] = None) -> Dict[str, Any]:
+        """One chunked training pass: one optimizer step per chunk.
+
+        The pass is algebraically the per-token pass for the per-token losses,
+        the accumulated gradients and the trace buffers. It is *not* the same
+        optimizer trajectory: one step per chunk is a different training
+        regime, so the accumulated gradient is divided by the chunk length and
+        both paths read the learning-rate schedule as a function of bytes
+        consumed.
+
+        ``verify_equivalence`` runs the per-token oracle beside the chunked
+        path and compares gradients, losses and buffers. When it is not run the
+        result names the missing verification and does not claim equivalence.
+        """
+        tokens, next_tokens, ends, mask = self._prepare_chunk_inputs(
+            tokens, next_tokens, ends
+        )
+        batch, length = tokens.shape
+        if length == 0:
+            return {
+                "loss": 0.0, "tokens": 0, "chunk_length": 0, "optimizer_steps": 0,
+                "grad_scale": 0.0, "equivalent": [], "not_equivalent": list(CHUNK_NON_EQUIVALENT_QUANTITIES),
+                "equivalence_verified": False,
+                "equivalence_note": "an empty chunk has no loss to compare",
+            }
+
+        self.zero_grad(set_to_none=True)
+        TOKEN_LOOP_COUNTER["chunked"] += 0
+        initial_buffers = {
+            name: tensor.detach().clone() for name, tensor in self.named_buffers()
+        }
+        enc, trajectories, states, dummies, per_token, terms, total = self._chunk_forward_backward(
+            tokens, next_tokens, ends, mask, chunk, ce_only
+        )
+        hook_info = self._apply_chunk_updates(tokens, enc.detach(), states, dummies, chunk)
+
+        # Capture the chunked gradients before anything else touches them.
+        chunked_grads = {
+            name: (param.grad.detach().clone() if param.grad is not None else None)
+            for name, param in self.named_parameters()
+        }
+
+        verification: Dict[str, Any] = {"verified": False}
+        if verify_equivalence:
+            # The oracle must start where the chunked pass started, so the
+            # buffers the chunked pass just advanced are set aside and put back
+            # afterwards. The comparison reads the chunked final buffers
+            # explicitly, never whatever happens to be current.
+            chunked_buffers = {
+                name: tensor.detach().clone() for name, tensor in self.named_buffers()
+            }
+            current = dict(self.named_buffers())
+            with torch.no_grad():
+                for name, value in initial_buffers.items():
+                    if name in current and current[name].shape == value.shape:
+                        current[name].copy_(value)
+            oracle = self.per_token_gradient_oracle(
+                tokens, next_tokens, ends, ce_only=ce_only, mask=mask
+            )
+            verification = self._compare_with_oracle(
+                chunked_grads, per_token, oracle, chunked_buffers
+            )
+            current = dict(self.named_buffers())
+            with torch.no_grad():
+                for name, value in chunked_buffers.items():
+                    if name in current and current[name].shape == value.shape:
+                        current[name].copy_(value)
+            # The oracle zeroed the gradients it accumulated; put the chunked
+            # gradients back for the optimizer step.
+            for name, param in self.named_parameters():
+                param.grad = chunked_grads[name]
+        elif counter is not None:
+            counter["equivalence_check"] = 0
+
+        lr = self.lr_at_bytes(self.step_count)
+        for group in self.optimizer.param_groups:
+            group["lr"] = lr
+        grad_scale = 1.0 / float(batch * length)
+        with torch.no_grad():
+            for param in self.parameters():
+                if param.grad is not None:
+                    param.grad.mul_(grad_scale)
+        self.optimizer.step()
+        self.step_count += batch * length
+
+        if verification.get("verified"):
+            equivalent = list(CHUNK_EQUIVALENT_QUANTITIES)
+            note = "verified against the per-token oracle for this chunk"
+        else:
+            equivalent = []
+            note = (
+                "the per-token equivalence check was not run on this chunk: "
+                "losses, gradients and trace buffers are not claimed as verified"
+            )
+        info: Dict[str, Any] = {
+            "loss": float(total.item()),
+            "loss_terms": {name: float(value.item()) for name, value in terms.items()},
+            # Summed over the batch, matching the per-token oracle's scalar.
+            "per_token_losses": per_token.detach().sum(dim=0).tolist(),
+            "tokens": batch * length,
+            "chunk_length": length,
+            "batch_size": batch,
+            "optimizer_steps": 1,
+            "step_count": self.step_count,
+            "lr": lr,
+            "grad_scale": grad_scale,
+            "equivalent": equivalent,
+            "not_equivalent": list(CHUNK_NON_EQUIVALENT_QUANTITIES),
+            "equivalence_verified": bool(verification.get("verified")),
+            "equivalence_note": note,
+            "verification": verification,
+            "hooks": hook_info,
+            "token_loop_iterations": 0,
+        }
+        return info
+
+    def per_token_gradient_oracle(self, tokens, next_tokens=None, ends=None, *,
+                                  ce_only: bool = False,
+                                  mask: Optional[torch.Tensor] = None) -> Dict[str, Any]:
+        """The reference: the per-token path with accumulation, not stepping.
+
+        For every token it runs the unchanged per-token forward, backward,
+        trace-buffer advance and hook injection, then sums the gradients into an
+        accumulator instead of handing them to the optimizer. Parameters never
+        move, so the buffers evolve exactly as they do in a real per-token run
+        and the accumulated gradient is the one a per-token run would apply
+        before its ``1/L`` scale. Buffers are restored before returning.
+        """
+        tokens, next_tokens, ends, derived_mask = self._prepare_chunk_inputs(
+            tokens, next_tokens, ends
+        )
+        mask = derived_mask if mask is None else mask
+        batch, length = tokens.shape
+
+        saved_buffers = {
+            name: tensor.detach().clone() for name, tensor in self.named_buffers()
+        }
+        accum = {
+            name: torch.zeros_like(param.detach())
+            for name, param in self.named_parameters()
+        }
+        prev_states = [
+            layer.states.detach().clone().expand(batch, self.dim).clone()
+            for layer in self.blocks
+        ]
+        # Per-sample trajectories: the (V, D) and (D,) buffers have no batch
+        # axis, so they store the batch mean, but the hooks are accumulated per
+        # sample and then summed exactly like the per-token path does. This
+        # keeps a B > 1 chunk consistent with the chunked pass.
+        etraces = [
+            layer.embedtrace.detach().clone().unsqueeze(0).repeat(batch, 1, 1)
+            for layer in self.blocks
+        ]
+        dtraces = [
+            layer.decaytrace.detach().clone().expand(batch, self.dim).clone()
+            for layer in self.blocks
+        ]
+        token_losses: List[float] = []
+
+        embed_weight = getattr(getattr(self.encoder, "embed", None), "weight", None)
+        try:
+            for step in range(length):
+                TOKEN_LOOP_COUNTER["per_token"] += 1
+                self.zero_grad(set_to_none=True)
+                dummies = [
+                    torch.zeros(batch, self.dim, dtype=torch.float32,
+                                device=self.device, requires_grad=True)
+                    for _ in self.blocks
+                ]
+                enc = self.encoder(tokens[:, step])
+                x = enc
+                new_states = []
+                decays = []
+                for index, layer in enumerate(self.blocks):
+                    decay = torch.sigmoid(layer.decay)
+                    decays.append(decay.detach())
+                    state = decay * prev_states[index] + enc + dummies[index]
+                    new_states.append(state)
+                    x = x + layer.silu(layer.weights(layer.norm(state)))
+                logits, stop = self.decoder(x)
+                _, token_terms = self._batched_token_losses(
+                    x.unsqueeze(1), logits.unsqueeze(1), stop.unsqueeze(1),
+                    next_tokens[:, step].unsqueeze(1), ends[:, step].unsqueeze(1),
+                    mask[:, step].unsqueeze(1), ce_only,
+                )
+                loss = token_terms["total"]
+                if loss.requires_grad:
+                    loss.backward()
+                token_losses.append(float(loss.item()))
+
+                for index, layer in enumerate(self.blocks):
+                    g = dummies[index].grad
+                    if g is None:
+                        g = torch.zeros(batch, self.dim, device=self.device)
+                    if embed_weight is not None and embed_weight.grad is not None:
+                        contribution = (g.unsqueeze(1) * etraces[index]).sum(dim=0)
+                        embed_weight.grad.add_(contribution.to(embed_weight.dtype))
+                    previous = prev_states[index]
+                    with torch.no_grad():
+                        # The per-token path advances decaytrace *before* it
+                        # reads it for the hook, so the hook uses decaytrace_t,
+                        # not decaytrace_{t-1}.
+                        decaytrace_t = (
+                            decays[index] * dtraces[index]
+                            + decays[index] * (1.0 - decays[index]) * previous
+                        )
+                    layer.decay.grad = (g * decaytrace_t).sum(dim=0)
+                    with torch.no_grad():
+                        dtraces[index] = decaytrace_t
+                        onehot = torch.zeros(batch, self.vocab_size, self.dim,
+                                             device=self.device)
+                        onehot.scatter_(
+                            1,
+                            tokens[:, step].reshape(batch, 1, 1).expand(batch, 1, self.dim),
+                            1.0,
+                        )
+                        etraces[index] = decays[index] * etraces[index] + onehot
+                    prev_states[index] = new_states[index].detach()
+
+                for name, param in self.named_parameters():
+                    if param.grad is not None:
+                        accum[name] += param.grad
+        finally:
+            current = dict(self.named_buffers())
+            with torch.no_grad():
+                for name, value in saved_buffers.items():
+                    if name in current and current[name].shape == value.shape:
+                        current[name].copy_(value)
+            self.zero_grad(set_to_none=True)
+
+        final_buffers: Dict[str, torch.Tensor] = {}
+        for name in dict(self.named_buffers()):
+            parts = name.split(".")
+            if len(parts) == 3 and parts[0] == "blocks" and parts[1].isdigit():
+                index = int(parts[1])
+                short = parts[2]
+                if short == "states":
+                    final_buffers[name] = prev_states[index].mean(dim=0)
+                elif short == "decaytrace":
+                    final_buffers[name] = dtraces[index].mean(dim=0)
+                elif short == "embedtrace":
+                    final_buffers[name] = etraces[index].mean(dim=0)
+        return {
+            "gradients": accum,
+            "buffers": final_buffers,
+            "token_losses": token_losses,
+            "tokens": batch * length,
+            "token_loop_iterations": batch * length,
+        }
+
+    def _compare_with_oracle(self, chunked_grads, per_token, oracle,
+                             chunked_buffers: Optional[Dict[str, torch.Tensor]] = None
+                             ) -> Dict[str, Any]:
+        """Compare the chunked pass to the per-token oracle within tolerance."""
+        problems: List[str] = []
+        max_grad_delta = 0.0
+        for name, param in self.named_parameters():
+            reference = oracle["gradients"].get(name)
+            actual = chunked_grads.get(name)
+            if reference is None:
+                continue
+            if actual is None:
+                if float(reference.abs().max().item()) > CHUNK_EQUIVALENCE_TOLERANCE:
+                    problems.append(f"gradient {name} is missing in the chunked pass")
+                continue
+            reference = reference.to(actual.dtype)
+            delta = float((actual - reference).abs().max().item())
+            max_grad_delta = max(max_grad_delta, delta)
+            scale = max(1.0, float(reference.abs().max().item()))
+            if delta > CHUNK_EQUIVALENCE_TOLERANCE * scale + CHUNK_EQUIVALENCE_TOLERANCE:
+                problems.append(f"gradient {name} differs by {delta:.3e}")
+
+        max_loss_delta = 0.0
+        reference_losses = oracle["token_losses"]
+        actual_losses = per_token.detach().sum(dim=0).tolist()
+        for reference, actual in zip(reference_losses, actual_losses):
+            delta = abs(float(actual) - float(reference))
+            max_loss_delta = max(max_loss_delta, delta)
+            if delta > CHUNK_EQUIVALENCE_TOLERANCE * max(1.0, abs(reference)):
+                problems.append(f"per-token loss differs by {delta:.3e}")
+
+        max_buffer_delta = 0.0
+        current = chunked_buffers if chunked_buffers is not None else dict(self.named_buffers())
+        for name, reference in oracle["buffers"].items():
+            actual = current.get(name)
+            if actual is None or actual.shape != reference.shape:
+                problems.append(f"buffer {name} is missing in the chunked pass")
+                continue
+            delta = float((actual - reference).abs().max().item())
+            max_buffer_delta = max(max_buffer_delta, delta)
+            scale = max(1.0, float(reference.abs().max().item()))
+            if delta > CHUNK_EQUIVALENCE_TOLERANCE * scale + CHUNK_EQUIVALENCE_TOLERANCE:
+                problems.append(f"buffer {name} differs by {delta:.3e}")
+
+        return {
+            "verified": not problems,
+            "tolerance": CHUNK_EQUIVALENCE_TOLERANCE,
+            "max_gradient_delta": max_grad_delta,
+            "max_loss_delta": max_loss_delta,
+            "max_buffer_delta": max_buffer_delta,
+            "problems": problems,
+            "reference": "Model.per_token_gradient_oracle",
+        }
 
     def __call__(self, currb: int | torch.Tensor, nextb: int | torch.Tensor | None = None,
                  end: bool = False, frozen: bool = False,
