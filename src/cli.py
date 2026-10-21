@@ -23,6 +23,9 @@ def cmd_chat(args):
     if args.query:
         # Single query mode
         query = args.query
+        if query.strip().lower().startswith('/sleep'):
+            print(droid._format_sleep_report(droid.sleep()))
+            return
         # Handle /fast /slow overrides
         if query.startswith('/fast '):
             mode = 'fast'
@@ -92,6 +95,9 @@ def cmd_chat(args):
                 continue
             if user_input.lower() in ('exit', 'quit', 'q'):
                 break
+            if user_input.strip().lower().startswith('/sleep'):
+                print(droid._format_sleep_report(droid.sleep()))
+                continue
             
             # Handle /fast /slow
             cur_mode = mode
@@ -148,6 +154,19 @@ def cmd_chat(args):
                 traceback.print_exc(file=sys.stderr)
     except KeyboardInterrupt:
         print("\nExiting.", file=sys.stderr)
+
+def cmd_sleep(args):
+    """Run one bounded sleep cycle through DroidEngine.sleep()."""
+    from src.model.droid_manager import DroidManager
+    mgr = DroidManager(base_dir=args.base_dir)
+    droid = mgr.get_droid(args.name)
+    report = droid.sleep()
+    if getattr(args, "json", False):
+        print(json.dumps(report, indent=2, default=str))
+    else:
+        print(droid._format_sleep_report(report))
+    return 0
+
 
 def cmd_teach(args):
     """Teach from stdin markdown ingestion."""
@@ -556,6 +575,12 @@ def main(argv: Optional[List[str]] = None):
     p_teach.add_argument('--source', help='Source tag')
     p_teach.set_defaults(func=cmd_teach)
     
+    # sleep
+    p_sleep = subparsers.add_parser('sleep', help='Run one consolidation cycle')
+    p_sleep.add_argument('--name', default='droid-alpha', help='Droid name')
+    p_sleep.add_argument('--json', action='store_true', help='Emit the structured report')
+    p_sleep.set_defaults(func=cmd_sleep)
+
     # decide
     p_decide = subparsers.add_parser('decide', help='System-1 option scoring')
     p_decide.add_argument('query', help='Query text')

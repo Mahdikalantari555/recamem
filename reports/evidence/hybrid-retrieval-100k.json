@@ -1,0 +1,79 @@
+{
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.14.1+cu130",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "threads": 1
+  },
+  "seed": 13,
+  "dense": {
+    "corpus_facts": 100000,
+    "dim": 384,
+    "queries": 25,
+    "k": 5,
+    "knnlib_mode": "exact-fallback",
+    "hnsw_available": false,
+    "fallback_reason": "hnswlib is not installed",
+    "build_ms": 104.81260799997472,
+    "dense_bytes": 153600000,
+    "exact_latency_ms": {
+      "mean": 12.25022160003391,
+      "p50": 11.861916000043493,
+      "p95": 14.800895000007586
+    },
+    "candidate_latency_ms": {
+      "mean": 14.57872683999085,
+      "p50": 14.85057699983372,
+      "p95": 15.357293000079153
+    },
+    "recall_at_k_vs_exact": 1.0,
+    "targets": {
+      "p95_ms": 5.0,
+      "recall_at_5": 0.95,
+      "p95_met": false,
+      "recall_met": true
+    },
+    "note": "Exact fallback measured because hnswlib is unavailable"
+  },
+  "matryoshka": {
+    "corpus_facts": 100000,
+    "fast_dim": 64,
+    "full_dim": 384,
+    "queries": 12,
+    "fast_latency_ms": {
+      "mean": 3.534454666654104,
+      "p50": 3.0924679999770888,
+      "p95": 3.5122679998949025
+    },
+    "full_latency_ms": {
+      "mean": 18.028530500032502,
+      "p50": 14.9463420000302,
+      "p95": 29.758102000187137
+    },
+    "fast_path_speedup_p50": 4.8331436251372475,
+    "fast_quality_p_at_5": 1.0,
+    "full_quality_p_at_5": 1.0,
+    "relative_quality_loss": 0.0,
+    "targets": {
+      "speedup": 6.0,
+      "relative_quality_loss": 0.05,
+      "speedup_met": false,
+      "quality_met": true
+    },
+    "metric": "cluster-label precision@5 (fast 64-D vs full 384-D)",
+    "projection_checksum": "15145f3a557de507"
+  },
+  "reranking": {
+    "labeled_queries": 50,
+    "relevant_per_query": 5,
+    "scorer": "fallback-lexical",
+    "precision_at_5_before": 0.23600000000000002,
+    "precision_at_5_after": 0.372,
+    "relative_gain": 0.5762711864406779,
+    "targets": {
+      "relative_gain": 0.2,
+      "met": true
+    },
+    "note": "lexical fallback scorer; no cross-encoder model supplied"
+  }
+}

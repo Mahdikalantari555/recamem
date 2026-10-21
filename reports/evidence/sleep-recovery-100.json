@@ -1,0 +1,22 @@
+{
+  "protocol": {
+    "patterns": 100,
+    "dim": 384,
+    "seed": 0,
+    "max_replay_steps": 160,
+    "max_seconds": 20.0,
+    "expected_patterns_passed_to_retrieval": false
+  },
+  "expected_count": 100,
+  "recovered_distinct_expected": 100,
+  "recovered_count": 100,
+  "coverage": 1.0,
+  "duplicates": 60,
+  "steps": 160,
+  "stop_reason": "budget_exhausted",
+  "replay_writes": 160,
+  "duration_sleep_s": 0.18711820899989107,
+  "duration_total_s": 0.18714294599999448,
+  "target": 0.95,
+  "target_met": true
+}

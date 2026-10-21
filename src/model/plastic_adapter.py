@@ -44,6 +44,28 @@ class PlasticAdapter(torch.nn.Module, ABC):
         # Some third-party loaders retain references to their inputs.
         return self.load_state_dict(clone_state(snapshot))
 
+    def differentiable_output(self, x: torch.Tensor) -> torch.Tensor:
+        """State-free differentiable forward used by MAS importance.
+
+        Exercises every same-width Linear projection without mutating any
+        buffer or associative state, so output sensitivity can be measured
+        with one backward pass and no labels.  Adapters with a different
+        geometry override this method.
+        """
+        x = torch.as_tensor(x).float()
+        if x.dim() == 1:
+            x = x.unsqueeze(0)
+        width = x.shape[-1]
+        out = x
+        for module in self.modules():
+            if (isinstance(module, torch.nn.Linear)
+                    and module.in_features == width
+                    and module.out_features == width):
+                out = out + module(out)
+        if hasattr(self, "norm") and isinstance(self.norm, torch.nn.Module):
+            out = self.norm(out)
+        return out
+
 
 def clone_state(state):
     """Detach/clone tensors recursively; deepcopy all other mutable metadata."""
@@ -122,6 +144,32 @@ def register_adapter(name: str, cls: Type[PlasticAdapter], strict: bool = True):
 
 def list_adapters() -> List[str]:
     return list(_ADAPTER_REGISTRY.keys())
+
+def identify_adapter(adapter) -> Optional[str]:
+    """Registered name for ``adapter``, without inferring from class-name text.
+
+    Preference order: the adapter's own ``_adapter_type`` if it is a registered
+    name, then the registry entry whose class is exactly ``type(adapter)``.
+    Returns ``None`` when the adapter was never registered.
+    """
+    if adapter is None:
+        return None
+    declared = getattr(adapter, "_adapter_type", None)
+    if isinstance(declared, str) and declared in _ADAPTER_REGISTRY:
+        if _ADAPTER_REGISTRY[declared] is type(adapter):
+            return declared
+    for name, cls in _ADAPTER_REGISTRY.items():
+        if cls is type(adapter):
+            return name
+    return None
+
+def get_adapter_class(name: str) -> Type[PlasticAdapter]:
+    if name not in _ADAPTER_REGISTRY:
+        _discover_entry_points()
+        _register_builtins()
+    if name not in _ADAPTER_REGISTRY:
+        raise KeyError(f"Adapter '{name}' not found. Available: {list_adapters()}")
+    return _ADAPTER_REGISTRY[name]
 
 def get_adapter(name: str, **kwargs) -> PlasticAdapter:
     if name not in _ADAPTER_REGISTRY:
@@ -211,5 +259,16 @@ def _register_builtins():
         register_adapter("rtu", LegacyRTUAdapter, strict=False)
     except Exception:
         pass
+    # Delta / sparse adapters are additive: they never replace an existing
+    # name, and a failure to import them must not break the builtins.
+    try:
+        from src.model.delta_memory import _register_delta_adapters
+        _register_delta_adapters()
+    except Exception:
+        try:
+            from .delta_memory import _register_delta_adapters
+            _register_delta_adapters()
+        except Exception:
+            pass
 
 _register_builtins()

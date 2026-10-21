@@ -2,6 +2,7 @@ import json
 import math
 import os
 import re
+import threading
 import time
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Union
@@ -9,11 +10,20 @@ import torch
 import torch.nn as nn
 from safetensors.torch import save_file, load_file
 
-from src.model.plastic_adapter import apply_plastic_update, clone_state
+from src.model.plastic_adapter import (
+    apply_plastic_update, clone_state, identify_adapter,
+)
 from src.model.onnx_anchor import OnnxMiniLM
 from src.model.knowledge_store import KnowledgeStore
 from src.model.byte_rtu_backend import ByteRtuBackend
 from src.model.rtu import InvalidProfileError, MissingCheckpointError
+from src.model.sleep_consolidation import (
+    DEFAULT_SLEEP_CONFIG,
+    AutoSleepWorker,
+    DecreasingBackprop,
+    MemoryAwareSynapses,
+    SleepConsolidation,
+)
 
 # ponytail: DroidEngine binds 22MB ONNX MiniLM semantic anchor to plastic RTU memory.
 
@@ -365,7 +375,8 @@ class DroidEngine(nn.Module):
                  gguf_config: Optional[Dict[str, Any]] = None,
                  test_time_training: bool = True,
                  surprise_threshold: float = 0.4,
-                 K_max: int = 5000):
+                 K_max: int = 5000,
+                 migrations: Optional[List[Dict[str, Any]]] = None):
         super().__init__()
         self.name = name
         self.dim = dim
@@ -374,22 +385,37 @@ class DroidEngine(nn.Module):
         adapter_kwargs = adapter_kwargs or {}
         # Store for profile round-trip (task 2.12)
         self.adapter_kwargs = dict(adapter_kwargs)
+        # Registered adapter identity, persisted verbatim. An explicitly
+        # configured unknown adapter fails instead of silently becoming the
+        # default (post-merge 2.6).
+        self.adapter_name: Optional[str] = None
+        self.migrations: List[Dict[str, Any]] = list(migrations or [])
         # Propagate K_max to plastic adapter for capacity enforcement (task 2.6)
         if "K_max" not in adapter_kwargs and "k_max" not in adapter_kwargs:
             adapter_kwargs["K_max"] = K_max
         if plastic_adapter is not None:
             if isinstance(plastic_adapter, str):
-                if get_adapter is not None:
-                    try:
-                        self.memory = get_adapter(plastic_adapter, dim=dim, **adapter_kwargs)
-                    except Exception as e:
-                        from src.model.rtu import PlasticAssociativeRTU
-                        self.memory = PlasticAssociativeRTU(dim=dim, **adapter_kwargs)
-                else:
+                if get_adapter is None:
                     from src.model.rtu import PlasticAssociativeRTU
                     self.memory = PlasticAssociativeRTU(dim=dim, **adapter_kwargs)
+                else:
+                    try:
+                        self.memory = get_adapter(plastic_adapter, dim=dim, **adapter_kwargs)
+                    except KeyError as exc:
+                        raise InvalidProfileError(
+                            f"Plastic adapter {plastic_adapter!r} is not registered; "
+                            f"refusing to fall back to the default. Available: "
+                            f"{list_adapters()}"
+                        ) from exc
+                    self.adapter_name = plastic_adapter
             else:
                 self.memory = plastic_adapter
+                self.adapter_name = identify_adapter(plastic_adapter)
+                if self.adapter_name is None:
+                    # Keep the class registered so save/load can round-trip it.
+                    registered = getattr(plastic_adapter, "_adapter_type", None)
+                    if isinstance(registered, str) and registered:
+                        self.adapter_name = registered
                 # If passing pre-built memory, sync its K_max to engine's K_max if it supports it
                 if hasattr(self.memory, 'K_max'):
                     try:
@@ -403,6 +429,7 @@ class DroidEngine(nn.Module):
             except Exception as e:
                 from src.model.rtu import RTUMemoryBlock
                 self.memory = RTUMemoryBlock(dim=dim)
+            self.adapter_name = "associative_rtu"
         # Expose anchor mock state for UI and CLI (task 2.10, 2.11)
         try:
             self.anchor_is_mock = bool(getattr(self.anchor, 'is_mock', False))
@@ -421,6 +448,20 @@ class DroidEngine(nn.Module):
         self.ttt_steps_this_session = 0
         self.max_ttt_steps = 100
         self.ttt_lr = 1e-4
+        # One lock serialises teach/recall/sleep and worker lifecycle.
+        self._engine_lock = threading.RLock()
+        self.last_activity = time.time()
+        self.sleep_config = json.loads(json.dumps(DEFAULT_SLEEP_CONFIG))
+        self.sleep_config["schedule"]["base_lr"] = self.base_lr
+        self.lr_schedule = DecreasingBackprop(
+            base_lr=self.base_lr,
+            decay_factor=float(self.sleep_config["schedule"].get("decay_factor", 0.95)),
+            index=0,
+        )
+        self.mas: Optional[MemoryAwareSynapses] = None
+        self.last_sleep_report: Optional[Dict[str, Any]] = None
+        self.sleep_cycles = 0
+        self.auto_sleep_worker: Optional[AutoSleepWorker] = None
         if DecisionHead is not None:
             try:
                 self.decision_head = DecisionHead(dim=dim)
@@ -545,7 +586,15 @@ class DroidEngine(nn.Module):
             resolved.append(prop)
         return resolved
 
-    def teach(self, text: str, source: str = "user_text", surprise_threshold: Optional[float] = None) -> Dict[str, Any]:
+    def teach(self, text: str, source: str = "user_text",
+              surprise_threshold: Optional[float] = None) -> Dict[str, Any]:
+        """Teach under the shared engine lock (serialised with sleep/recall)."""
+        with self._engine_lock:
+            self.last_activity = time.time()
+            return self._teach_impl(text, source, surprise_threshold)
+
+    def _teach_impl(self, text: str, source: str = "user_text",
+                    surprise_threshold: Optional[float] = None) -> Dict[str, Any]:
         t0 = time.perf_counter()
         if surprise_threshold is None:
             surprise_threshold = self.surprise_threshold
@@ -635,7 +684,14 @@ class DroidEngine(nn.Module):
         self.log(f"Successfully learned {len(propositions)} facts in {elapsed*1000:.1f}ms. State norm: {mem_norm:.2f}.", details=result)
         return result
 
-    def recall(self, query: str, top_k: int = 3, threshold: float = 0.50, strategy: Optional[str] = None) -> List[Dict[str, Any]]:
+    def recall(self, query: str, top_k: int = 3, threshold: float = 0.50,
+               strategy: Optional[str] = None) -> List[Dict[str, Any]]:
+        with self._engine_lock:
+            self.last_activity = time.time()
+            return self._recall_impl(query, top_k, threshold, strategy)
+
+    def _recall_impl(self, query: str, top_k: int = 3, threshold: float = 0.50,
+                     strategy: Optional[str] = None) -> List[Dict[str, Any]]:
         if self.knowledge.total_count() == 0:
             return []
         query_type = "specific_fact"
@@ -774,6 +830,11 @@ class DroidEngine(nn.Module):
         mode = "auto"
         query = user_message
         lower = user_message.lower().strip()
+        if lower == "/sleep" or lower.startswith("/sleep "):
+            # Command dispatch happens before teaching/retrieval so the command
+            # text is never inserted as a knowledge fact.
+            report = self.sleep()
+            return self._format_sleep_report(report)
         if lower.startswith("/fast "):
             mode = "fast"
             query = user_message[5:].strip()
@@ -924,6 +985,194 @@ class DroidEngine(nn.Module):
             except Exception as e:
                 pass
         return {"status": "consolidated", "total_before": total, "pruned": pruned, "total_after": self.knowledge.active_count(), "recon_loss": recon_loss}
+
+    # ------------------------------------------------------------------
+    # Sleep consolidation / MAS / decreasing backprop
+    # ------------------------------------------------------------------
+    def configure_sleep(self, **settings) -> Dict[str, Any]:
+        """Update the profile's sleep policy; automatic sleep stays opt-in."""
+        unknown = set(settings) - set(DEFAULT_SLEEP_CONFIG)
+        if unknown:
+            raise ValueError(f"Unknown sleep settings: {sorted(unknown)}")
+        schedule = settings.pop("schedule", None)
+        for key, value in settings.items():
+            self.sleep_config[key] = value
+        if schedule is not None:
+            self.sleep_config["schedule"] = {**DEFAULT_SLEEP_CONFIG["schedule"], **schedule}
+        cfg = self.sleep_config["schedule"]
+        self.lr_schedule = DecreasingBackprop(
+            base_lr=float(cfg.get("base_lr", self.base_lr)),
+            decay_factor=float(cfg.get("decay_factor", 0.95)),
+            index=int(cfg.get("index", self.lr_schedule.index)),
+            experimental_relu_down=bool(cfg.get("experimental_relu_down", False)),
+        )
+        return dict(self.sleep_config)
+
+    def _retrieval_quality(self, sample: int = 8) -> Optional[float]:
+        """Fraction of sampled facts recovered in their own top-3 recall."""
+        facts = self.knowledge.get_active_facts()[:sample]
+        if not facts:
+            return None
+        hits = 0
+        for fact in facts:
+            try:
+                emb = self.anchor.embed(fact["text"])
+                if emb.dim() > 1:
+                    emb = emb.squeeze(0)
+                results = self.knowledge.recall(
+                    emb, top_k=3, query_text=fact["text"], strategy="hybrid_rrf"
+                )
+                if any(int(r["id"]) == int(fact["id"]) for r in results):
+                    hits += 1
+            except Exception:
+                return None
+        return hits / len(facts)
+
+    def sleep(self, cancel_event: Optional[threading.Event] = None,
+              **overrides) -> Dict[str, Any]:
+        """Run one bounded consolidation cycle and return a structured report.
+
+        Replay, fact pruning and parameter pruning are reported separately so
+        an empty phase is never mistaken for work performed.
+        """
+        started = time.perf_counter()
+        cfg = dict(self.sleep_config)
+        cfg.update(overrides)
+        warnings: List[str] = []
+        errors: List[str] = []
+        report: Dict[str, Any] = {
+            "status": "completed",
+            "duration_ms": 0.0,
+            "cycles": self.sleep_cycles,
+            "replay": {
+                "status": "not_run", "steps": 0, "unique_recovered": 0,
+                "duplicates": 0, "coverage": 0.0, "replay_writes": 0,
+            },
+            "fact_pruning": {"status": "not_run", "pruned": 0, "total_before": 0,
+                             "total_after": 0},
+            "parameter_pruning": {"status": "disabled", "selected": 0, "total": 0},
+            "learning_rate": self.lr_schedule.diagnostics(),
+            "warnings": warnings,
+            "errors": errors,
+        }
+        if cancel_event is not None and cancel_event.is_set():
+            report["status"] = "cancelled"
+            report["duration_ms"] = (time.perf_counter() - started) * 1000
+            self.last_sleep_report = report
+            return report
+        with self._engine_lock:
+            total_facts = self.knowledge.active_count()
+            if total_facts == 0:
+                report["status"] = "no_op_empty"
+                report["fact_pruning"].update(
+                    {"status": "no_facts", "total_before": 0, "total_after": 0}
+                )
+                report["replay"]["status"] = "no_patterns"
+                report["duration_ms"] = (time.perf_counter() - started) * 1000
+                self.last_sleep_report = report
+                return report
+
+            # Phase 1: autonomous replay (never receives expected patterns).
+            try:
+                consolidator = SleepConsolidation(
+                    self,
+                    max_replay_steps=int(cfg.get("max_replay_steps", 128)),
+                    max_seconds=float(cfg.get("max_seconds", 10.0)),
+                    min_similarity=float(cfg.get("min_similarity", 0.0)),
+                    duplicate_cap=int(cfg.get("duplicate_cap", 2)),
+                    inhibition_strength=float(cfg.get("inhibition_strength", 0.6)),
+                    inhibition_decay=float(cfg.get("inhibition_decay", 0.5)),
+                    lr=self.lr_schedule.current_lr,
+                    base_lr=max(self.base_lr, 1e-9),
+                )
+                replay = consolidator.autonomous_retrieval(cancel_event)
+                report["replay"] = replay
+                warnings.extend(replay.get("warnings", []))
+                if replay.get("status") == "cancelled":
+                    report["status"] = "cancelled"
+            except Exception as exc:
+                errors.append(f"replay: {exc}")
+                report["replay"]["status"] = "failed"
+
+            # Phase 2: MAS parameter pruning (opt-in).
+            if cfg.get("mas_enabled"):
+                try:
+                    vecs, _ids = self.knowledge._load_dense()
+                    inputs = vecs[: min(32, vecs.shape[0])]
+                    mas = MemoryAwareSynapses(
+                        self.memory,
+                        ratio=float(cfg.get("parameter_prune_ratio", 0.1)),
+                        quality_fn=self._retrieval_quality,
+                    )
+                    mas.estimate_importance(inputs)
+                    report["parameter_pruning"] = mas.prune()
+                    self.mas = mas
+                    if report["parameter_pruning"].get("warning"):
+                        warnings.append(report["parameter_pruning"]["warning"])
+                except Exception as exc:
+                    errors.append(f"parameter_pruning: {exc}")
+                    report["parameter_pruning"] = {"status": "failed", "selected": 0,
+                                                   "total": 0, "error": str(exc)}
+            else:
+                report["parameter_pruning"] = {
+                    "status": "disabled", "selected": 0, "total": 0,
+                    "reason": "mas_enabled is false by default",
+                }
+
+            # Phase 3: fact-utility pruning (separate counts from parameters).
+            if report["status"] != "cancelled":
+                try:
+                    fact_report = self.consolidate_memory(
+                        max_prune_ratio=float(cfg.get("fact_prune_ratio", 0.1))
+                    )
+                    report["fact_pruning"] = {
+                        "status": fact_report.get("status", "unknown"),
+                        "pruned": int(fact_report.get("pruned", 0)),
+                        "total_before": int(fact_report.get("total_before", total_facts)),
+                        "total_after": int(fact_report.get(
+                            "total_after", self.knowledge.active_count())),
+                    }
+                except Exception as exc:
+                    errors.append(f"fact_pruning: {exc}")
+                    report["fact_pruning"] = {"status": "failed", "pruned": 0,
+                                              "total_before": total_facts,
+                                              "total_after": total_facts}
+
+            # A committed cycle advances the persisted schedule exactly once.
+            committed = (
+                not errors and report["status"] == "completed"
+                and int(report["replay"].get("steps", 0)) > 0
+            )
+            if committed:
+                self.lr_schedule.advance()
+                self.sleep_cycles += 1
+            self.sleep_config["schedule"] = self.lr_schedule.state_dict()
+            report["cycles"] = self.sleep_cycles
+            report["learning_rate"] = self.lr_schedule.diagnostics()
+            if errors:
+                report["status"] = "partial_failure"
+            report["duration_ms"] = (time.perf_counter() - started) * 1000
+            self.last_sleep_report = report
+            self.log(f"Sleep cycle {self.sleep_cycles} finished: {report['status']}",
+                     details={k: report[k] for k in ("replay", "fact_pruning",
+                                                     "parameter_pruning")})
+            return report
+
+    @staticmethod
+    def _format_sleep_report(report: Dict[str, Any]) -> str:
+        replay = report.get("replay", {})
+        facts = report.get("fact_pruning", {})
+        params = report.get("parameter_pruning", {})
+        return (
+            f"Sleep cycle {report.get('status')} in "
+            f"{report.get('duration_ms', 0.0):.1f} ms: "
+            f"replayed {replay.get('steps', 0)} patterns "
+            f"({replay.get('unique_recovered', 0)} unique, coverage "
+            f"{replay.get('coverage', 0.0):.2f}); pruned {facts.get('pruned', 0)} facts "
+            f"and {params.get('selected', 0)} plastic parameters "
+            f"(lr index {report.get('learning_rate', {}).get('i', 0)}, "
+            f"lr {report.get('learning_rate', {}).get('lr_i', 0.0):.4f})."
+        )
 
     def get_memory_health(self) -> Dict[str, Any]:
         total = self.knowledge.total_count()
@@ -1436,7 +1685,10 @@ class DroidEngine(nn.Module):
         except Exception:
             pass
 
-        # 2. Plastic state.
+        # 2. Plastic state. Tensors go to safetensors; version/identity and
+        # other non-tensor metadata go to a JSON sidecar so a restart restores
+        # capacity, eviction counters, gates and schedule state (post-merge 2.7).
+        adapter_meta: Dict[str, Any] = {}
         try:
             if hasattr(self.memory, 'state_dict'):
                 weights = {}
@@ -1444,6 +1696,8 @@ class DroidEngine(nn.Module):
                 for k, v in sd.items():
                     if isinstance(v, torch.Tensor):
                         weights[k] = v.detach().cpu().contiguous()
+                    elif isinstance(v, (str, int, float, bool, list, tuple, type(None))):
+                        adapter_meta[k] = v
                 # ``h_trace`` is already in the adapter state dict; do not
                 # also write it as ``states`` (safetensors rejects two keys
                 # that share memory). Legacy states-only readers still work.
@@ -1473,6 +1727,18 @@ class DroidEngine(nn.Module):
                     save_file({"states": self.memory.h_trace.detach().cpu()}, str(p / "memory.safetensors"))
             except Exception:
                 pass
+        # Sidecar is written after the tensors it describes, and only when
+        # there is metadata to record.
+        if adapter_meta:
+            adapter_meta.setdefault("adapter_name", self.adapter_name)
+            adapter_meta.setdefault("adapter_version", getattr(self.memory, "_adapter_version", 1))
+            try:
+                tmp = p / "adapter_meta.json.tmp"
+                with open(tmp, "w") as f:
+                    json.dump(adapter_meta, f, indent=2)
+                os.replace(tmp, p / "adapter_meta.json")
+            except Exception:
+                pass
 
         # 3. Byte-RTU checkpoint (byte_rtu / hybrid profiles only).
         if checkpoint_name is not None:
@@ -1497,6 +1763,17 @@ class DroidEngine(nn.Module):
         except Exception:
             pass
 
+        # 4b. MAS importance/masks (reversible pruning evidence).
+        mas_manifest: Optional[Dict[str, Any]] = None
+        if self.mas is not None and getattr(self.mas, "importance", None):
+            try:
+                self.mas.save_state(
+                    str(p / "mas.safetensors"), str(p / "mas_meta.json")
+                )
+                mas_manifest = {"file": "mas.safetensors", "metadata": "mas_meta.json"}
+            except Exception:
+                mas_manifest = None
+
         # 5. Manifest last.
         config: Dict[str, Any] = {
             "name": self.name,
@@ -1510,19 +1787,14 @@ class DroidEngine(nn.Module):
             "test_time_training": self.test_time_training,
             "current_version": self.current_version,
         }
-        try:
-            if hasattr(self.memory, '_adapter_type'):
-                config["plastic_adapter"] = self.memory._adapter_type if isinstance(self.memory._adapter_type, str) else "associative_rtu"
-            else:
-                cls_name = self.memory.__class__.__name__
-                if "Associative" in cls_name:
-                    config["plastic_adapter"] = "associative_rtu"
-                elif "RTU" in cls_name:
-                    config["plastic_adapter"] = "legacy_rtu"
-                else:
-                    config["plastic_adapter"] = "associative_rtu"
-        except Exception:
-            config["plastic_adapter"] = "associative_rtu"
+        # Explicit registered identity, never a class-name substring guess.
+        identity = self.adapter_name or identify_adapter(self.memory)
+        config["plastic_adapter"] = identity or "associative_rtu"
+        config["adapter_identity_source"] = "registry" if identity else "default"
+        if getattr(self.memory, "_adapter_version", None) is not None:
+            config["adapter_version"] = int(self.memory._adapter_version)
+        if self.migrations:
+            config["migrations"] = self.migrations
         # Write constructor kwargs for round-trip (task 2.12)
         try:
             if hasattr(self, 'adapter_kwargs') and self.adapter_kwargs:
@@ -1536,6 +1808,10 @@ class DroidEngine(nn.Module):
             config.update(self.gguf_config)
         if self.gguf_backend and hasattr(self.gguf_backend, 'model_path'):
             config["gguf_model_path"] = self.gguf_backend.model_path
+        config["sleep"] = dict(self.sleep_config)
+        config["decreasing_backprop"] = self.lr_schedule.state_dict()
+        if mas_manifest is not None:
+            config["mas_state"] = mas_manifest
         if self.retrieval_policy:
             try:
                 policy_path = p / "retrieval_policy.json"
@@ -1643,23 +1919,92 @@ class DroidEngine(nn.Module):
         self.gguf_config = {k: v for k, v in config.items() if k.startswith("gguf_")}
         if "injection_strategy" in config:
             self.gguf_config["injection_strategy"] = config["injection_strategy"]
+        # Explicit adapter identity is authoritative (post-merge 2.5/2.6).
+        explicit_identity = "plastic_adapter" in config
         adapter_name = config.get("plastic_adapter", "associative_rtu")
-        adapter_kwargs = config.get("adapter_kwargs", {})
-        if adapter_name and get_adapter is not None:
+        adapter_kwargs = config.get("adapter_kwargs", {}) or {}
+        if not isinstance(adapter_kwargs, dict):
+            raise InvalidProfileError(
+                f"Profile manifest {config_file} declares non-object adapter_kwargs"
+            )
+        current_identity = identify_adapter(self.memory) or getattr(
+            self.memory, "_adapter_type", None
+        )
+        if explicit_identity:
+            if not isinstance(adapter_name, str) or not adapter_name:
+                raise InvalidProfileError(
+                    f"Profile manifest {config_file} declares an empty plastic_adapter"
+                )
+            if get_adapter is None:
+                raise InvalidProfileError(
+                    "Cannot load a profile with an explicit plastic_adapter: "
+                    "the adapter registry is unavailable"
+                )
             try:
-                current_type = self.memory.__class__.__name__.lower()
-                if adapter_name not in current_type:
+                from src.model.plastic_adapter import get_adapter_class
+                get_adapter_class(adapter_name)
+            except KeyError as exc:
+                raise InvalidProfileError(
+                    f"Profile manifest {config_file} names unsupported plastic_adapter "
+                    f"{adapter_name!r}; refusing to substitute the default adapter"
+                ) from exc
+            if current_identity != adapter_name:
+                try:
                     self.memory = get_adapter(adapter_name, dim=self.dim, **adapter_kwargs)
-            except Exception:
-                pass
+                except Exception as exc:
+                    raise InvalidProfileError(
+                        f"Could not construct plastic adapter {adapter_name!r} from "
+                        f"{config_file}: {exc}"
+                    ) from exc
+            self.adapter_name = adapter_name
+        else:
+            # Legacy manifest: documented default, recorded as a versioned
+            # migration rather than silently treated as authored state.
+            self.adapter_name = "associative_rtu"
+            record = {"migration": "adapter_identity_default", "version": 1,
+                      "from": "absent", "to": "associative_rtu"}
+            if record not in self.migrations:
+                self.migrations.append(record)
+        self.adapter_kwargs = dict(adapter_kwargs)
+
         weights: Dict[str, Any] = {}
         try:
-            weights = load_file(str(mem_file))
+            weights = dict(load_file(str(mem_file)))
+        except Exception as exc:
+            raise InvalidProfileError(
+                f"Profile artifact {mem_file} is unreadable or malformed: {exc}"
+            ) from exc
+        # Merge the versioned metadata sidecar that safetensors cannot carry.
+        meta_file = p / "adapter_meta.json"
+        if meta_file.exists():
+            try:
+                with open(meta_file, "r") as f:
+                    meta = json.load(f)
+                if not isinstance(meta, dict):
+                    raise ValueError("adapter metadata must be a JSON object")
+            except Exception as exc:
+                raise InvalidProfileError(
+                    f"Adapter metadata {meta_file} is malformed: {exc}"
+                ) from exc
+            for key, value in meta.items():
+                weights.setdefault(key, value)
+
+        previous_state = None
+        try:
+            previous_state = clone_state(self.memory.state_dict())
+        except Exception:
+            previous_state = None
+        try:
             with torch.no_grad():
                 if hasattr(self.memory, 'load_state_dict'):
                     try:
                         self.memory.load_state_dict(weights)
                     except Exception:
+                        adapter_type = getattr(self.memory, "_adapter_type", "")
+                        if adapter_type in ("delta_rtu", "sparse_delta", "fly_model"):
+                            # Versioned delta/sparse states must never be
+                            # reinterpreted through the legacy key path.
+                            raise
                         if "states" in weights and hasattr(self.memory, 'h_trace'):
                             self.memory.h_trace.copy_(weights["states"])
                         elif "states" in weights and hasattr(self.memory, 'states'):
@@ -1675,8 +2020,17 @@ class DroidEngine(nn.Module):
                         self.memory.decay.copy_(weights["decay"])
                     if "proj_weight" in weights:
                         self.memory.proj.weight.copy_(weights["proj_weight"])
-        except Exception:
-            pass
+        except Exception as exc:
+            # Staged failure: restore the previously active plastic state.
+            if previous_state is not None:
+                try:
+                    self.memory.load_state_dict(previous_state)
+                except Exception:
+                    pass
+            raise InvalidProfileError(
+                f"Plastic state {mem_file} is incompatible with adapter "
+                f"{self.adapter_name!r}: {exc}"
+            ) from exc
         db_file = p / "knowledge.db"
         know_file = p / "knowledge.json"
         self.knowledge.close()
@@ -1724,6 +2078,46 @@ class DroidEngine(nn.Module):
                 self.retrieval_policy.load(str(policy_file))
             except Exception:
                 pass
+
+        # Sleep policy, learning-rate schedule and MAS state.
+        sleep_cfg = config.get("sleep")
+        if isinstance(sleep_cfg, dict):
+            merged = json.loads(json.dumps(DEFAULT_SLEEP_CONFIG))
+            merged.update(sleep_cfg)
+            self.sleep_config = merged
+        schedule_cfg = config.get("decreasing_backprop")
+        if isinstance(schedule_cfg, dict):
+            try:
+                self.lr_schedule = DecreasingBackprop().load_state_dict(schedule_cfg)
+            except Exception as exc:
+                raise InvalidProfileError(
+                    f"Profile {config_file} declares an invalid decreasing-backprop "
+                    f"schedule: {exc}"
+                ) from exc
+            self.sleep_config["schedule"] = self.lr_schedule.state_dict()
+        mas_manifest = config.get("mas_state")
+        if isinstance(mas_manifest, dict) and mas_manifest.get("file"):
+            mas_path = p / str(mas_manifest["file"])
+            meta_path = p / str(mas_manifest.get("metadata", "mas_meta.json"))
+            if not mas_path.is_file():
+                raise InvalidProfileError(
+                    f"Profile {config_file} declares MAS state {mas_path} which is missing"
+                )
+            try:
+                mas = MemoryAwareSynapses(
+                    self.memory,
+                    ratio=float((json.loads(meta_path.read_text())
+                                 if meta_path.exists() else {}).get("ratio", 0.1)),
+                    quality_fn=self._retrieval_quality,
+                )
+                mas.load_state(str(mas_path),
+                               str(meta_path) if meta_path.exists() else None)
+                self.mas = mas
+            except Exception as exc:
+                raise InvalidProfileError(
+                    f"MAS state {mas_path} is incompatible with adapter "
+                    f"{self.adapter_name!r}: {exc}"
+                ) from exc
 
         # Re-attach the generative backend *after* the artifacts are restored.
         if checkpoint_path is not None:
