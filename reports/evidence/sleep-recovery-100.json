@@ -15,8 +15,8 @@
   "steps": 160,
   "stop_reason": "budget_exhausted",
   "replay_writes": 160,
-  "duration_sleep_s": 0.18711820899989107,
-  "duration_total_s": 0.18714294599999448,
+  "duration_sleep_s": 0.1869078150000405,
+  "duration_total_s": 0.1869464959997913,
   "target": 0.95,
   "target_met": true
 }

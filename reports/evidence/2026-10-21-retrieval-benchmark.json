@@ -1,0 +1,89 @@
+{
+  "commit": "f31b00cec57e481306b5b37a72f3362b2cf8e614",
+  "tier": "benchmark",
+  "command": "PYTHONPATH=. python scripts/bench_hybrid_retrieval.py",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.14.1+cu130",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "cpu_threads": 1,
+    "hnswlib": false,
+    "embeddings": "OnnxMiniLM mock (is_mock=True)",
+    "sandbox": "Arena Agent Mode CPU sandbox"
+  },
+  "configuration": {
+    "corpus_facts": 100000,
+    "dim": 384,
+    "queries": 25,
+    "seed": 13,
+    "index": "auto",
+    "hnswlib_available": false
+  },
+  "outcome": "failed",
+  "details": {
+    "dense": {
+      "corpus_facts": 100000,
+      "dim": 384,
+      "queries": 25,
+      "k": 5,
+      "knnlib_mode": "exact-fallback",
+      "hnsw_available": false,
+      "fallback_reason": "hnswlib is not installed",
+      "build_ms": 92.69583399986914,
+      "dense_bytes": 153600000,
+      "exact_latency_ms": {
+        "mean": 13.827801639972677,
+        "p50": 13.520889999881547,
+        "p95": 16.417956000168488
+      },
+      "candidate_latency_ms": {
+        "mean": 9.936735359988234,
+        "p50": 9.141171000010218,
+        "p95": 13.853525000058653
+      },
+      "recall_at_k_vs_exact": 1.0,
+      "targets": {
+        "p95_ms": 5.0,
+        "recall_at_5": 0.95,
+        "p95_met": false,
+        "recall_met": true
+      },
+      "note": "Exact fallback measured because hnswlib is unavailable"
+    },
+    "matryoshka": {
+      "corpus_facts": 100000,
+      "fast_dim": 64,
+      "full_dim": 384,
+      "queries": 12,
+      "fast_latency_ms": {
+        "mean": 3.896020666672939,
+        "p50": 3.245565000042916,
+        "p95": 5.195467000021381
+      },
+      "full_latency_ms": {
+        "mean": 18.21419766666092,
+        "p50": 15.660904000014852,
+        "p95": 23.77418400010356
+      },
+      "fast_path_speedup_p50": 4.8253244041662295,
+      "fast_quality_p_at_5": 1.0,
+      "full_quality_p_at_5": 1.0,
+      "relative_quality_loss": 0.0,
+      "targets": {
+        "speedup": 6.0,
+        "relative_quality_loss": 0.05,
+        "speedup_met": false,
+        "quality_met": true
+      },
+      "metric": "cluster-label precision@5 (fast 64-D vs full 384-D)",
+      "projection_checksum": "15145f3a557de507"
+    },
+    "raw_artifact": "reports/evidence/hybrid-retrieval-100k.json",
+    "misses": [
+      "dense p95 5 ms target not met by the exact fallback; hnswlib unavailable",
+      "matryoshka >=6x fast-path speedup not met (p50 speedup measured)"
+    ]
+  },
+  "skip_reason": "hnswlib is not installed, so the approximate index and its latency target cannot be measured",
+  "outcome_meaning": "failed = the benchmark ran, but the <5 ms p95 dense target and the >=6x Matryoshka target were not met; hnswlib was unavailable so the approximate index was not measured."
+}

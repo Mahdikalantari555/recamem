@@ -1,0 +1,38 @@
+{
+  "commit": "f31b00cec57e481306b5b37a72f3362b2cf8e614",
+  "tier": "offline",
+  "command": "PYTHONPATH=. python -c 'from src.model.edge_slm import EdgeSLMRegistry; EdgeSLMRegistry().metadata()'",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.14.1+cu130",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "cpu_threads": 1,
+    "hnswlib": false,
+    "embeddings": "OnnxMiniLM mock (is_mock=True)",
+    "sandbox": "Arena Agent Mode CPU sandbox"
+  },
+  "configuration": {
+    "catalog": "src/model/edge_slm.py",
+    "version": "1.0.0"
+  },
+  "outcome": "passed",
+  "details": {
+    "model_count": 13,
+    "metadata": {
+      "version": "1.0.0",
+      "verified": "2026-10-21",
+      "count": 13,
+      "families": [
+        "gemma-3",
+        "llama-3.2",
+        "phi-4",
+        "qwen2.5",
+        "smollm2"
+      ],
+      "provenance_note": "RAM/throughput figures are source-reported or estimates, not local measurements; unknown throughput is reported as unknown."
+    },
+    "artifact": "reports/evidence/edge-slm-catalog.json",
+    "note": "browsing constructs entries only; no weights are loaded or downloaded"
+  },
+  "outcome_meaning": "passed = 13 catalog entries with provenance were produced without loading or downloading weights."
+}

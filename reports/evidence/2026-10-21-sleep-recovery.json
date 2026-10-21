@@ -1,0 +1,50 @@
+{
+  "commit": "f31b00cec57e481306b5b37a72f3362b2cf8e614",
+  "tier": "benchmark",
+  "command": "PYTHONPATH=. python scripts/bench_sleep_recovery.py",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.14.1+cu130",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "cpu_threads": 1,
+    "hnswlib": false,
+    "embeddings": "OnnxMiniLM mock (is_mock=True)",
+    "sandbox": "Arena Agent Mode CPU sandbox"
+  },
+  "configuration": {
+    "patterns": 100,
+    "dim": 384,
+    "seed": 0,
+    "max_replay_steps": 160,
+    "max_seconds": 20.0,
+    "expected_patterns_passed_to_retrieval": false
+  },
+  "outcome": "passed",
+  "details": {
+    "result": {
+      "protocol": {
+        "patterns": 100,
+        "dim": 384,
+        "seed": 0,
+        "max_replay_steps": 160,
+        "max_seconds": 20.0,
+        "expected_patterns_passed_to_retrieval": false
+      },
+      "expected_count": 100,
+      "recovered_distinct_expected": 100,
+      "recovered_count": 100,
+      "coverage": 1.0,
+      "duplicates": 60,
+      "steps": 160,
+      "stop_reason": "budget_exhausted",
+      "replay_writes": 160,
+      "duration_sleep_s": 0.1869078150000405,
+      "duration_total_s": 0.1869464959997913,
+      "target": 0.95,
+      "target_met": true
+    },
+    "raw_artifact": "reports/evidence/sleep-recovery-100.json",
+    "note": "expected pattern IDs are scored after replay and never passed in"
+  },
+  "outcome_meaning": "passed = >=95 of 100 stored patterns were recovered without passing the expected list into replay."
+}
