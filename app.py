@@ -897,18 +897,20 @@ with tab_memory:
                     if not confirm_rollback:
                         st.warning("Confirm the rollback first")
                     else:
-                        # Snapshot the current state first so the rollback is reversible.
-                        pre = snapshot_mgr.create_snapshot(
-                            active_droid, f"pre-rollback-{int(time.time())}"
-                        )
-                        if snapshot_mgr.restore_snapshot(active_droid, target_version):
+                        # Shared staged rollback: a pre-rollback snapshot is taken
+                        # before anything is activated, so the rollback is reversible.
+                        report = snapshot_mgr.rollback(active_droid, target_version)
+                        if report.get("restored"):
                             droid_mgr.save_droid(st.session_state.selected_droid_name)
                             st.success(
                                 f"Restored {target_version}. Pre-rollback state saved as "
-                                f"{pre['metadata']['version_id']}."
+                                f"{report['pre_rollback_version']}."
                             )
                         else:
-                            st.error(f"Snapshot {target_version} not found; nothing changed")
+                            st.error(
+                                f"Rollback to {target_version} failed; nothing changed: "
+                                f"{report.get('error')}"
+                            )
                         st.rerun()
 
                 branch_input = st.text_input("New branch version id", key="branch_version_id", placeholder="e.g. experiment-a")

@@ -242,6 +242,26 @@ class DroidManager:
 
         return new_droid
 
+    def create_version(self, name: str, version_id: str) -> Dict[str, Any]:
+        """Create a complete snapshot of a profile through the engine."""
+        clean_name = name.strip().lower().replace(" ", "-")
+        droid = self.get_droid(clean_name)
+        snapshot = droid.create_snapshot(version_id)
+        return snapshot.get("metadata", {})
+
+    def rollback_version(self, name: str, version_id: str, save: bool = True) -> Dict[str, Any]:
+        """Roll back a profile with the same staged path the console uses.
+
+        A pre-rollback snapshot is written first, so ``rollback_version`` back to
+        ``pre_rollback_version`` restores the state that was just replaced.
+        """
+        clean_name = name.strip().lower().replace(" ", "-")
+        droid = self.get_droid(clean_name)
+        report = droid.rollback(version_id)
+        if report.get("restored") and save:
+            droid.save_profile(str(self.base_dir / clean_name))
+        return report
+
     def export_version(self, name: str, version_id: str, out_path: str) -> Dict[str, Any]:
         """Export snapshot artifact."""
         clean_name = name.strip().lower().replace(" ", "-")

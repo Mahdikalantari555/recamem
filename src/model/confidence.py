@@ -30,7 +30,11 @@ def retrieval_confidence(similarity: float, surprise: Optional[float] = None,
     # Adjust for health metrics: low interference, high quality => higher confidence
     if health_metrics:
         interference = health_metrics.get("interference", 0.5)
-        quality = health_metrics.get("retrieval_quality", 0.5)
+        quality = health_metrics.get("retrieval_quality")
+        if quality is None:
+            # No labelled retrieval judgements yet: do not invent a neutral
+            # 0.5 that would silently masquerade as measured quality.
+            quality = 0.5
         # Low interference good
         interference_factor = 1.0 - interference * 0.3  # if interference 0.7, factor 0.79
         # High quality good

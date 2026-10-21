@@ -500,6 +500,10 @@ class DroidEngine(nn.Module):
         self.ttt_steps_this_session = 0
         self.max_ttt_steps = 100
         self.ttt_lr = 1e-4
+        self.ttt_rate = 1.0              # allowed fraction of updates (1.0 = all)
+        self.ttt_attempts = 0
+        self.ttt_skipped = 0
+        self.ttt_last_skip_reason: Optional[str] = None
         # One lock serialises teach/recall/sleep and worker lifecycle.
         self._engine_lock = threading.RLock()
         self.last_activity = time.time()
@@ -840,18 +844,16 @@ class DroidEngine(nn.Module):
                 hits.append(m)
         hits.sort(key=lambda x: (x["dense_gate_pass"], x["similarity"]), reverse=True)
         hits = hits[:top_k]
-        if self.test_time_training and self.ttt_steps_this_session < self.max_ttt_steps:
+        ttt_decision = self._consume_ttt_step() if hits else {"allowed": False}
+        if ttt_decision.get("allowed"):
             try:
                 for hit in hits[:1]:
-                    if self.ttt_steps_this_session >= self.max_ttt_steps:
-                        break
                     fact_emb = self.anchor.embed(hit["text"])
                     if fact_emb.dim() > 1:
                         fact_emb = fact_emb.squeeze(0)
                     conf = hit.get("similarity", 0.5)
                     if hasattr(self.memory, 'update_associative_memory'):
                         self.memory.update_associative_memory(fact_emb, surprise_factor=conf)
-                        self.ttt_steps_this_session += 1
             except Exception as e:
                 pass
         self._retrieval_history.append({
@@ -1226,6 +1228,68 @@ class DroidEngine(nn.Module):
             f"lr {report.get('learning_rate', {}).get('lr_i', 0.0):.4f})."
         )
 
+    # ------------------------------------------------------------------ #
+    # Test-time training budget (post-merge 4.10)
+    # ------------------------------------------------------------------ #
+    def ttt_status(self) -> Dict[str, Any]:
+        return {
+            "enabled": bool(self.test_time_training),
+            "used": int(self.ttt_steps_this_session),
+            "max_steps": int(self.max_ttt_steps),
+            "attempts": int(self.ttt_attempts),
+            "skipped": int(self.ttt_skipped),
+            "rate": float(self.ttt_rate),
+            "remaining": max(0, int(self.max_ttt_steps) - int(self.ttt_steps_this_session)),
+            "last_skip_reason": self.ttt_last_skip_reason,
+        }
+
+    def _consume_ttt_step(self) -> Dict[str, Any]:
+        """Reserve one TTT update; shared by recall and every feedback path.
+
+        Returns ``{"allowed": bool, "reason": str|None, "used": int}``. A denied
+        step never mutates plastic state, so the budget is a hard bound and not
+        a best-effort hint.
+        """
+        self.ttt_attempts += 1
+        if not self.test_time_training:
+            self.ttt_skipped += 1
+            self.ttt_last_skip_reason = "opt_out"
+            return {"allowed": False, "reason": "opt_out",
+                    "used": self.ttt_steps_this_session}
+        if self.ttt_steps_this_session >= self.max_ttt_steps:
+            self.ttt_skipped += 1
+            self.ttt_last_skip_reason = "exhausted"
+            return {"allowed": False, "reason": "exhausted",
+                    "used": self.ttt_steps_this_session}
+        if self.ttt_rate < 1.0 and (self.ttt_attempts % max(1, int(round(1.0 / self.ttt_rate)))) != 0:
+            self.ttt_skipped += 1
+            self.ttt_last_skip_reason = "rate_limited"
+            return {"allowed": False, "reason": "rate_limited",
+                    "used": self.ttt_steps_this_session}
+        self.ttt_steps_this_session += 1
+        self.ttt_last_skip_reason = None
+        return {"allowed": True, "reason": None, "used": self.ttt_steps_this_session}
+
+    def _erase_corrected_fact(self, old_fact_id: int) -> bool:
+        """Remove a corrected fact's association from plastic memory."""
+        try:
+            row = self.knowledge.conn.execute(
+                "SELECT text FROM facts WHERE id=?", (int(old_fact_id),)
+            ).fetchone()
+            if not row:
+                return False
+            emb = self.anchor.embed(row[0])
+            if emb.dim() > 1:
+                emb = emb.squeeze(0)
+            emb = emb / torch.linalg.vector_norm(emb).clamp(min=1e-6)
+            erase = getattr(self.memory, "erase", None)
+            if callable(erase):
+                erase(emb, strength=1.0)
+                return True
+        except Exception:
+            return False
+        return False
+
     def get_memory_health(self) -> Dict[str, Any]:
         total = self.knowledge.total_count()
         active = self.knowledge.active_count()
@@ -1273,19 +1337,42 @@ class DroidEngine(nn.Module):
                 interference = max(0.0, mean_sim)
         except:
             pass
-        retrieval_quality = 0.5
+        # Retrieval quality comes from labelled judgements only (4.9): a real
+        # precision@k / MRR over persisted feedback, never a constant guess.
+        retrieval_health: Dict[str, Any] = {
+            "available": False,
+            "reason": "not_computed",
+            "samples": 0,
+            "precision_at_k": None,
+            "mrr": None,
+        }
+        try:
+            retrieval_health = self.knowledge.retrieval_health()
+        except Exception as exc:
+            retrieval_health = {
+                "available": False,
+                "reason": f"error: {exc}",
+                "samples": 0,
+                "precision_at_k": None,
+                "mrr": None,
+            }
+        retrieval_quality: Optional[float] = (
+            float(retrieval_health["precision_at_k"])
+            if retrieval_health.get("available") and retrieval_health.get("precision_at_k") is not None
+            else None
+        )
+        # Approve/reject counts are a separate, unweighted signal: they say how
+        # often users accepted a shown fact, not how well ranking performed.
+        approval_rate: Optional[float] = None
+        approval_samples = 0
         try:
             feedbacks = self.knowledge.get_feedback_log()
-            if feedbacks:
-                approves = sum(1 for fb in feedbacks if fb["action"] == "approve")
-                rejects = sum(1 for fb in feedbacks if fb["action"] == "reject")
-                total_fb = approves + rejects
-                if total_fb > 0:
-                    retrieval_quality = approves / total_fb
-            else:
-                if self._retrieval_history:
-                    retrieval_quality = 0.7
-        except:
+            approves = sum(1 for fb in feedbacks if fb["action"] == "approve")
+            rejects = sum(1 for fb in feedbacks if fb["action"] == "reject")
+            approval_samples = approves + rejects
+            if approval_samples:
+                approval_rate = approves / approval_samples
+        except Exception:
             pass
         # Eviction tracking from capacity enforcement (tasks 2.6, 2.7)
         evictions = 0
@@ -1300,71 +1387,121 @@ class DroidEngine(nn.Module):
                 key_count = active
         except:
             pass
-        return {"saturation": saturation, "associative_norm": associative_norm, "forgetting_rate": forgetting_rate, "interference": interference, "retrieval_quality": retrieval_quality, "active_facts": active, "total_facts": total, "K_max": self.K_max, "evictions": evictions, "eviction_count": evictions, "key_count": key_count, "active_key_count": key_count}
+        return {
+            "saturation": saturation,
+            "associative_norm": associative_norm,
+            "forgetting_rate": forgetting_rate,
+            "interference": interference,
+            "retrieval_quality": retrieval_quality,
+            "retrieval_health": retrieval_health,
+            "approval_rate": approval_rate,
+            "approval_samples": approval_samples,
+            "ttt": self.ttt_status(),
+            "active_facts": active,
+            "total_facts": total,
+            "K_max": self.K_max,
+            "evictions": evictions,
+            "eviction_count": evictions,
+            "key_count": key_count,
+            "active_key_count": key_count,
+        }
 
     def create_snapshot(self, version_id: Optional[str] = None) -> Dict[str, Any]:
+        """Snapshot tensors, the complete database and lifecycle state (4.4).
+
+        Delegates to :class:`SnapshotManager`, which writes the manifest last
+        and never aliases live tensors.
+        """
         if version_id is None:
             version_id = f"v{int(time.time())}"
-        try:
-            if hasattr(self.memory, 'state_dict'):
-                plastic_state = self.memory.state_dict()
-                serializable_state = {}
-                for k, v in plastic_state.items():
-                    if isinstance(v, torch.Tensor):
-                        serializable_state[k] = v.detach().cpu().clone()
-                    else:
-                        serializable_state[k] = clone_state(v)
-            else:
-                serializable_state = {}
-        except Exception as e:
-            serializable_state = {}
-        health = {}
-        try:
-            health = self.get_memory_health()
-        except:
-            pass
-        metadata = {"version_id": version_id, "timestamp": time.time(), "step_count": self.step_count, "fact_count": self.knowledge.active_count(), "parent_version": self.current_version, "health_metrics": health}
-        snapshot = {"plastic_state": serializable_state, "metadata": metadata, "version": version_id, "timestamp": metadata["timestamp"], "step_count": metadata["step_count"], "fact_count": metadata["fact_count"]}
+        if self.snapshot_manager is not None:
+            snapshot = self.snapshot_manager.create_snapshot(
+                self, version_id, parent_version=self.current_version
+            )
+        else:  # pragma: no cover - SnapshotManager is always importable
+            plastic_state = (
+                clone_state(self.memory.state_dict())
+                if hasattr(self.memory, "state_dict") else {}
+            )
+            snapshot = {
+                "plastic_state": plastic_state,
+                "metadata": {
+                    "version_id": version_id,
+                    "timestamp": time.time(),
+                    "step_count": self.step_count,
+                    "fact_count": self.knowledge.active_count(),
+                    "parent_version": self.current_version,
+                    "health_metrics": {},
+                },
+                "persisted": False,
+                "artifacts": {},
+            }
         self.snapshots[version_id] = snapshot
         self.current_version = version_id
-        if self.snapshot_manager:
-            try:
-                self.snapshot_manager.create_snapshot(self, version_id, parent_version=metadata["parent_version"])
-            except:
-                pass
         return snapshot
 
     def restore_snapshot(self, snapshot_dict_or_version: Union[Dict, str]) -> bool:
-        snapshot = None
+        """Staged restore: validate everything before activating (4.4/4.5)."""
         if isinstance(snapshot_dict_or_version, str):
             version_id = snapshot_dict_or_version
-            snapshot = self.snapshots.get(version_id)
-            if snapshot is None and self.snapshot_manager:
-                if version_id in self.snapshot_manager.snapshots:
-                    snapshot = self.snapshot_manager.snapshots[version_id]
         else:
             snapshot = snapshot_dict_or_version
-            version_id = snapshot.get("version_id") or snapshot.get("version") or snapshot.get("metadata", {}).get("version_id")
+            version_id = (
+                snapshot.get("version_id")
+                or snapshot.get("version")
+                or snapshot.get("metadata", {}).get("version_id")
+            )
+            self.snapshots.setdefault(version_id, snapshot)
+        if self.snapshot_manager is not None:
+            if self.snapshot_manager.restore_snapshot(self, version_id):
+                self.current_version = version_id
+                return True
+            # Fall back to in-memory payloads for snapshots created before the
+            # manager owned persistence; never silently succeed otherwise.
+            if version_id not in self.snapshots:
+                return False
+        snapshot = self.snapshots.get(version_id)
         if snapshot is None:
             return False
         plastic_state = snapshot.get("plastic_state", {})
         try:
-            if hasattr(self.memory, 'load_state_dict') and plastic_state:
+            if hasattr(self.memory, "load_state_dict") and plastic_state:
                 self.memory.load_state_dict(clone_state(plastic_state))
-        except Exception as e:
+        except Exception:
             return False
         meta = snapshot.get("metadata", {})
         self.step_count = meta.get("step_count", self.step_count)
-        self.current_version = meta.get("version_id") or snapshot.get("version_id") or snapshot.get("version")
+        self.current_version = version_id
         return True
 
     def rollback_to(self, version_id: str) -> bool:
-        result = self.restore_snapshot(version_id)
-        if result:
+        """Reversible rollback with a pre-rollback snapshot."""
+        return bool(self.rollback(version_id).get("restored"))
+
+    def rollback(self, version_id: str) -> Dict[str, Any]:
+        """Roll back through the shared staged path; the live state is saved first."""
+        if self.snapshot_manager is None:  # pragma: no cover
+            restored = self.restore_snapshot(version_id)
+            return {
+                "restored": restored,
+                "version_id": version_id,
+                "pre_rollback_version": None,
+                "error": None if restored else "snapshot not found",
+            }
+        before = self.current_version
+        report = self.snapshot_manager.rollback(self, version_id)
+        if report.get("restored"):
             self.current_version = f"{version_id}_branch_{int(time.time())}"
-        return result
+            report["restored_from_version"] = before
+        return report
 
     def branch_from(self, version_id: str, new_version_id: str) -> Optional[Dict]:
+        if self.snapshot_manager is not None:
+            branched = self.snapshot_manager.branch_from(version_id, new_version_id, self)
+            if branched is not None:
+                self.snapshots[new_version_id] = branched
+                self.current_version = new_version_id
+                return branched
         snapshot = self.snapshots.get(version_id)
         if snapshot is None:
             if self.snapshot_manager:
@@ -1377,6 +1514,11 @@ class DroidEngine(nn.Module):
         return new_snapshot
 
     def list_snapshots(self) -> List[Dict]:
+        if self.snapshot_manager is not None:
+            try:
+                return self.snapshot_manager.list_snapshots(self)
+            except Exception:
+                pass
         result = []
         for vid, snap in self.snapshots.items():
             meta = snap.get("metadata", {})
@@ -1484,7 +1626,8 @@ class DroidEngine(nn.Module):
                     self.retrieval_policy.update(qt, self._last_retrieval_strategy, reward=1.0)
                 except:
                     pass
-            if self.test_time_training and self.ttt_steps_this_session < self.max_ttt_steps:
+            decision = self._consume_ttt_step()
+            if decision.get("allowed"):
                 try:
                     row = self.knowledge.conn.execute("SELECT text FROM facts WHERE id=?", (fact_id,)).fetchone()
                     if row:
@@ -1494,7 +1637,6 @@ class DroidEngine(nn.Module):
                             emb = emb.squeeze(0)
                         if hasattr(self.memory, 'update_associative_memory'):
                             self.memory.update_associative_memory(emb, surprise_factor=1.0)
-                            self.ttt_steps_this_session += 1
                 except Exception as e:
                     pass
             return {"status": "approved", "fact_id": fact_id}
@@ -1532,11 +1674,11 @@ class DroidEngine(nn.Module):
                 self.knowledge.log_feedback(old_fact_id, "correct", correction_text=new_text, strategy_used=self._last_retrieval_strategy)
             except:
                 pass
-            if self.test_time_training and self.ttt_steps_this_session < self.max_ttt_steps:
+            decision = self._consume_ttt_step()
+            if decision.get("allowed"):
                 try:
                     if hasattr(self.memory, 'update_associative_memory'):
                         self.memory.update_associative_memory(emb, surprise_factor=1.5)
-                        self.ttt_steps_this_session += 1
                 except Exception as e:
                     pass
             try:
