@@ -1,0 +1,26 @@
+{
+  "commit": "d9fc1fdfda08f2f341b4f80601e5c8bd1e84da64",
+  "tier": "offline",
+  "command": "PYTHONPATH=. python -m pytest tests -q",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.14.1+cu130",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "cpu_threads": 1,
+    "hnswlib": false,
+    "embeddings": "OnnxMiniLM mock (is_mock=True)",
+    "sandbox": "Arena Agent Mode CPU sandbox"
+  },
+  "configuration": {
+    "suite": "all tests",
+    "torch_threads": 1
+  },
+  "outcome": "passed",
+  "details": {
+    "passed": 622,
+    "skipped": 1,
+    "failed": 0,
+    "note": "one skip is the pre-existing optional-dependency skip"
+  },
+  "outcome_meaning": "passed = the full offline test suite is green at this commit."
+}

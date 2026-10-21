@@ -70,6 +70,80 @@ class KnowledgeStore:
         # Cached dense matrix, rebuilt only on insert. Per-query recall reuses it.
         self._vec_cache: Optional[torch.Tensor] = None
         self._id_cache: Optional[List[int]] = None
+        # Optional hybrid retrieval (HNSW / reranker / Matryoshka). Defaults
+        # preserve the exact dense MVM path byte-for-byte.
+        self.dense_index = None
+        self.reranker = None
+        self.matryoshka = None
+        self.rerank_limit = 50
+        self._index_signature = None
+        self.last_retrieval_trace: Optional[Dict[str, Any]] = None
+
+    # ------------------------------------------------------------------ #
+    # Optional hybrid retrieval
+    # ------------------------------------------------------------------ #
+    def configure_retrieval(self, dense_index=None, reranker=None,
+                            matryoshka=None, rerank_limit: int = 50) -> Dict[str, Any]:
+        """Enable approximate candidates and/or reranking for this store."""
+        self.dense_index = dense_index
+        self.reranker = reranker
+        self.matryoshka = matryoshka
+        self.rerank_limit = int(rerank_limit)
+        self._index_signature = None
+        return self.retrieval_status()
+
+    def retrieval_status(self) -> Dict[str, Any]:
+        status: Dict[str, Any] = {
+            "dense_index": None,
+            "reranker": None,
+            "matryoshka": None,
+        }
+        if self.dense_index is not None:
+            if hasattr(self.dense_index, "stats"):
+                status["dense_index"] = self.dense_index.stats()
+            else:
+                try:
+                    count = len(self.dense_index)
+                except Exception:
+                    count = len(getattr(self.dense_index, "ids", []) or [])
+                status["dense_index"] = {
+                    "kind": getattr(self.dense_index, "kind", type(self.dense_index).__name__),
+                    "mode": getattr(self.dense_index, "mode", "exact"),
+                    "count": count,
+                }
+        if self.reranker is not None:
+            status["reranker"] = {
+                "scorer": getattr(self.reranker, "scorer", "unknown"),
+                "limit": int(getattr(self.reranker, "limit", self.rerank_limit)),
+            }
+        if self.matryoshka is not None:
+            status["matryoshka"] = self.matryoshka.metadata()
+        return status
+
+    def _sync_dense_index(self) -> bool:
+        if self.dense_index is None:
+            return False
+        vecs, ids = self._load_dense()
+        signature = (len(ids), ids[-1] if ids else None, len(getattr(self.dense_index, "ids", [])))
+        index_ids = list(getattr(self.dense_index, "ids", []))
+        if signature != self._index_signature or index_ids != ids:
+            self.dense_index.rebuild(ids, vecs)
+            self._index_signature = (len(ids), ids[-1] if ids else None, len(ids))
+        return True
+
+    def _dense_candidates(self, q: torch.Tensor, k: int):
+        """Return (ids, scores) from the configured index, else exact MVM."""
+        try:
+            if self._sync_dense_index():
+                ids, scores = self.dense_index.search(q, k)
+                if len(ids):
+                    return ids, scores
+        except Exception as exc:  # fall back without corrupting the store
+            self.last_retrieval_trace = {"dense_index_error": str(exc)}
+        vecs, ids_all = self._load_dense()
+        sims = torch.mv(vecs, q)
+        top = sims.topk(k=min(k, len(ids_all)))
+        return ([ids_all[i] for i in top.indices.tolist()], top.values.tolist())
 
     def _create_schema(self):
         c = self.conn
@@ -345,12 +419,7 @@ class KnowledgeStore:
             return []
 
         q = self._query_vec(query_vec)
-        sims = torch.mv(vecs, q)
-        top_dense = sims.topk(
-            k=min(self._CANDS, len(ids))
-        )
-        dense_vals = top_dense.values.tolist()
-        dense_idx = top_dense.indices.tolist()
+        dense_ids, dense_vals = self._dense_candidates(q, min(self._CANDS, len(ids)))
         with self._write_lock:
             self.conn.execute("DROP TABLE IF EXISTS _dense_cands")
             self.conn.execute(
@@ -360,8 +429,8 @@ class KnowledgeStore:
             self.conn.executemany(
                 "INSERT INTO _dense_cands(id, score, drank) VALUES (?,?,?)",
                 [
-                    (ids[idx], dense_vals[rank], rank + 1)
-                    for rank, idx in enumerate(dense_idx)
+                    (int(fact_id), dense_vals[rank], rank + 1)
+                    for rank, fact_id in enumerate(dense_ids)
                 ],
             )
 
@@ -507,6 +576,26 @@ class KnowledgeStore:
                 "similarity": r[19] if r[19] is not None else 0.0,
             }
             results.append(entry)
+
+        # Optional bounded reranking: only the configured top candidates are
+        # scored, and both pre/post ranks plus the scorer stay in the trace.
+        previous_trace = self.last_retrieval_trace or {}
+        self.last_retrieval_trace = {
+            **previous_trace,
+            "dense_index": self.retrieval_status().get("dense_index"),
+            "candidates": len(results),
+        }
+        if self.reranker is not None and results and query_text:
+            try:
+                rerank = self.reranker.rerank(query_text, results, text_key="text")
+                results = rerank["results"]
+                self.last_retrieval_trace.update({
+                    "reranker": rerank["scorer"],
+                    "rerank_scored": rerank["scored"],
+                    "rerank_timing_ms": rerank["timing_ms"],
+                })
+            except Exception as exc:
+                self.last_retrieval_trace["reranker_error"] = str(exc)
 
         # Update access_count and last_retrieved
         if results:

@@ -36,6 +36,9 @@ class DroidManager:
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.cached_instances = {}
+        # At most one auto-sleep worker per droid name.
+        self._sleep_workers: Dict[str, Any] = {}
+        self._sleep_lock = __import__("threading").RLock()
 
     def list_droids(self) -> List[str]:
         """List all available Droid names."""
@@ -134,9 +137,64 @@ class DroidManager:
             droid_dir = self.base_dir / clean_name
             self.cached_instances[clean_name].save_profile(str(droid_dir))
 
+    def start_auto_sleep(self, name: str, config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Start the single opt-in auto-sleep worker for a droid.
+
+        Repeated calls (for example from Streamlit reruns) reuse the live
+        worker instead of creating a duplicate thread.
+        """
+        clean_name = name.strip().lower().replace(" ", "-")
+        with self._sleep_lock:
+            worker = self._sleep_workers.get(clean_name)
+            if worker is not None and worker.is_alive():
+                return {"status": "already_running", **worker.status()}
+            droid = self.get_droid(clean_name)
+            merged = dict(droid.sleep_config)
+            if config:
+                merged.update(config)
+            if not merged.get("enabled"):
+                return {"status": "disabled",
+                        "reason": "auto sleep is disabled by default; enable it explicitly"}
+            from src.model.sleep_consolidation import AutoSleepWorker
+            worker = AutoSleepWorker(droid, merged)
+            worker.start()
+            droid.auto_sleep_worker = worker
+            self._sleep_workers[clean_name] = worker
+            return {"status": "started", **worker.status()}
+
+    def stop_auto_sleep(self, name: str, timeout: float = 5.0) -> Dict[str, Any]:
+        clean_name = name.strip().lower().replace(" ", "-")
+        with self._sleep_lock:
+            worker = self._sleep_workers.pop(clean_name, None)
+        if worker is None:
+            droid = self.cached_instances.get(clean_name)
+            worker = getattr(droid, "auto_sleep_worker", None) if droid else None
+        if worker is None:
+            return {"status": "not_running"}
+        joined = worker.stop(timeout=timeout)
+        droid = self.cached_instances.get(clean_name)
+        if droid is not None:
+            droid.auto_sleep_worker = None
+        return {"status": "stopped" if joined else "stop_timeout", **worker.status()}
+
+    def auto_sleep_status(self, name: str) -> Dict[str, Any]:
+        clean_name = name.strip().lower().replace(" ", "-")
+        worker = self._sleep_workers.get(clean_name)
+        if worker is None:
+            return {"status": "not_running", "alive": False, "cycles": 0}
+        return {"status": "running" if worker.is_alive() else "stopped", **worker.status()}
+
+    def shutdown(self) -> None:
+        """Stop every worker; safe to call repeatedly."""
+        for name in list(self._sleep_workers):
+            self.stop_auto_sleep(name)
+
     def delete_droid(self, name: str) -> bool:
         """Delete a Droid profile directory."""
         clean_name = name.strip().lower().replace(" ", "-")
+        # Cancellation before filesystem removal: a worker must not write into
+        # a profile that is being deleted.
+        self.stop_auto_sleep(clean_name)
         droid_dir = self.base_dir / clean_name
         if clean_name in self.cached_instances:
             del self.cached_instances[clean_name]

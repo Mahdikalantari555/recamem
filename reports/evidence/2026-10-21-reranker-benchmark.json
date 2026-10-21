@@ -1,0 +1,38 @@
+{
+  "commit": "f31b00cec57e481306b5b37a72f3362b2cf8e614",
+  "tier": "benchmark",
+  "command": "PYTHONPATH=. python scripts/bench_hybrid_retrieval.py",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.14.1+cu130",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "cpu_threads": 1,
+    "hnswlib": false,
+    "embeddings": "OnnxMiniLM mock (is_mock=True)",
+    "sandbox": "Arena Agent Mode CPU sandbox"
+  },
+  "configuration": {
+    "labeled_queries": 50,
+    "relevant_per_query": 5,
+    "limit": 20
+  },
+  "outcome": "passed",
+  "details": {
+    "reranking": {
+      "labeled_queries": 50,
+      "relevant_per_query": 5,
+      "scorer": "fallback-lexical",
+      "precision_at_5_before": 0.23600000000000002,
+      "precision_at_5_after": 0.372,
+      "relative_gain": 0.5762711864406779,
+      "targets": {
+        "relative_gain": 0.2,
+        "met": true
+      },
+      "note": "lexical fallback scorer; no cross-encoder model supplied"
+    },
+    "raw_artifact": "reports/evidence/hybrid-retrieval-100k.json",
+    "caveat": "scorer is fallback-lexical; no cross-encoder model was available"
+  },
+  "outcome_meaning": "passed = Precision@5 improved by more than 20% relative with the lexical fallback scorer; no cross-encoder weights were available."
+}

@@ -1,0 +1,407 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "verified": "2026-10-21",
+    "count": 13,
+    "families": [
+      "gemma-3",
+      "llama-3.2",
+      "phi-4",
+      "qwen2.5",
+      "smollm2"
+    ],
+    "provenance_note": "RAM/throughput figures are source-reported or estimates, not local measurements; unknown throughput is reported as unknown."
+  },
+  "models": [
+    {
+      "key": "gemma-3-1b",
+      "family": "gemma-3",
+      "display_name": "Gemma 3 1B Instruct",
+      "params_b": 1.0,
+      "ram_gb": 0.8,
+      "ram_source": "source-reported",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "general_chat",
+        "reasoning",
+        "summarization"
+      ],
+      "tok_s": null,
+      "tok_s_source": "unknown",
+      "quality": {
+        "gsm8k_pct": 62.8,
+        "source_label": "source-reported"
+      },
+      "notes": [
+        "source-reported ~0.8 GB and 62.8% GSM8K"
+      ],
+      "model_id": "bartowski/gemma-3-1b-it-GGUF",
+      "filename": "gemma-3-1b-it-Q4_K_M.gguf",
+      "provenance": {
+        "type": "source-reported",
+        "url": "https://v-chandra.github.io/on-device-llms/",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    },
+    {
+      "key": "gemma-3-270m",
+      "family": "gemma-3",
+      "display_name": "Gemma 3 270M Instruct",
+      "params_b": 0.27,
+      "ram_gb": 0.3,
+      "ram_source": "estimate",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "general_chat",
+        "extraction"
+      ],
+      "tok_s": null,
+      "tok_s_source": "unknown",
+      "quality": {},
+      "notes": [],
+      "model_id": "bartowski/gemma-3-270m-it-GGUF",
+      "filename": "gemma-3-270m-it-Q4_K_M.gguf",
+      "provenance": {
+        "type": "estimate",
+        "url": "",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    },
+    {
+      "key": "gemma-3-4b",
+      "family": "gemma-3",
+      "display_name": "Gemma 3 4B Instruct",
+      "params_b": 4.0,
+      "ram_gb": 3.3,
+      "ram_source": "estimate",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "reasoning",
+        "general_chat",
+        "summarization"
+      ],
+      "tok_s": null,
+      "tok_s_source": "unknown",
+      "quality": {},
+      "notes": [],
+      "model_id": "bartowski/gemma-3-4b-it-GGUF",
+      "filename": "gemma-3-4b-it-Q4_K_M.gguf",
+      "provenance": {
+        "type": "estimate",
+        "url": "",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    },
+    {
+      "key": "llama-3.2-1b",
+      "family": "llama-3.2",
+      "display_name": "Llama 3.2 1B Instruct",
+      "params_b": 1.0,
+      "ram_gb": 1.5,
+      "ram_source": "source-reported",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "general_chat",
+        "summarization",
+        "extraction"
+      ],
+      "tok_s": [
+        30.0,
+        50.0
+      ],
+      "tok_s_source": "source-reported",
+      "quality": {
+        "source_label": "source-reported"
+      },
+      "notes": [
+        "source-reported ~1.5 GB RAM and 30-50 tokens/s on the cited i5/16 GB system"
+      ],
+      "model_id": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+      "filename": "Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+      "provenance": {
+        "type": "source-reported",
+        "url": "https://ggufloader.github.io/2025-07-07-top-10-gguf-models-i5-16gb.html",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    },
+    {
+      "key": "llama-3.2-3b",
+      "family": "llama-3.2",
+      "display_name": "Llama 3.2 3B Instruct",
+      "params_b": 3.0,
+      "ram_gb": 2.6,
+      "ram_source": "estimate",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "general_chat",
+        "reasoning",
+        "summarization"
+      ],
+      "tok_s": null,
+      "tok_s_source": "unknown",
+      "quality": {},
+      "notes": [
+        "throughput on this device is unknown"
+      ],
+      "model_id": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+      "filename": "Llama-3.2-3B-Instruct-Q4_K_M.gguf",
+      "provenance": {
+        "type": "estimate",
+        "url": "",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    },
+    {
+      "key": "phi-4-mini",
+      "family": "phi-4",
+      "display_name": "Phi-4-mini Instruct",
+      "params_b": 3.8,
+      "ram_gb": 3.0,
+      "ram_source": "estimate",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "reasoning",
+        "coding",
+        "general_chat"
+      ],
+      "tok_s": null,
+      "tok_s_source": "unknown",
+      "quality": {},
+      "notes": [],
+      "model_id": "bartowski/microsoft_Phi-4-mini-instruct-GGUF",
+      "filename": "microsoft_Phi-4-mini-instruct-Q4_K_M.gguf",
+      "provenance": {
+        "type": "estimate",
+        "url": "",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    },
+    {
+      "key": "qwen2.5-0.5b",
+      "family": "qwen2.5",
+      "display_name": "Qwen2.5 0.5B Instruct",
+      "params_b": 0.5,
+      "ram_gb": 0.5,
+      "ram_source": "estimate",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "general_chat",
+        "extraction"
+      ],
+      "tok_s": null,
+      "tok_s_source": "unknown",
+      "quality": {},
+      "notes": [],
+      "model_id": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "filename": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+      "provenance": {
+        "type": "estimate",
+        "url": "",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    },
+    {
+      "key": "qwen2.5-1.5b",
+      "family": "qwen2.5",
+      "display_name": "Qwen2.5 1.5B Instruct",
+      "params_b": 1.5,
+      "ram_gb": 1.2,
+      "ram_source": "estimate",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "reasoning",
+        "general_chat",
+        "coding"
+      ],
+      "tok_s": null,
+      "tok_s_source": "unknown",
+      "quality": {},
+      "notes": [
+        "tagged reasoning-oriented by the cited on-device survey"
+      ],
+      "model_id": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+      "provenance": {
+        "type": "estimate",
+        "url": "https://v-chandra.github.io/on-device-llms/",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    },
+    {
+      "key": "qwen2.5-3b",
+      "family": "qwen2.5",
+      "display_name": "Qwen2.5 3B Instruct",
+      "params_b": 3.0,
+      "ram_gb": 2.4,
+      "ram_source": "estimate",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "reasoning",
+        "coding",
+        "general_chat"
+      ],
+      "tok_s": null,
+      "tok_s_source": "unknown",
+      "quality": {},
+      "notes": [],
+      "model_id": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "filename": "qwen2.5-3b-instruct-q4_k_m.gguf",
+      "provenance": {
+        "type": "estimate",
+        "url": "",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    },
+    {
+      "key": "smollm2-1.7b",
+      "family": "smollm2",
+      "display_name": "SmolLM2 1.7B Instruct",
+      "params_b": 1.7,
+      "ram_gb": 1.5,
+      "ram_source": "estimate",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "general_chat",
+        "summarization",
+        "reasoning"
+      ],
+      "tok_s": null,
+      "tok_s_source": "unknown",
+      "quality": {},
+      "notes": [
+        "reported 11T-token training corpus"
+      ],
+      "model_id": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+      "filename": "smollm2-1.7b-instruct-q4_k_m.gguf",
+      "provenance": {
+        "type": "estimate",
+        "url": "https://v-chandra.github.io/on-device-llms/",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    },
+    {
+      "key": "smollm2-135m",
+      "family": "smollm2",
+      "display_name": "SmolLM2 135M Instruct",
+      "params_b": 0.135,
+      "ram_gb": 0.2,
+      "ram_source": "estimate",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "general_chat",
+        "extraction"
+      ],
+      "tok_s": null,
+      "tok_s_source": "unknown",
+      "quality": {},
+      "notes": [],
+      "model_id": "HuggingFaceTB/SmolLM2-135M-Instruct-GGUF",
+      "filename": "smollm2-135m-instruct-q4_k_m.gguf",
+      "provenance": {
+        "type": "estimate",
+        "url": "",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    },
+    {
+      "key": "smollm2-360m",
+      "family": "smollm2",
+      "display_name": "SmolLM2 360M Instruct",
+      "params_b": 0.36,
+      "ram_gb": 0.35,
+      "ram_source": "estimate",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "general_chat",
+        "extraction"
+      ],
+      "tok_s": null,
+      "tok_s_source": "unknown",
+      "quality": {},
+      "notes": [],
+      "model_id": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "filename": "smollm2-360m-instruct-q4_k_m.gguf",
+      "provenance": {
+        "type": "estimate",
+        "url": "",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    },
+    {
+      "key": "smollm2-3b",
+      "family": "smollm2",
+      "display_name": "SmolLM2 3B (preview)",
+      "params_b": 3.0,
+      "ram_gb": 2.5,
+      "ram_source": "estimate",
+      "quantizations": [
+        "Q4_K_M"
+      ],
+      "default_quantization": "Q4_K_M",
+      "task_tags": [
+        "general_chat",
+        "summarization"
+      ],
+      "tok_s": null,
+      "tok_s_source": "unknown",
+      "quality": {},
+      "notes": [],
+      "model_id": "HuggingFaceTB/SmolLM2-3B-Instruct-GGUF",
+      "filename": "smollm2-3b-instruct-q4_k_m.gguf",
+      "provenance": {
+        "type": "estimate",
+        "url": "",
+        "verified": "2026-10-21",
+        "local_measurement": false
+      }
+    }
+  ]
+}

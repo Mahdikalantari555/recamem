@@ -1,0 +1,77 @@
+{
+  "commit": "f31b00cec57e481306b5b37a72f3362b2cf8e614",
+  "tier": "benchmark",
+  "command": "PYTHONPATH=. python scripts/bench_continual_learning.py",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.14.1+cu130",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "cpu_threads": 1,
+    "hnswlib": false,
+    "embeddings": "OnnxMiniLM mock (is_mock=True)",
+    "sandbox": "Arena Agent Mode CPU sandbox"
+  },
+  "configuration": {
+    "version": "continual-20-v1",
+    "seeds": {
+      "data": 7,
+      "task_order": 11
+    },
+    "split": {
+      "train_per_task": 40,
+      "eval_per_task": 10,
+      "eval_pairs_with_train": true
+    },
+    "dim": 384,
+    "update_lr": 0.5,
+    "delta_gate": 1.0,
+    "density": 0.4,
+    "ewc_lambda": 200.0,
+    "ewc_lr": 0.02
+  },
+  "outcome": "passed",
+  "details": {
+    "summary": {
+      "code_utilization": {
+        "code_dim": 2048,
+        "distinct_codes_used": 2048,
+        "distinct_ratio": 1.0,
+        "mean_active_per_code": 128.0,
+        "sparsity": 0.9375
+      },
+      "delta_memory_loss": 0.11981909272260964,
+      "sparse_memory_loss": 0.04195302109234035,
+      "ewc_memory_loss": 0.10155712584964931,
+      "delta_target": 0.1,
+      "ewc_reference_target": 0.24,
+      "delta_target_met": false,
+      "ewc_reference_matched": false,
+      "ewc_note": "The external ~0.24 EWC reference was not reproduced by this protocol; the measured EWC loss is reported as-is.",
+      "interference": {
+        "dense_overlap": 1.0,
+        "sparse_overlap": 0.033545825816690925,
+        "relative_reduction": 0.966454174183309,
+        "target_relative_reduction": 0.2,
+        "retrieval_quality_delta_pp": -5.338183164130895,
+        "quality_loss_limit_pp": 5.0,
+        "target_met": true
+      },
+      "note": "Measured values from this configuration only. Reference figures are external targets, not measurements."
+    },
+    "raw_artifact": "reports/evidence/continual-learning-20task.json",
+    "misses": {
+      "delta_memory_loss_target": {
+        "target": 0.1,
+        "measured": 0.11981909272260964,
+        "met": false
+      },
+      "ewc_reference": {
+        "reference": 0.24,
+        "measured": 0.10155712584964931,
+        "matched": false,
+        "note": "The external ~0.24 EWC reference was not reproduced by this protocol; the measured EWC loss is reported as-is."
+      }
+    }
+  },
+  "outcome_meaning": "passed = the versioned 20-task protocol ran end to end and produced complete per-task results; target misses are recorded under details.misses and are not claimed as met."
+}
