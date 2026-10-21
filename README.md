@@ -4,6 +4,8 @@
 
 This repository provides a 1:1, contract-verified **PyTorch** implementation of Test-Model-Thing (TMT) alongside the **Droid Lifelong Engine** — a lightweight continual learning system that combines a frozen ONNX semantic anchor with plastic Recurrent Trace Units (RTUs) for conversational domain teaching while retaining prior domain facts in sequential-teaching tests.
 
+It is not a finished work.
+
 ---
 
 ## Key Features
@@ -56,6 +58,9 @@ python main.py <checkpoint.safetensors> chat
 
 # Inference only (frozen weights)
 python main.py <checkpoint.safetensors> chat --frozen
+
+# only use crossentropy loss
+python main.py <checkpoint.safetensors> chat --ce-only
 
 # Benchmark with CoLA
 python benchmark.py <checkpoint.safetensors> <epochs> <slice>
