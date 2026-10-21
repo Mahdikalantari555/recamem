@@ -1245,6 +1245,10 @@ class ContinuousStream:
         self.running = False
         self.paused = False
         self.thread: Optional[threading.Thread] = None
+        self._stop_event = threading.Event()
+        self._lock = threading.Lock()
+        self.stop_calls = 0
+        self.joined = True
         self.stats = {
             "facts_processed": 0,
             "facts_absorbed": 0,
@@ -1253,26 +1257,32 @@ class ContinuousStream:
         }
         self.lock = threading.Lock()
 
-    def start(self, log_source: Optional[str] = None):
-        """Start background thread."""
-        if self.running:
-            return
-        self.running = True
-        self.paused = False
-        self.thread = threading.Thread(target=self._run_loop, daemon=True)
-        self.thread.start()
+    def start(self, log_source: Optional[str] = None) -> bool:
+        """Start the single worker. Repeated starts reuse it (never duplicate)."""
+        with self._lock:
+            if self.running and self.thread is not None and self.thread.is_alive():
+                return False
+            self._stop_event.clear()
+            self.running = True
+            self.paused = False
+            self.joined = False
+            self.thread = threading.Thread(
+                target=self._run_loop, name="continuous-stream", daemon=True
+            )
+            self.thread.start()
         # If log_source provided, ingest it
         if log_source:
             self.ingest_file(log_source)
+        return True
 
     def _run_loop(self):
         """Background loop processing queue with rate limiting."""
         last_minute = time.time()
         facts_this_minute = 0
         
-        while self.running:
+        while self.running and not self._stop_event.is_set():
             if self.paused:
-                time.sleep(0.1)
+                self._stop_event.wait(0.05)
                 continue
             
             try:
@@ -1283,7 +1293,7 @@ class ContinuousStream:
                     facts_this_minute = 0
                 
                 if facts_this_minute >= self.max_fpm:
-                    time.sleep(1.0)
+                    self._stop_event.wait(0.1)
                     continue
                 
                 try:
@@ -1360,22 +1370,47 @@ class ContinuousStream:
         except Exception as e:
             print(f"Failed to ingest file {path}: {e}")
 
-    def pause(self):
+    def pause(self) -> bool:
+        """Pause the worker; the flag is meaningful before a start too."""
         self.paused = True
+        return self.is_alive()
 
-    def resume(self):
+    def resume(self) -> bool:
         self.paused = False
+        return self.is_alive()
 
-    def stop(self):
-        self.running = False
-        if self.thread:
-            self.thread.join(timeout=1.0)
+    def status(self) -> Dict[str, Any]:
+        return self.get_status()
+
+    def stop(self, timeout: float = 2.0) -> bool:
+        """Bounded stop: signal, join, and report whether the worker exited."""
+        with self._lock:
+            self.stop_calls += 1
+            self.running = False
+            self._stop_event.set()
+            thread = self.thread
+        if thread is not None and thread.is_alive():
+            thread.join(timeout=timeout)
+            self.joined = not thread.is_alive()
+        else:
+            self.joined = True
+        return self.joined
+
+    def is_alive(self) -> bool:
+        return bool(self.thread is not None and self.thread.is_alive())
+
+    def cancel(self) -> bool:
+        """Alias used by console/CLI cancellation; same bounded semantics."""
+        return self.stop()
 
     def get_status(self) -> Dict:
         with self.lock:
             return {
                 "running": self.running and not self.paused,
+                "alive": self.is_alive(),
                 "paused": self.paused,
+                "stop_calls": self.stop_calls,
+                "joined": self.joined,
                 "facts_processed": self.stats["facts_processed"],
                 "facts_absorbed": self.stats["facts_absorbed"],
                 "queue_depth": self.stats["queue_depth"],

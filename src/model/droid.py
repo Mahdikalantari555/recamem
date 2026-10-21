@@ -1,7 +1,9 @@
+import hashlib
 import json
 import math
 import os
 import re
+import sqlite3
 import threading
 import time
 from pathlib import Path
@@ -990,10 +992,101 @@ class DroidEngine(nn.Module):
         self._set_answer_path(ANSWER_PATH_RECALL)
         return NO_INFORMATION_MESSAGE
 
+    def _frozen_fingerprint(self) -> str:
+        """Stable hash of frozen components (anchor + generative decoder).
+
+        Consolidation is allowed to touch plastic parameters only; comparing
+        this before and after proves the frozen path was not modified.
+        """
+        digest = hashlib.sha256()
+        targets = [("anchor", getattr(self, "anchor", None))]
+        backend = getattr(self, "gguf_backend", None)
+        model = getattr(backend, "model", None)
+        if model is not None:
+            targets.append(("decoder", model))
+        for label, module in targets:
+            if module is None:
+                continue
+            params = getattr(module, "parameters", None)
+            state = None
+            if callable(params):
+                try:
+                    state = {name: param.detach() for name, param in module.named_parameters()}
+                except Exception:
+                    state = None
+            if isinstance(state, dict):
+                digest.update(label.encode())
+                for name in sorted(state):
+                    tensor = state[name].detach().float().cpu().contiguous()
+                    digest.update(name.encode())
+                    digest.update(tensor.numpy().tobytes())
+        return digest.hexdigest()
+
+    def consolidation_objective(self, sample: int = 16) -> Dict[str, Any]:
+        """Measure reconstruction fidelity and orthogonality of plastic state.
+
+        Both numbers are computed, never assumed: ``None`` means the adapter
+        offers no such measurement, and the report says so instead of inventing
+        a value.
+        """
+        objective: Dict[str, Any] = {
+            "samples": 0,
+            "reconstruction_cosine": None,
+            "orthogonality_loss": None,
+        }
+        try:
+            vecs, ids = self.knowledge._load_dense()
+        except Exception:
+            return objective
+        if len(ids) == 0:
+            return objective
+        x = vecs[: min(sample, vecs.shape[0])].detach().float()
+        objective["samples"] = int(x.shape[0])
+        retrieve = getattr(self.memory, "retrieve", None)
+        if callable(retrieve):
+            try:
+                with torch.no_grad():
+                    outputs = torch.stack([retrieve(row) for row in x])
+                    objective["reconstruction_cosine"] = float(
+                        torch.nn.functional.cosine_similarity(outputs, x, dim=-1).mean()
+                    )
+            except Exception:
+                objective["reconstruction_cosine"] = None
+        S = getattr(self.memory, "S", None)
+        if S is not None:
+            try:
+                with torch.no_grad():
+                    total = 0.0
+                    for head in S:
+                        if head.shape[0] != head.shape[1]:
+                            continue
+                        eye = torch.eye(head.shape[0], dtype=head.dtype, device=head.device)
+                        total += float(torch.linalg.matrix_norm(head.T @ head - eye))
+                    objective["orthogonality_loss"] = total
+            except Exception:
+                objective["orthogonality_loss"] = None
+        return objective
+
     def consolidate_memory(self, max_prune_ratio: float = 0.1) -> Dict[str, Any]:
+        """Bounded consolidation: measured objective change + audit-safe pruning.
+
+        * The reconstruction/orthogonality objective is measured before and
+          after the plastic update, and the delta is reported (4.8).
+        * The update runs through the adapter's own ``consolidate()`` when it
+          provides one, so only eligible plastic parameters move.
+        * Pruning is capped by ``max_prune_ratio`` and only *supersedes* rows,
+          so the audit trail and the reversible pre-cycle snapshot keep the
+          evidence.
+        """
         total = self.knowledge.active_count()
         if total == 0:
-            return {"status": "no_facts", "pruned": 0}
+            return {
+                "status": "no_facts",
+                "pruned": 0,
+                "total_before": 0,
+                "total_after": 0,
+                "objective": {"before": None, "after": None, "improved": False},
+            }
         facts = [f for f in self.knowledge.get_audit_trail() if not f.get("superseded")]
         now = time.time()
         tau_half = 86400.0
@@ -1001,44 +1094,89 @@ class DroidEngine(nn.Module):
         utilities = []
         for f in facts:
             access = f.get("access_count", 1)
-            last = f.get("last_retrieved") or f.get("timestamp") or now
+            last = f.get("last_retrieved")
+            if last is None:
+                last = f.get("timestamp")
+            if last is None:
+                last = now
             recency = math.exp(-(now - last) / tau_half)
             novelty = f.get("novelty", 0.5)
-            utility = access * recency + lambda_novelty * novelty
-            utilities.append((f, utility))
-        utilities.sort(key=lambda x: x[1])
-        prune_count = int(total * max_prune_ratio)
+            utilities.append((f, access * recency + lambda_novelty * novelty))
+        utilities.sort(key=lambda item: item[1])
+
+        frozen_before = self._frozen_fingerprint()
+        before = self.consolidation_objective()
+
+        plastic_report: Dict[str, Any] = {"status": "skipped", "updated": False}
+        consolidate = getattr(self.memory, "consolidate", None)
+        if callable(consolidate):
+            try:
+                plastic_report = dict(consolidate() or {})
+            except Exception as exc:
+                plastic_report = {"status": "failed", "updated": False, "error": str(exc)}
+        if not plastic_report.get("updated"):
+            S = getattr(self.memory, "S", None)
+            if S is not None:
+                try:
+                    with torch.no_grad():
+                        for head in S:
+                            if head.shape[0] != head.shape[1]:
+                                continue
+                            eye = torch.eye(head.shape[0], dtype=head.dtype, device=head.device)
+                            grad = 2 * head @ (head.T @ head - eye)
+                            head.sub_(1e-4 * grad)
+                    plastic_report = {
+                        "status": "consolidated",
+                        "updated": True,
+                        "method": "orthogonality_regularisation",
+                    }
+                except Exception as exc:
+                    plastic_report = {"status": "failed", "updated": False, "error": str(exc)}
+
+        after = self.consolidation_objective()
+        improved = False
+        if (before.get("orthogonality_loss") is not None
+                and after.get("orthogonality_loss") is not None):
+            improved = after["orthogonality_loss"] < before["orthogonality_loss"]
+        elif (before.get("reconstruction_cosine") is not None
+              and after.get("reconstruction_cosine") is not None):
+            improved = after["reconstruction_cosine"] > before["reconstruction_cosine"]
+
+        ratio = max(0.0, min(1.0, float(max_prune_ratio)))
+        prune_count = int(total * ratio)
         pruned = 0
         if prune_count > 0:
-            to_prune = utilities[:prune_count]
-            for fact, util in to_prune:
-                if util < 0.5:
-                    try:
-                        self.knowledge.conn.execute("DELETE FROM facts WHERE id=?", (fact["id"],))
-                        self.knowledge.conn.execute("DELETE FROM facts_vecs WHERE id=?", (fact["id"],))
-                        self.knowledge.conn.execute("DELETE FROM facts_fts WHERE rowid=?", (fact["id"],))
-                        pruned += 1
-                    except Exception as e:
-                        pass
+            for fact, util in utilities[:prune_count]:
+                if util >= 0.5:
+                    continue
+                try:
+                    # Audit-safe: the row stays queryable through get_audit_trail.
+                    self.knowledge.conn.execute(
+                        "UPDATE facts SET superseded=1, valid_until=?, needs_review=1 WHERE id=?",
+                        (now, fact["id"]),
+                    )
+                    pruned += 1
+                except Exception:
+                    continue
             self.knowledge.conn.commit()
-            self.knowledge._vec_cache = None
-        recon_loss = 0.0
-        if utilities and hasattr(self.memory, 'S'):
-            try:
-                for _ in range(3):
-                    if hasattr(self.memory, 'S'):
-                        S = self.memory.S
-                        for h in range(S.shape[0]):
-                            Sh = S[h]
-                            I = torch.eye(Sh.shape[0], device=Sh.device)
-                            orth_loss = torch.norm(Sh.T @ Sh - I, p='fro')
-                            recon_loss += orth_loss.item()
-                            grad = 2 * Sh @ (Sh.T @ Sh - I)
-                            with torch.no_grad():
-                                self.memory.S[h].sub_(1e-4 * grad)
-            except Exception as e:
-                pass
-        return {"status": "consolidated", "total_before": total, "pruned": pruned, "total_after": self.knowledge.active_count(), "recon_loss": recon_loss}
+
+        return {
+            "status": "consolidated",
+            "total_before": total,
+            "pruned": pruned,
+            "total_after": self.knowledge.active_count(),
+            "pruning": {
+                "ratio": ratio,
+                "cap": prune_count,
+                "bounded": pruned <= prune_count,
+                "audit_retained": True,
+                "utility_threshold": 0.5,
+            },
+            "plastic": plastic_report,
+            "objective": {"before": before, "after": after, "improved": improved},
+            "frozen_unchanged": self._frozen_fingerprint() == frozen_before,
+            "recon_loss": before.get("orthogonality_loss"),
+        }
 
     # ------------------------------------------------------------------
     # Sleep consolidation / MAS / decreasing backprop
@@ -1528,54 +1666,149 @@ class DroidEngine(nn.Module):
         result.sort(key=lambda x: x.get("timestamp",0))
         return result
 
-    def merge_memory(self, other_droid, policy: str = "require_manual") -> Dict[str, Any]:
-        if MergeEngine is None:
-            return {"error": "MergeEngine not available"}
+    def _profile_fingerprint(self) -> str:
+        """Hash of live plastic tensors and episodic facts (immutability probe)."""
+        digest = hashlib.sha256()
         try:
-            merge_result = MergeEngine.merge_memories(self.knowledge, other_droid.knowledge, policy=policy)
+            state = self.memory.state_dict()
+        except Exception:
+            state = {}
+        for key in sorted(state):
+            value = state[key]
+            if isinstance(value, torch.Tensor):
+                digest.update(key.encode())
+                digest.update(value.detach().float().cpu().contiguous().numpy().tobytes())
+        for row in self.knowledge.conn.execute(
+            "SELECT id, text, superseded FROM facts ORDER BY id"
+        ):
+            digest.update(repr(tuple(row)).encode())
+        return digest.hexdigest()
+
+    def merge_memory(self, other_droid, policy: str = "require_manual") -> Dict[str, Any]:
+        """Fuse another profile into this one without corrupting either side.
+
+        Ordering (post-merge 4.6): policy → compatibility → conflict
+        resolution → writes. A manual policy with unresolved conflicts and an
+        incompatible adapter/dimension both return a refusal *before* any write
+        to either store.
+        """
+        if MergeEngine is None:  # pragma: no cover - import fallback
+            return {"error": "MergeEngine not available", "status": "unavailable",
+                    "writes": 0}
+        try:
+            MergeEngine.validate_policy(policy)
+        except ValueError as exc:
+            return {"status": "rejected", "error": str(exc), "writes": 0,
+                    "conflicts": [], "new_version": None}
+        self_dim = getattr(self, "dim", None)
+        other_dim = getattr(other_droid, "dim", None)
+        if self_dim is not None and other_dim is not None and int(self_dim) != int(other_dim):
+            return {
+                "status": "rejected",
+                "error": f"incompatible embedding dimensions: {self_dim} vs {other_dim}",
+                "writes": 0,
+                "conflicts": [],
+                "new_version": None,
+            }
+        self_adapter = self.adapter_name or identify_adapter(self.memory)
+        other_adapter = getattr(other_droid, "adapter_name", None) or identify_adapter(
+            other_droid.memory
+        )
+        if self_adapter and other_adapter and self_adapter != other_adapter:
+            return {
+                "status": "rejected",
+                "error": f"incompatible plastic adapters: {self_adapter} vs {other_adapter}",
+                "writes": 0,
+                "conflicts": [],
+                "new_version": None,
+            }
+        source_before = other_droid._profile_fingerprint()
+        self_before = self._profile_fingerprint()
+        try:
+            merge_result = MergeEngine.merge_memories(
+                self.knowledge, other_droid.knowledge, policy=policy
+            )
+            conflicts = merge_result.get("conflicts", [])
+            if policy == "require_manual" and conflicts:
+                return {
+                    "status": "manual_required",
+                    "error": "conflicts require explicit resolution; nothing was written",
+                    "conflicts": conflicts,
+                    "conflict_count": len(conflicts),
+                    "resolutions": [],
+                    "writes": 0,
+                    "new_version": None,
+                    "source_unchanged": other_droid._profile_fingerprint() == source_before,
+                }
+            writes = 0
             try:
                 weight_a = self.knowledge.active_count()
                 weight_b = other_droid.knowledge.active_count()
                 total = weight_a + weight_b
-                if total == 0:
-                    w_a, w_b = 0.5, 0.5
-                else:
-                    w_a = weight_a / total
-                    w_b = weight_b / total
-                fused = MergeEngine.fuse_plastic(self.memory, other_droid.memory, weight_a=w_a, weight_b=w_b)
-                if fused.get("S") is not None and hasattr(self.memory, 'S'):
+                w_a, w_b = (0.5, 0.5) if total == 0 else (weight_a / total, weight_b / total)
+                fused = MergeEngine.fuse_plastic(
+                    self.memory, other_droid.memory, weight_a=w_a, weight_b=w_b
+                )
+                if fused.get("S") is not None and hasattr(self.memory, "S"):
                     with torch.no_grad():
                         S_fused = fused["S"]
                         if S_fused.shape == self.memory.S.shape:
                             self.memory.S.copy_(S_fused)
-                        if "h_trace" in fused and hasattr(self.memory, 'h_trace'):
+                        if "h_trace" in fused and hasattr(self.memory, "h_trace"):
                             h_fused = fused["h_trace"]
                             if h_fused.shape == self.memory.h_trace.shape:
                                 self.memory.h_trace.copy_(h_fused)
-                        if "momentum" in fused and hasattr(self.memory, 'momentum'):
+                        if "momentum" in fused and hasattr(self.memory, "momentum"):
                             mom_fused = fused["momentum"]
                             if mom_fused.shape == self.memory.momentum.shape:
                                 self.memory.momentum.copy_(mom_fused)
-            except Exception as e:
-                pass
-            other_facts = [f for f in other_droid.knowledge.get_audit_trail() if not f.get("superseded")]
+            except Exception as exc:
+                return {
+                    "status": "rejected",
+                    "error": f"plastic fusion failed: {exc}",
+                    "writes": 0,
+                    "conflicts": conflicts,
+                    "new_version": None,
+                    "source_unchanged": other_droid._profile_fingerprint() == source_before,
+                }
+            other_facts = [
+                f for f in other_droid.knowledge.get_audit_trail()
+                if not f.get("superseded")
+            ]
             for fact in other_facts:
                 try:
-                    vec = other_droid.knowledge.conn.execute("SELECT vec FROM facts_vecs WHERE id=?", (fact["id"],)).fetchone()
-                    if vec:
-                        v = torch.frombuffer(bytearray(vec[0]), dtype=torch.float32).reshape(self.dim)
-                        similar = self.knowledge.find_similar(v, threshold=0.9)
-                        if not similar:
-                            self.knowledge.insert_fact(fact["text"], fact.get("source","merge"), time.time(), self.step_count, fact.get("novelty",0.5), v)
-                except Exception as e:
-                    pass
+                    vec = other_droid.knowledge.conn.execute(
+                        "SELECT vec FROM facts_vecs WHERE id=?", (fact["id"],)
+                    ).fetchone()
+                    if not vec:
+                        continue
+                    v = torch.frombuffer(bytearray(vec[0]), dtype=torch.float32).reshape(
+                        self.dim
+                    )
+                    if self.knowledge.find_similar(v, threshold=0.9):
+                        continue
+                    self.knowledge.insert_fact(
+                        fact["text"], fact.get("source", "merge"), time.time(),
+                        self.step_count, fact.get("novelty", 0.5), v,
+                    )
+                    writes += 1
+                except Exception:
+                    continue
             new_version = f"merge_{int(time.time())}"
             self.create_snapshot(new_version)
-            return {"status": "merged", "new_version": new_version, "conflicts": merge_result.get("conflicts", []), "conflict_count": merge_result.get("conflict_count", 0), "resolutions": merge_result.get("resolutions", [])}
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            return {"error": str(e)}
+            return {
+                "status": "merged",
+                "new_version": new_version,
+                "conflicts": conflicts,
+                "conflict_count": len(conflicts),
+                "resolutions": merge_result.get("resolutions", []),
+                "writes": writes,
+                "source_unchanged": other_droid._profile_fingerprint() == source_before,
+                "target_preexisting": self_before,
+            }
+        except Exception as exc:  # pragma: no cover - defensive
+            return {"status": "error", "error": str(exc), "writes": 0,
+                    "conflicts": [], "new_version": None}
 
     def distill_to_semantic(self) -> List[Dict]:
         if SemanticStore is None:
@@ -1695,46 +1928,108 @@ class DroidEngine(nn.Module):
         except:
             return []
 
-    def start_continuous_stream(self, source: Optional[str] = None, max_fpm: int = 10) -> Dict[str, Any]:
-        if ContinuousStream is None:
-            if self.continuous_stream is None:
-                self.continuous_stream = {"running": True, "source": source, "max_fpm": max_fpm, "stats": {"facts_processed":0, "facts_absorbed":0, "queue_depth":0, "dropped":0}}
-            return {"status": "started", "source": source}
-        try:
-            if self.continuous_stream is None:
-                self.continuous_stream = ContinuousStream(self, max_facts_per_minute=max_fpm, surprise_threshold=0.6)
-            self.continuous_stream.start(log_source=source)
-            return {"status": "started", "source": source, "max_fpm": max_fpm}
-        except Exception as e:
-            return {"error": str(e)}
+    def start_continuous_stream(self, source: Optional[str] = None,
+                                max_fpm: int = 10) -> Dict[str, Any]:
+        """Start this engine's single stream worker (idempotent under reruns)."""
+        with self._engine_lock:
+            if ContinuousStream is None:  # pragma: no cover - import fallback
+                if self.continuous_stream is None:
+                    self.continuous_stream = {
+                        "running": True, "source": source, "max_fpm": max_fpm,
+                        "stats": {"facts_processed": 0, "facts_absorbed": 0,
+                                  "queue_depth": 0, "dropped": 0},
+                    }
+                return {"status": "started", "source": source}
+            stream = self.continuous_stream
+            if stream is not None and not isinstance(stream, ContinuousStream):
+                # A cached dict stub from an older surface must not shadow a
+                # real worker: replace it rather than double-own the stream.
+                self.continuous_stream = None
+                stream = None
+            if stream is None:
+                stream = ContinuousStream(
+                    self, max_facts_per_minute=max_fpm, surprise_threshold=0.6
+                )
+                self.continuous_stream = stream
+            started = stream.start(log_source=source)
+            status = "started" if started else "already_running"
+            return {"status": status, "source": source, "max_fpm": max_fpm,
+                    "stream": stream.get_status()}
+
+    def stop_continuous_stream(self, timeout: float = 2.0) -> Dict[str, Any]:
+        """Bounded stop of this engine's worker; safe to call repeatedly."""
+        with self._engine_lock:
+            stream = self.continuous_stream
+            if not isinstance(stream, ContinuousStream):
+                self.continuous_stream = None
+                return {"status": "not_running", "joined": True}
+            if not stream.running and not stream.is_alive():
+                return {"status": "not_running", "joined": True,
+                        "stream": stream.get_status()}
+            joined = stream.stop(timeout=timeout)
+            status = stream.get_status()
+            return {"status": "stopped" if joined else "stop_timeout",
+                    "joined": joined, "stream": status}
 
     def pause_stream(self) -> Dict[str, Any]:
-        if self.continuous_stream and hasattr(self.continuous_stream, 'pause'):
-            self.continuous_stream.pause()
-            return {"status": "paused"}
-        elif self.continuous_stream and isinstance(self.continuous_stream, dict):
-            self.continuous_stream["running"] = False
-            return {"status": "paused"}
-        return {"status": "no_stream"}
+        with self._engine_lock:
+            stream = self.continuous_stream
+            if isinstance(stream, ContinuousStream):
+                alive = stream.pause()
+                return {"status": "paused", "worker_alive": alive}
+            if isinstance(stream, dict):
+                stream["running"] = False
+                return {"status": "paused"}
+            return {"status": "no_stream"}
 
     def resume_stream(self) -> Dict[str, Any]:
-        if self.continuous_stream and hasattr(self.continuous_stream, 'resume'):
-            self.continuous_stream.resume()
-            return {"status": "resumed"}
-        elif self.continuous_stream and isinstance(self.continuous_stream, dict):
-            self.continuous_stream["running"] = True
-            return {"status": "resumed"}
-        return {"status": "no_stream"}
+        with self._engine_lock:
+            stream = self.continuous_stream
+            if isinstance(stream, ContinuousStream):
+                alive = stream.resume()
+                return {"status": "resumed", "worker_alive": alive}
+            if isinstance(stream, dict):
+                stream["running"] = True
+                return {"status": "resumed"}
+            return {"status": "no_stream"}
 
     def get_stream_status(self) -> Dict[str, Any]:
-        if self.continuous_stream and hasattr(self.continuous_stream, 'get_status'):
-            return self.continuous_stream.get_status()
-        elif self.continuous_stream and isinstance(self.continuous_stream, dict):
-            return {"running": self.continuous_stream.get("running", False), "facts_processed": self.continuous_stream.get("stats", {}).get("facts_processed",0), "facts_absorbed": self.continuous_stream.get("stats", {}).get("facts_absorbed",0), "queue_depth": self.continuous_stream.get("stats", {}).get("queue_depth",0)}
-        return {"running": False, "facts_processed":0, "facts_absorbed":0, "queue_depth":0}
+        stream = self.continuous_stream
+        if isinstance(stream, ContinuousStream):
+            return stream.get_status()
+        if isinstance(stream, dict):
+            return {"running": stream.get("running", False),
+                    "alive": False,
+                    "facts_processed": stream.get("stats", {}).get("facts_processed", 0),
+                    "facts_absorbed": stream.get("stats", {}).get("facts_absorbed", 0),
+                    "queue_depth": stream.get("stats", {}).get("queue_depth", 0)}
+        return {"running": False, "alive": False, "facts_processed": 0,
+                "facts_absorbed": 0, "queue_depth": 0}
 
     def get_stream_stats(self) -> Dict[str, Any]:
         return self.get_stream_status()
+
+    def shutdown(self, timeout: float = 2.0) -> Dict[str, Any]:
+        """Stop every owned worker with a bounded join; safe to repeat."""
+        report: Dict[str, Any] = {"stream": {"status": "not_running", "joined": True}}
+        try:
+            report["stream"] = self.stop_continuous_stream(timeout=timeout)
+        except Exception as exc:  # never let shutdown mask the original error
+            report["stream"] = {"status": "failed", "error": str(exc)}
+        worker = getattr(self, "auto_sleep_worker", None)
+        if worker is not None:
+            try:
+                joined = worker.stop(timeout=timeout)
+                report["auto_sleep"] = {"status": "stopped" if joined else "stop_timeout",
+                                        "joined": joined}
+            except Exception as exc:
+                report["auto_sleep"] = {"status": "failed", "error": str(exc)}
+            self.auto_sleep_worker = None
+        report["stream_alive"] = bool(
+            isinstance(self.continuous_stream, ContinuousStream)
+            and self.continuous_stream.is_alive()
+        )
+        return report
 
     def continuous_learn(self, text: str) -> Dict[str, Any]:
         return self.teach(text, source="continuous_stream", surprise_threshold=0.6)
@@ -2101,7 +2396,150 @@ class DroidEngine(nn.Module):
         self._write_manifest(p, config)
         self.log(f"Profile saved to {target_dir}")
 
+    def _capture_live_profile_state(self) -> Dict[str, Any]:
+        """Snapshot everything a failed load must be able to put back."""
+        state: Dict[str, Any] = {"memory": self.memory, "knowledge": self.knowledge}
+        try:
+            state["plastic"] = clone_state(self.memory.state_dict())
+        except Exception:
+            state["plastic"] = None
+        policy = self.retrieval_policy
+        state["policy"] = (
+            clone_state(policy.state_dict()) if policy is not None
+            and hasattr(policy, "state_dict") else None
+        )
+        try:
+            state["schedule"] = clone_state(self.lr_schedule.state_dict())
+        except Exception:
+            state["schedule"] = None
+        for name in ("engine", "fusion_mode", "rtu_dim", "rtu_layers", "rtu_spread",
+                     "name", "step_count", "base_lr", "surprise_threshold", "K_max",
+                     "test_time_training", "current_version", "gguf_config",
+                     "adapter_name", "adapter_kwargs", "migrations",
+                     "byte_rtu_checkpoint", "sleep_config", "logs", "gguf_backend",
+                     "mas", "byte_rtu_backend"):
+            state[name] = getattr(self, name, None)
+        return state
+
+    def _restore_live_profile_state(self, state: Dict[str, Any]) -> None:
+        self.memory = state.get("memory", self.memory)
+        if state.get("plastic") is not None and hasattr(self.memory, "load_state_dict"):
+            try:
+                self.memory.load_state_dict(clone_state(state["plastic"]))
+            except Exception:
+                pass
+        if state.get("knowledge") is not None:
+            if self.knowledge is not state["knowledge"]:
+                try:
+                    self.knowledge.close()
+                except Exception:
+                    pass
+            self.knowledge = state["knowledge"]
+        policy = self.retrieval_policy
+        if state.get("policy") is not None and policy is not None and hasattr(
+            policy, "load_state_dict"
+        ):
+            try:
+                policy.load_state_dict(state["policy"])
+            except Exception:
+                pass
+        if state.get("schedule") is not None:
+            try:
+                self.lr_schedule = DecreasingBackprop().load_state_dict(state["schedule"])
+            except Exception:
+                pass
+        for name in ("engine", "fusion_mode", "rtu_dim", "rtu_layers", "rtu_spread",
+                     "name", "step_count", "base_lr", "surprise_threshold", "K_max",
+                     "test_time_training", "current_version", "gguf_config",
+                     "adapter_name", "adapter_kwargs", "migrations",
+                     "byte_rtu_checkpoint", "sleep_config", "logs", "gguf_backend",
+                     "mas", "byte_rtu_backend"):
+            if name in state:
+                setattr(self, name, state[name])
+
+    @staticmethod
+    def _validate_profile_artifacts(p: Path, config: Dict[str, Any],
+                                    config_file: Path) -> None:
+        """Validate every referenced artifact before anything is activated."""
+        db_file = p / "knowledge.db"
+        if db_file.exists():
+            try:
+                conn = sqlite3.connect(f"file:{db_file}?mode=ro", uri=True)
+                try:
+                    integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
+                    tables = {
+                        row[0] for row in conn.execute(
+                            "SELECT name FROM sqlite_master WHERE type='table'"
+                        )
+                    }
+                finally:
+                    conn.close()
+            except Exception as exc:
+                raise InvalidProfileError(
+                    f"Profile database {db_file} is unreadable: {exc}"
+                ) from exc
+            if integrity != "ok":
+                raise InvalidProfileError(
+                    f"Profile database {db_file} failed integrity_check: {integrity}"
+                )
+            if "facts" not in tables:
+                raise InvalidProfileError(
+                    f"Profile database {db_file} has no facts table"
+                )
+        for name in ("retrieval_policy.json", "snapshots.json", "train_log.json",
+                     "adapter_meta.json"):
+            path = p / name
+            if not path.exists():
+                continue
+            try:
+                with open(path, "r") as handle:
+                    json.load(handle)
+            except Exception as exc:
+                raise InvalidProfileError(
+                    f"Profile artifact {path} is malformed: {exc}"
+                ) from exc
+        schedule_cfg = config.get("decreasing_backprop")
+        if isinstance(schedule_cfg, dict):
+            try:
+                DecreasingBackprop().load_state_dict(schedule_cfg)
+            except Exception as exc:
+                raise InvalidProfileError(
+                    f"Profile manifest {config_file} declares an invalid "
+                    f"decreasing-backprop schedule: {exc}"
+                ) from exc
+        mas_manifest = config.get("mas_state")
+        if isinstance(mas_manifest, dict) and mas_manifest.get("file"):
+            mas_path = p / str(mas_manifest["file"])
+            if not mas_path.is_file():
+                raise InvalidProfileError(
+                    f"Profile manifest {config_file} declares MAS state {mas_path} "
+                    "which is missing"
+                )
+            meta_path = p / str(mas_manifest.get("metadata", "mas_meta.json"))
+            if meta_path.exists():
+                try:
+                    with open(meta_path, "r") as handle:
+                        json.load(handle)
+                except Exception as exc:
+                    raise InvalidProfileError(
+                        f"MAS metadata {meta_path} is malformed: {exc}"
+                    ) from exc
+
     def load_profile(self, target_dir: str) -> bool:
+        """Load a profile transactionally (post-merge 2.8).
+
+        Every referenced artifact is validated before activation, and any
+        failure restores the previously active profile instead of leaving a
+        half-swapped engine behind.
+        """
+        live = self._capture_live_profile_state()
+        try:
+            return self._load_profile_inner(target_dir)
+        except Exception:
+            self._restore_live_profile_state(live)
+            raise
+
+    def _load_profile_inner(self, target_dir: str) -> bool:
         """Load a profile, failing loudly on a missing or invalid artifact.
 
         Change 1.5/1.16/1.23: a missing/corrupt manifest raises
@@ -2136,6 +2574,8 @@ class DroidEngine(nn.Module):
             raise InvalidProfileError(
                 f"Profile artifact missing: {mem_file} (plastic state)"
             )
+        # Stage 1: validate every artifact before any live state is replaced.
+        self._validate_profile_artifacts(p, config, config_file)
 
         declared_checkpoint = config.get("byte_rtu_checkpoint") or config.get("rtu_checkpoint")
         engine = config.get("engine")
@@ -2296,11 +2736,12 @@ class DroidEngine(nn.Module):
             ) from exc
         db_file = p / "knowledge.db"
         know_file = p / "knowledge.json"
-        self.knowledge.close()
+        # Build the replacement store first; the live store is closed only once
+        # the new one is fully populated (transactional load, post-merge 2.8).
         if db_file.exists():
-            self.knowledge = KnowledgeStore(str(db_file), dim=self.dim)
+            new_knowledge = KnowledgeStore(str(db_file), dim=self.dim)
         else:
-            self.knowledge = KnowledgeStore(":memory:", dim=self.dim)
+            new_knowledge = KnowledgeStore(":memory:", dim=self.dim)
             if know_file.exists():
                 with open(know_file, "r") as f:
                     legacy_facts = json.load(f)
@@ -2313,7 +2754,7 @@ class DroidEngine(nn.Module):
                         vec = self.anchor.embed(fact["text"])
                         if vec.dim() > 1:
                             vec = vec.squeeze(0)
-                    self.knowledge.insert_fact(
+                    new_knowledge.insert_fact(
                         fact["text"],
                         fact.get("source", "legacy"),
                         fact.get("timestamp", time.time()),
@@ -2321,6 +2762,13 @@ class DroidEngine(nn.Module):
                         fact.get("novelty", 0.0),
                         vec,
                     )
+        previous_knowledge = self.knowledge
+        self.knowledge = new_knowledge
+        try:
+            if previous_knowledge is not None and previous_knowledge is not new_knowledge:
+                previous_knowledge.close()
+        except Exception:
+            pass
         log_file = p / "train_log.json"
         if log_file.exists():
             with open(log_file, "r") as f:
