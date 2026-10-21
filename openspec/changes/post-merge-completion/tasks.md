@@ -10,16 +10,17 @@ and archived under `openspec/changes/archive/2026-10-21-*`; their dependency
 tasks 5.x, 6.x and 7.x below are checked with evidence. The archive notes record
 the targets that were missed (delta memory loss, HNSW p95, Matryoshka speedup)
 and the tasks that stayed blocked (TTC versus an 8B reference). This umbrella
-change stays active: section 1.2-1.5, 3.1-3.8 and 4.1-4.12 are not implemented,
-and its own release-evidence spec forbids archiving on incomplete dependency
-acceptance.
+change stays active: sections 1.2, 1.3, 1.5, 3.4, 3.7, 7.9, 7.10, 8.x and 9.x are
+still open, and its own release-evidence spec forbids archiving on incomplete
+dependency acceptance. Sections 2.7-2.9, 3 (except 3.4/3.7) and 4.1-4.12 landed
+on 2026-10-21 — see the implementation-progress note at the bottom.
 
 ## 1. Evidence and compatibility foundation
 
 - [x] 1.1 Create a machine-readable evidence ledger from every inventory entry with disposition, implementation paths, test IDs, owner and evidence location; verify a schema/coverage guard rejects missing entries and unsupported completion claims.
 - [ ] 1.2 Reconcile the six September 29 archives task by task with current tests; deliver a gap table with each item mapped to tasks 2–8 or an explicit superseding requirement, without treating stale checkboxes as missing code.
 - [ ] 1.3 Reconcile the other archived tasks and all 114 baseline requirements, including checked fusion/product/scan tasks; verify each is evidenced, owned by follow-up implementation, or blocked with a specific missing artifact.
-- [ ] 1.4 Add legacy/default/custom adapter, profile and database migration fixtures without model weights; verify fixtures load under baseline contracts and record checksums/configurations.
+- [x] 1.4 Add legacy/default/custom adapter, profile and database migration fixtures without model weights; verify fixtures load under baseline contracts and record checksums/configurations.
 - [ ] 1.5 Document offline versus model/benchmark test commands and add CI for offline contracts, coverage-map completeness and OpenSpec validation; verify the jobs on the integration branch before marking this task complete.
 
 ## 2. Adapter contract and profile integrity
@@ -30,35 +31,35 @@ acceptance.
 - [x] 2.4 Replace swallowed update failures with documented failures; test an adapter that raises before/after mutation and confirm no implicit retry or success log.
 - [x] 2.5 Persist the registered adapter identifier instead of class-name inference; test a custom adapter whose class name differs from its registry name through create/save/load/re-save.
 - [x] 2.6 Reject explicitly unknown adapters and invalid kwargs without default substitution; test invalid configurations and legacy manifests lacking the field, documenting the compatibility distinction.
-- [ ] 2.7 Add versioned non-tensor metadata alongside safetensors for capacity, eviction count, key registry, schedule and constructor config; compare next-update/eviction/retrieval behavior against an uninterrupted reference after restart.
-- [ ] 2.8 Stage profile loads and validate all declared state before activation; test missing/corrupt artifacts, incompatible shapes, interrupted saves and unchanged prior active state after failure.
-- [ ] 2.9 Implement reversible metadata migration and document rollback; verify old associative/legacy checkpoints and fused profiles still load and no profile artifacts are shared.
+- [x] 2.7 Add versioned non-tensor metadata alongside safetensors for capacity, eviction count, key registry, schedule and constructor config; compare next-update/eviction/retrieval behavior against an uninterrupted reference after restart.
+- [x] 2.8 Stage profile loads and validate all declared state before activation; test missing/corrupt artifacts, incompatible shapes, interrupted saves and unchanged prior active state after failure.
+- [x] 2.9 Implement reversible metadata migration and document rollback; verify old associative/legacy checkpoints and fused profiles still load and no profile artifacts are shared.
 
 ## 3. Actual memory injection and backend contracts
 
-- [ ] 3.1 Define backend capability and injection-result contracts (requested/executed mode, reason, cleanup scope); test unsupported explicit modes versus auto fallback and document the support matrix.
-- [ ] 3.2 Implement tokenizer/byte-aware prompt budgeting including query, separators, special tokens and output reserve; test multibyte text, exact limits, no fitting facts and oversized queries.
-- [ ] 3.3 Add scoped hidden-injection operations for a locally supplied hookable PyTorch decoder; prove a deterministic decoder fixture's intermediate state/logits change and hooks are removed on success and exception.
+- [x] 3.1 Define backend capability and injection-result contracts (requested/executed mode, reason, cleanup scope); test unsupported explicit modes versus auto fallback and document the support matrix.
+- [x] 3.2 Implement tokenizer/byte-aware prompt budgeting including query, separators, special tokens and output reserve; test multibyte text, exact limits, no fitting facts and oversized queries.
+- [x] 3.3 Add scoped hidden-injection operations for a locally supplied hookable PyTorch decoder; prove a deterministic decoder fixture's intermediate state/logits change and hooks are removed on success and exception.
 - [ ] 3.4 Implement real KV prefill for the supported GGUF binding API; test prefill-before-generation ordering, first-token cache consumption and cleanup, with no fake token IDs or metadata-only success.
-- [ ] 3.5 Replace hidden/KV helper stubs with those backend calls; test malformed/nonfinite/wrong-shape traces and ensure error formatting cannot fail again or change global RNG state.
-- [ ] 3.6 Wire capability-aware strategy selection through engine, CLI, MCP and UI; test 3/15/21-fact cases, explicit unsupported requests, pinned settings after reload and byte-RTU prompt-only behavior.
+- [x] 3.5 Replace hidden/KV helper stubs with those backend calls; test malformed/nonfinite/wrong-shape traces and ensure error formatting cannot fail again or change global RNG state.
+- [x] 3.6 Wire capability-aware strategy selection through engine, CLI, MCP and UI; test 3/15/21-fact cases, explicit unsupported requests, pinned settings after reload and byte-RTU prompt-only behavior.
 - [ ] 3.7 Add local-artifact GGUF streaming/cache and hookable-decoder integration tests; record binding/model versions, artifact checksums and observed conditioning, with unavailable models reported as blocked.
-- [ ] 3.8 Separate optional GGUF/hookable-backend dependencies from the core install and document exact setup commands; verify core import/tests work without optional packages and optional smoke tests work when installed.
+- [x] 3.8 Separate optional GGUF/hookable-backend dependencies from the core install and document exact setup commands; verify core import/tests work without optional packages and optional smoke tests work when installed.
 
 ## 4. Retrieval, snapshots, health and lifecycle completion
 
-- [ ] 4.1 Implement deterministic classification precedence with reachable ambiguity; add labeled fixtures including empty, "what?", temporal, definitional and relational queries, and document precedence.
-- [ ] 4.2 Wire semantic/episodic/recency/hybrid policy choices into actual retrieval; test distinct store access and results rather than only the selected strategy label.
-- [ ] 4.3 Persist seeded exploration and feedback-derived policy per profile; test approval/rejection effects, restart continuity and cross-profile independence.
-- [ ] 4.4 Replace metadata-only snapshots with complete SQLite backup, tensors and policy/config artifacts; test WAL-backed data, restart/list/restore and no snapshot aliases.
-- [ ] 4.5 Make console/engine/manager rollback use the same staged restore and pre-rollback snapshot; test failed restore, source-preserving branch and rollback-of-rollback end to end.
-- [ ] 4.6 Complete merge/import/export lifecycle against existing contracts; test all conflict policies, manual refusal without writes, incompatible adapter/dimension rejection and source-profile immutability.
-- [ ] 4.7 Implement persistent power-law accessibility and bounded reinforcement; test fixed-clock decay, beta decrease, restart equality and the explicit supersession of contradictory historical wording.
-- [ ] 4.8 Complete reconstruction-loss consolidation and orthogonality regularization on eligible plastic parameters; test measured objective change, bounded pruning, audit retention and unchanged frozen components.
-- [ ] 4.9 Replace placeholder health-quality values with recent-query precision@k/MRR and sample/provenance metadata; test ranked approved/rejected examples and explicit insufficient-evidence reporting.
-- [ ] 4.10 Enforce TTT step/rate budgets across recall and all feedback paths; test exhaustion, opt-out, corrected-fact erasure and unchanged byte-decoder weights.
-- [ ] 4.11 Unify stream worker ownership and profile locks with bounded stop/join; test repeated starts, pause/resume, cancellation, profile switch/delete and concurrent snapshot/teach without torn state.
-- [ ] 4.12 Document lifecycle semantics and update console integration tests; verify teaching, editing, superseding, feedback, stream control, snapshot and rollback actions survive reruns and restarts.
+- [x] 4.1 Implement deterministic classification precedence with reachable ambiguity; add labeled fixtures including empty, "what?", temporal, definitional and relational queries, and document precedence.
+- [x] 4.2 Wire semantic/episodic/recency/hybrid policy choices into actual retrieval; test distinct store access and results rather than only the selected strategy label.
+- [x] 4.3 Persist seeded exploration and feedback-derived policy per profile; test approval/rejection effects, restart continuity and cross-profile independence.
+- [x] 4.4 Replace metadata-only snapshots with complete SQLite backup, tensors and policy/config artifacts; test WAL-backed data, restart/list/restore and no snapshot aliases.
+- [x] 4.5 Make console/engine/manager rollback use the same staged restore and pre-rollback snapshot; test failed restore, source-preserving branch and rollback-of-rollback end to end.
+- [x] 4.6 Complete merge/import/export lifecycle against existing contracts; test all conflict policies, manual refusal without writes, incompatible adapter/dimension rejection and source-profile immutability.
+- [x] 4.7 Implement persistent power-law accessibility and bounded reinforcement; test fixed-clock decay, beta decrease, restart equality and the explicit supersession of contradictory historical wording.
+- [x] 4.8 Complete reconstruction-loss consolidation and orthogonality regularization on eligible plastic parameters; test measured objective change, bounded pruning, audit retention and unchanged frozen components.
+- [x] 4.9 Replace placeholder health-quality values with recent-query precision@k/MRR and sample/provenance metadata; test ranked approved/rejected examples and explicit insufficient-evidence reporting.
+- [x] 4.10 Enforce TTT step/rate budgets across recall and all feedback paths; test exhaustion, opt-out, corrected-fact erasure and unchanged byte-decoder weights.
+- [x] 4.11 Unify stream worker ownership and profile locks with bounded stop/join; test repeated starts, pause/resume, cancellation, profile switch/delete and concurrent snapshot/teach without torn state.
+- [x] 4.12 Document lifecycle semantics and update console integration tests; verify teaching, editing, superseding, feedback, stream control, snapshot and rollback actions survive reruns and restarts.
 
 ## 5. Complete dependency: delta-plastic-memory
 
@@ -129,3 +130,45 @@ All other tasks and the three feature dependencies remain open. Real ONNX/GGUF,
 a hookable decoder, trained RTU and matched-budget 1B/8B evaluation artifacts
 are not supplied in this sandbox; do not mark their gates passed or merge this
 umbrella as complete without the required evidence.
+
+## Implementation progress (2026-10-21, post-merge sections 2.7-4.12)
+
+Ticked here because behaviour + regression tests exist; evidence is
+`reports/evidence/2026-10-21-offline-suite-post-merge.json` (offline tier,
+`PYTHONPATH=. pytest tests -q` → 750 passed, 1 skipped) and the targeted node
+IDs in `reports/completion-evidence.json`.
+
+| Task | Landed behaviour | Tests |
+| ---- | ---------------- | ----- |
+| 1.4 | legacy/default/custom fixtures without weights, layout pinned by checksums; old DB schema migrated in place | `tests/test_migration_fixtures.py` (6) |
+| 2.7 | `adapter_meta.json` sidecar + schedule/policy; next-update parity after restart | `tests/test_lifecycle_completion.py::test_capacity_eviction_and_policy_survive_restart` |
+| 2.8 | staged profile validation, full live-state rollback, build-new-store-before-close | `tests/test_lifecycle_completion.py::test_failed_load_preserves_the_active_profile` |
+| 2.9 | versioned `adapter_identity_default` migration, independent migrated artifacts | `tests/test_lifecycle_completion.py::test_legacy_manifest_records_a_versioned_migration` |
+| 3.1-3.3, 3.5, 3.6, 3.8 | capability contracts, byte-aware budget, scoped hidden hooks, engine/CLI/MCP/UI wiring, core-vs-optional split | `tests/test_{backend_contracts,injection_engine,torch_decoder_backend,gguf_capabilities,optional_dependencies}.py` |
+| 4.1 | classifier v2 precedence, punctuation-invariant ambiguity | `tests/test_adaptive_retrieval.py::test_classification_matches_labelled_fixture` |
+| 4.2 | strategy decides the store (`retrieval_store`, executed strategy in the trace) | `...::test_semantic_strategy_consults_semantic_store` |
+| 4.3 | per-profile policy + seeded exploration persistence | `...::test_policy_feedback_persists_per_profile` |
+| 4.4 | SQLite-backup (WAL-inclusive) + tensors + policy/config snapshots, checksummed manifest last | `tests/test_memory_snapshots.py` (20) |
+| 4.5 | shared staged rollback with pre-rollback snapshot in console/engine/manager | `...::test_rollback_takes_a_pre_rollback_snapshot_and_is_reversible` |
+| 4.6 | merge pre-checks, manual refusal with zero writes, source immutability | `tests/test_lifecycle_completion.py::test_merge_require_manual_refuses_without_writes` |
+| 4.7 | power-law accessibility + bounded reinforcement + restart equality | `tests/test_memory_snapshots.py::test_accessibility_matches_the_power_law` |
+| 4.8 | measured reconstruction/orthogonality objective, bounded audit-safe pruning | `tests/test_lifecycle_completion.py::test_consolidation_measures_objective_and_keeps_audit` |
+| 4.9 | precision@k/MRR from labelled rows only, explicit insufficient-evidence report | `tests/test_adaptive_retrieval.py::test_health_precision_and_mrr_match_hand_computed_values` |
+| 4.10 | one TTT gate for recall/approve/reject/correct, erasure on correction | `...::test_ttt_budget_is_shared_and_hard_bounded` |
+| 4.11 | single-owner stream worker, bounded stop/join, manager switch/delete cancellation | `tests/test_lifecycle_completion.py::test_stream_start_is_idempotent_and_stop_is_bounded` |
+| 4.12 | `docs/lifecycle.md` + console actions exercised through the engine | `tests/test_console_lifecycle.py` (6) |
+
+Deliberately still unchecked:
+
+* 1.2/1.3 — archive/task reconciliation is a review activity, not code.
+* 1.5 — `docs/testing.md` and `.github/workflows/offline-contracts.yml` exist,
+  but the CI job has not been observed green on the integration branch yet.
+* 3.4/3.7 — no GGUF binding and no local GGUF/hookable artifacts in this
+  sandbox, so KV prefill stays reported as unsupported.
+* 7.9/7.10 — benchmarks need hardware/an 8B reference.
+* 8.x/9.x — historical product contracts and whole-product acceptance.
+
+Console note: `streamlit` is not installed here, so `app.py` is validated
+structurally (`tests/test_console_lifecycle.py`, `tests/test_memory_console_contracts.py`)
+and every action it triggers is executed through `DroidEngine`/`DroidManager`.
+No `AppTest` run is claimed.

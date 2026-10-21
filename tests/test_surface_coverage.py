@@ -36,6 +36,8 @@ MODULE_TESTS = {
     "src/model/edge_slm.py": "tests/test_edge_slm.py",
     "src/model/test_time_compute.py": "tests/test_test_time_compute.py",
     "src/model/continual_bench.py": "tests/test_continual_bench.py",
+    "src/model/backend_contracts.py": "tests/test_backend_contracts.py",
+    "src/model/torch_decoder_backend.py": "tests/test_torch_decoder_backend.py",
     "src/model/gguf_backend.py": "tests/test_gguf_backend.py",
     "src/model/knowledge_store.py": "tests/test_knowledge_store.py",
     "src/model/memory_injection.py": "tests/test_memory_injection.py",

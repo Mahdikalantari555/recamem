@@ -142,7 +142,21 @@ def test_index_integration_preserves_recall_contract(tmp_path, kind):
     index = build_dense_index(kind, dim=32)
     store.configure_retrieval(dense_index=index)
     results = store.recall(vecs[5], top_k=5, query_text="sensors", strategy="hybrid_rrf")
-    assert [r["id"] for r in results] == [r["id"] for r in reference]
+    reference_ids = [r["id"] for r in reference]
+    result_ids = [r["id"] for r in results]
+    if kind == "exact":
+        # An exact index is the reference: identical ids and order.
+        assert result_ids == reference_ids
+    else:
+        # An approximate index may reorder near-ties, so the contract is the
+        # published recall@5 target (>= 0.95) rather than identity with the
+        # exact ranking. Recall is measured against the exact baseline.
+        overlap = len(set(result_ids) & set(reference_ids))
+        recall = overlap / max(1, len(reference_ids))
+        assert recall >= 0.95, (
+            f"{kind} recall@5={recall:.2f} against the exact baseline "
+            f"(got {result_ids}, expected {reference_ids})"
+        )
     assert set(results[0]) >= {
         "id", "text", "superseded", "fused_score", "lexical_score",
         "dense_score", "lexical_rank", "dense_rank", "dense_similarity", "similarity",

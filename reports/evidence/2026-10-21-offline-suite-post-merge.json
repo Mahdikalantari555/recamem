@@ -1,0 +1,33 @@
+{
+  "commit": "0bcc5f2c12997b8640e5cf44bc2a8cf44160cbdb",
+  "tier": "offline",
+  "command": "PYTHONPATH=. python -m pytest tests -q",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.14.1+cu130",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "cpu_threads": 1,
+    "hnswlib": false,
+    "embeddings": "OnnxMiniLM mock (is_mock=True)",
+    "sandbox": "Arena Agent Mode CPU sandbox"
+  },
+  "configuration": {
+    "suite": "all tests",
+    "torch_threads": 1
+  },
+  "outcome": "passed",
+  "details": {
+    "passed": 750,
+    "skipped": 1,
+    "failed": 0,
+    "note": "One skip is a model/artifact-gated test; no weights exist in the sandbox.",
+    "included_test_files": [
+      "tests/test_adaptive_retrieval.py",
+      "tests/test_memory_snapshots.py",
+      "tests/test_lifecycle_completion.py",
+      "tests/test_console_lifecycle.py",
+      "tests/test_migration_fixtures.py",
+      "tests/test_optional_dependencies.py"
+    ]
+  }
+}

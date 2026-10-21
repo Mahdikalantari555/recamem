@@ -7,7 +7,7 @@ import threading
 import time
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import torch
 
@@ -16,6 +16,36 @@ import torch
 # Ceiling: single-process; upgrade to HNSW/FAISS only if 100k+ facts miss 5ms on GPU.
 # Extended with access_count, last_retrieved, version_id, feedback, needs_review,
 # semantic_facts, feedback_log for lifelong learning.
+
+
+EXECUTABLE_STRATEGIES = (
+    "episodic_only",
+    "semantic_primary",
+    "hybrid_rrf",
+    "episodic_recency_weighted",
+    "contextual_boosted",
+)
+
+
+def _precision_at_k(ranked: Sequence[int], relevant: Sequence[int]) -> float:
+    """Fraction of the first k results that are judged relevant (k=|relevant|)."""
+    relevant_set = set(relevant)
+    if not relevant_set:
+        return 0.0
+    k = min(len(relevant_set), max(len(ranked), 1))
+    head = list(ranked)[:k]
+    if not head:
+        return 0.0
+    return sum(1 for fid in head if fid in relevant_set) / float(k)
+
+
+def _mrr(ranked: Sequence[int], relevant: Sequence[int]) -> float:
+    """Reciprocal rank of the first relevant result (0.0 when absent)."""
+    relevant_set = set(relevant)
+    for position, fid in enumerate(ranked, start=1):
+        if fid in relevant_set:
+            return 1.0 / float(position)
+    return 0.0
 
 
 def _tokenize(terms: List[str]) -> str:
@@ -179,6 +209,7 @@ class KnowledgeStore:
                 version_id    TEXT,
                 feedback      TEXT,
                 needs_review  INTEGER DEFAULT 0,
+                decay_beta    REAL DEFAULT 1.0,
                 origin        TEXT DEFAULT 'user_text',
                 source_url    TEXT,
                 source_query  TEXT
@@ -213,6 +244,18 @@ class KnowledgeStore:
                 timestamp REAL,
                 strategy_used TEXT
             );
+            CREATE TABLE IF NOT EXISTS retrieval_feedback (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                query TEXT,
+                ranked_ids TEXT,
+                relevant_ids TEXT,
+                precision_at_k REAL,
+                mrr REAL,
+                k INTEGER,
+                strategy_used TEXT,
+                query_type TEXT,
+                timestamp REAL
+            );
             """
         )
         c.commit()
@@ -228,6 +271,7 @@ class KnowledgeStore:
                 "version_id": "ALTER TABLE facts ADD COLUMN version_id TEXT",
                 "feedback": "ALTER TABLE facts ADD COLUMN feedback TEXT",
                 "needs_review": "ALTER TABLE facts ADD COLUMN needs_review INTEGER DEFAULT 0",
+                "decay_beta": "ALTER TABLE facts ADD COLUMN decay_beta REAL DEFAULT 1.0",
                 "origin": "ALTER TABLE facts ADD COLUMN origin TEXT DEFAULT 'user_text'",
                 "source_url": "ALTER TABLE facts ADD COLUMN source_url TEXT",
                 "source_query": "ALTER TABLE facts ADD COLUMN source_query TEXT",
@@ -267,6 +311,18 @@ class KnowledgeStore:
                     correction_text TEXT,
                     timestamp REAL,
                     strategy_used TEXT
+                );
+                CREATE TABLE IF NOT EXISTS retrieval_feedback (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    query TEXT,
+                    ranked_ids TEXT,
+                    relevant_ids TEXT,
+                    precision_at_k REAL,
+                    mrr REAL,
+                    k INTEGER,
+                    strategy_used TEXT,
+                    query_type TEXT,
+                    timestamp REAL
                 );
                 """
             )
@@ -363,6 +419,104 @@ class KnowledgeStore:
             )
             self.conn.commit()
 
+    def log_ranked_feedback(self, query: str, ranked_ids: List[int], relevant_ids: List[int],
+                            strategy_used: Optional[str] = None,
+                            query_type: Optional[str] = None) -> Dict[str, Any]:
+        """Persist one labelled retrieval judgement (post-merge 4.9).
+
+        A row is written only when the caller supplies *both* a ranked result
+        list and a non-empty set of judged-relevant ids, so health metrics can
+        never be computed from unlabelled traffic.
+        """
+        ranked = [int(fid) for fid in ranked_ids]
+        relevant = sorted({int(fid) for fid in relevant_ids})
+        precision = _precision_at_k(ranked, relevant)
+        mrr = _mrr(ranked, relevant)
+        with self._write_lock:
+            self.conn.execute(
+                "INSERT INTO retrieval_feedback(query, ranked_ids, relevant_ids, "
+                "precision_at_k, mrr, k, strategy_used, query_type, timestamp) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (
+                    query,
+                    json.dumps(ranked),
+                    json.dumps(relevant),
+                    precision,
+                    mrr,
+                    len(relevant),
+                    strategy_used,
+                    query_type,
+                    time.time(),
+                ),
+            )
+            self.conn.commit()
+        return {
+            "query": query,
+            "k": len(relevant),
+            "precision_at_k": precision,
+            "mrr": mrr,
+            "strategy_used": strategy_used,
+            "query_type": query_type,
+        }
+
+    def retrieval_label_count(self) -> int:
+        row = self.conn.execute("SELECT COUNT(*) FROM retrieval_feedback").fetchone()
+        return int(row[0]) if row else 0
+
+    def retrieval_health(self, window: int = 200) -> Dict[str, Any]:
+        """precision@k / MRR over labelled feedback only.
+
+        Returns ``available: False`` with an explicit reason and a sample count
+        when there is no labelling data — no placeholder metric is invented.
+        """
+        rows = self.conn.execute(
+            "SELECT precision_at_k, mrr, k, strategy_used, query_type FROM "
+            "retrieval_feedback ORDER BY id DESC LIMIT ?",
+            (int(window),),
+        ).fetchall()
+        total = self.retrieval_label_count()
+        samples = len(rows)
+        source = "retrieval_feedback table (explicitly labelled judgements)"
+        if samples == 0:
+            return {
+                "available": False,
+                "reason": "no_labelled_feedback",
+                "samples": 0,
+                "labels_recorded": total,
+                "source": source,
+                "precision_at_k": None,
+                "mrr": None,
+            }
+        precision = sum(float(r[0]) for r in rows) / samples
+        mrr = sum(float(r[1]) for r in rows) / samples
+        by_strategy: Dict[str, Dict[str, Any]] = {}
+        for p_at_k, row_mrr, _k, strategy, qtype in rows:
+            key = strategy or "unknown"
+            bucket = by_strategy.setdefault(
+                key, {"samples": 0, "precision_at_k": 0.0, "mrr": 0.0}
+            )
+            bucket["samples"] += 1
+            bucket["precision_at_k"] += float(p_at_k)
+            bucket["mrr"] += float(row_mrr)
+        for bucket in by_strategy.values():
+            bucket["precision_at_k"] /= bucket["samples"]
+            bucket["mrr"] /= bucket["samples"]
+        by_query_type: Dict[str, int] = {}
+        for _p, _m, _k, _s, qtype in rows:
+            by_query_type[qtype or "unknown"] = by_query_type.get(qtype or "unknown", 0) + 1
+        return {
+            "available": True,
+            "reason": None,
+            "samples": samples,
+            "labels_recorded": total,
+            "window": int(window),
+            "source": source,
+            "precision_at_k": precision,
+            "mrr": mrr,
+            "by_strategy": by_strategy,
+            "by_query_type": by_query_type,
+        }
+
     def get_feedback_log(self, fact_id: Optional[int] = None) -> List[Dict[str, Any]]:
         if fact_id is not None:
             rows = self.conn.execute(
@@ -433,6 +587,73 @@ class KnowledgeStore:
         return hits
 
     # ------------------------------------------------------------------ #
+    # Power-law accessibility (post-merge 4.7)
+    # ------------------------------------------------------------------ #
+    # A_i(t) = S_base * (1 + alpha * (t - t_last)) ** -beta_i
+    # beta_i is positive, starts at DECAY_BETA_INITIAL and is *decreased* by
+    # successful retrieval (bounded below by DECAY_BETA_MIN), so reinforced
+    # facts decay more slowly. State lives in the facts table and therefore
+    # survives restart with no replay.
+    DECAY_ALPHA = 1.0 / 86400.0       # per-second ageing rate (one day scale)
+    DECAY_BETA_INITIAL = 1.0
+    DECAY_BETA_MIN = 0.2
+    REINFORCE_DELTA = 0.2             # within the specified [0.1, 0.3]
+
+    def decay_exponent(self, fact_id: int) -> float:
+        row = self.conn.execute(
+            "SELECT decay_beta FROM facts WHERE id=?", (int(fact_id),)
+        ).fetchone()
+        value = row[0] if row and row[0] is not None else self.DECAY_BETA_INITIAL
+        try:
+            value = float(value)
+        except (TypeError, ValueError):
+            value = self.DECAY_BETA_INITIAL
+        return max(self.DECAY_BETA_MIN, value)
+
+    def accessibility(self, fact_id: int, now: Optional[float] = None) -> float:
+        """Current power-law accessibility of a fact in (0, 1]."""
+        row = self.conn.execute(
+            "SELECT access_count, last_retrieved, timestamp, decay_beta FROM facts WHERE id=?",
+            (int(fact_id),),
+        ).fetchone()
+        if row is None:
+            return 0.0
+        access_count, last_retrieved, timestamp, beta = row
+        now = time.time() if now is None else float(now)
+        base = max(1.0, float(access_count or 1))
+        last = last_retrieved if last_retrieved is not None else timestamp
+        if last is None:
+            last = now
+        beta = self.DECAY_BETA_MIN if beta is None else max(
+            self.DECAY_BETA_MIN, float(beta)
+        )
+        age = max(0.0, now - float(last))
+        return float(base * (1.0 + self.DECAY_ALPHA * age) ** (-beta))
+
+    def reinforce(self, fact_id: int, now: Optional[float] = None,
+                  delta: Optional[float] = None) -> Dict[str, Any]:
+        """Successful retrieval: bounded decay-exponent decrease + access bump."""
+        delta = self.REINFORCE_DELTA if delta is None else float(delta)
+        delta = max(0.1, min(0.3, delta))
+        before = self.decay_exponent(fact_id)
+        after = max(self.DECAY_BETA_MIN, before * (1.0 - delta))
+        now = time.time() if now is None else float(now)
+        with self._write_lock:
+            self.conn.execute(
+                "UPDATE facts SET decay_beta=?, access_count=COALESCE(access_count,0)+1, "
+                "last_retrieved=? WHERE id=?",
+                (after, now, int(fact_id)),
+            )
+            self.conn.commit()
+        return {
+            "fact_id": int(fact_id),
+            "beta_before": before,
+            "beta_after": after,
+            "delta": delta,
+            "accessibility": self.accessibility(fact_id, now=now),
+        }
+
+    # ------------------------------------------------------------------ #
     # Recall: fused RRF - preserved original logic with extensions
     # ------------------------------------------------------------------ #
     def recall(
@@ -446,7 +667,27 @@ class KnowledgeStore:
         """Hybrid lexical+dense retrieval, fused via Reciprocal Rank Fusion."""
         vecs, ids = self._load_dense()
         if len(ids) == 0:
-            return []
+            if strategy != "semantic_primary":
+                return []
+            # A semantic-only profile still answers definitional questions:
+            # the selected strategy decides which store is consulted (4.2).
+            semantic = self.recall_semantic(
+                query_vec, top_k=top_k, query_text=query_text
+            )
+            results = []
+            for hit in semantic:
+                entry = dict(hit)
+                entry["retrieval_store"] = "semantic"
+                entry["superseded"] = False
+                results.append(entry)
+            self.last_retrieval_trace = {
+                "requested_strategy": strategy,
+                "executed_strategy": "semantic_primary",
+                "semantic_hits": len(results),
+                "candidates": len(results),
+                "episodic_available": False,
+            }
+            return results[: max(top_k, 1)]
 
         q = self._query_vec(query_vec)
         dense_ids, dense_vals = self._dense_candidates(q, min(self._CANDS, len(ids)))
@@ -613,6 +854,55 @@ class KnowledgeStore:
             }
             results.append(entry)
 
+        # Strategy execution (post-merge 4.2): the label decides access, not
+        # just diagnostics. Every result records which store answered.
+        executed_strategy = strategy if strategy in EXECUTABLE_STRATEGIES else "hybrid_rrf"
+        if executed_strategy == "semantic_primary":
+            try:
+                semantic = self.recall_semantic(q, top_k=top_k)
+            except Exception:
+                semantic = []
+            if semantic:
+                promoted = []
+                for hit in semantic:
+                    entry = dict(hit)
+                    entry.setdefault("fused_score", float(entry.get("similarity", 0.0)))
+                    entry["retrieval_store"] = "semantic"
+                    entry["superseded"] = False
+                    promoted.append(entry)
+                # Deduplicate by text: semantic ids and fact ids come from
+                # different tables and are not comparable.
+                seen = {str(entry.get("text", "")).strip().lower() for entry in promoted}
+                for entry in results:
+                    entry["retrieval_store"] = "episodic"
+                results = promoted + [
+                    e for e in results
+                    if str(e.get("text", "")).strip().lower() not in seen
+                ]
+                results = results[: max(top_k, 1)]
+            else:
+                for entry in results:
+                    entry["retrieval_store"] = "episodic"
+        elif executed_strategy == "episodic_recency_weighted":
+            for entry in results:
+                stamp = entry.get("timestamp") or entry.get("last_retrieved") or 0.0
+                age_days = max(0.0, (time.time() - float(stamp)) / 86400.0)
+                weight = 1.0 / (1.0 + 0.5 * age_days)
+                entry["recency_weight"] = weight
+                entry["fused_score"] = float(entry.get("fused_score") or 0.0) * weight
+                entry["retrieval_store"] = "episodic"
+            results.sort(key=lambda e: e["fused_score"], reverse=True)
+        elif executed_strategy == "contextual_boosted":
+            for entry in results:
+                boost = 1.0 + 0.1 * float(self.decay_exponent(entry["id"]))
+                entry["contextual_weight"] = boost
+                entry["fused_score"] = float(entry.get("fused_score") or 0.0) * boost
+                entry["retrieval_store"] = "episodic"
+            results.sort(key=lambda e: e["fused_score"], reverse=True)
+        else:  # episodic_only / hybrid_rrf
+            for entry in results:
+                entry["retrieval_store"] = "episodic"
+
         # Optional bounded reranking: only the configured top candidates are
         # scored, and both pre/post ranks plus the scorer stay in the trace.
         previous_trace = self.last_retrieval_trace or {}
@@ -620,6 +910,11 @@ class KnowledgeStore:
             **previous_trace,
             "dense_index": self.retrieval_status().get("dense_index"),
             "candidates": len(results),
+            "requested_strategy": strategy,
+            "executed_strategy": executed_strategy,
+            "semantic_hits": sum(
+                1 for entry in results if entry.get("retrieval_store") == "semantic"
+            ),
         }
         if self.reranker is not None and results and query_text:
             try:
@@ -633,19 +928,17 @@ class KnowledgeStore:
             except Exception as exc:
                 self.last_retrieval_trace["reranker_error"] = str(exc)
 
-        # Update access_count and last_retrieved
+        # Successful retrieval reinforces each returned *episodic* fact: the
+        # access counter bumps and the decay exponent decreases (4.7). Semantic
+        # rows have their own counters inside recall_semantic().
         if results:
             now = time.time()
-            with self._write_lock:
-                for entry in results:
+            for entry in results:
+                if entry.get("retrieval_store") != "semantic":
                     try:
-                        self.conn.execute(
-                            "UPDATE facts SET access_count = COALESCE(access_count,0)+1, last_retrieved=? WHERE id=?",
-                            (now, entry["id"]),
-                        )
+                        self.reinforce(entry["id"], now=now)
                     except Exception:
                         pass
-                self.conn.commit()
 
         with self._write_lock:
             self.conn.execute("DROP TABLE IF EXISTS _dense_cands")

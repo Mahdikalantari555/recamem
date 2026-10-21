@@ -407,13 +407,28 @@ def held_out_perplexity(model: Model, corpus: Mapping[str, Any], *,
 # --------------------------------------------------------------------------- #
 # Training
 # --------------------------------------------------------------------------- #
-def build_model(config: Mapping[str, Any]) -> Model:
-    return Model(
-        dim=int(config["dim"]),
-        layers=int(config["layers"]),
-        spread=int(config.get("spread", 32)),
-        vocab_size=int(config.get("vocab_size", 256)),
-    )
+def build_model(config: Mapping[str, Any], seed: Optional[int] = None) -> Model:
+    """Construct the model, optionally from a reproducible RNG stream.
+
+    ``Model`` initialises its weights from the ambient torch RNG, so without a
+    seed two runs with the same corpus produce different initial losses. Passing
+    the run's ``--seed`` makes ``loss_decreased`` a property of the run rather
+    than of process timing.
+    """
+    generator_state = None
+    if seed is not None:
+        generator_state = torch.get_rng_state()
+        torch.manual_seed(int(seed))
+    try:
+        return Model(
+            dim=int(config["dim"]),
+            layers=int(config["layers"]),
+            spread=int(config.get("spread", 32)),
+            vocab_size=int(config.get("vocab_size", 256)),
+        )
+    finally:
+        if generator_state is not None:
+            torch.set_rng_state(generator_state)
 
 
 def _chunk_losses(model: Model, tokens: torch.Tensor, next_tokens: torch.Tensor,
@@ -737,7 +752,7 @@ def run_scale(sources: Iterable[str | os.PathLike], *, command: str = "",
     if checkpoint_path and Path(checkpoint_path).is_file():
         state = read_checkpoint(checkpoint_path)
 
-    trained = model or build_model(model_config)
+    trained = model or build_model(model_config, seed=state.seed)
     run = {
         "start_position": state.corpus_position,
         "end_position": state.corpus_position,
@@ -766,7 +781,7 @@ def run_scale(sources: Iterable[str | os.PathLike], *, command: str = "",
             if len(window) >= 2:
                 # A dedicated probe model: the equivalence check must not take
                 # an optimizer step on the model the run is about to train.
-                probe_model = build_model(model_config)
+                probe_model = build_model(model_config, seed=state.seed)
                 verification_chunk = probe_model.train_chunk(
                     torch.tensor([list(window[:-1])], dtype=torch.long),
                     torch.tensor([list(window[1:])], dtype=torch.long),

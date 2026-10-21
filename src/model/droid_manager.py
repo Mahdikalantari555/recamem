@@ -184,10 +184,34 @@ class DroidManager:
             return {"status": "not_running", "alive": False, "cycles": 0}
         return {"status": "running" if worker.is_alive() else "stopped", **worker.status()}
 
-    def shutdown(self) -> None:
-        """Stop every worker; safe to call repeatedly."""
+    def shutdown(self, timeout: float = 2.0) -> None:
+        """Stop every owned worker (sleep and stream); safe to call repeatedly."""
         for name in list(self._sleep_workers):
             self.stop_auto_sleep(name)
+        for name, engine in list(self.cached_instances.items()):
+            try:
+                engine.shutdown(timeout=timeout)
+            except Exception:
+                continue
+
+    def stop_continuous_stream(self, name: str, timeout: float = 2.0) -> Dict[str, Any]:
+        clean_name = name.strip().lower().replace(" ", "-")
+        engine = self.cached_instances.get(clean_name)
+        if engine is None:
+            return {"status": "not_loaded"}
+        return engine.stop_continuous_stream(timeout=timeout)
+
+    def activate_droid(self, name: str) -> DroidEngine:
+        """Focus a profile: stop every other cached stream so ownership is unique."""
+        clean_name = name.strip().lower().replace(" ", "-")
+        for other, engine in list(self.cached_instances.items()):
+            if other == clean_name:
+                continue
+            try:
+                engine.shutdown(timeout=1.0)
+            except Exception:
+                continue
+        return self.get_droid(clean_name)
 
     def delete_droid(self, name: str) -> bool:
         """Delete a Droid profile directory."""
@@ -195,6 +219,12 @@ class DroidManager:
         # Cancellation before filesystem removal: a worker must not write into
         # a profile that is being deleted.
         self.stop_auto_sleep(clean_name)
+        engine = self.cached_instances.get(clean_name)
+        if engine is not None:
+            try:
+                engine.shutdown(timeout=1.0)
+            except Exception:
+                pass
         droid_dir = self.base_dir / clean_name
         if clean_name in self.cached_instances:
             del self.cached_instances[clean_name]
@@ -241,6 +271,26 @@ class DroidManager:
         new_droid.save_profile(str(dst_new))
 
         return new_droid
+
+    def create_version(self, name: str, version_id: str) -> Dict[str, Any]:
+        """Create a complete snapshot of a profile through the engine."""
+        clean_name = name.strip().lower().replace(" ", "-")
+        droid = self.get_droid(clean_name)
+        snapshot = droid.create_snapshot(version_id)
+        return snapshot.get("metadata", {})
+
+    def rollback_version(self, name: str, version_id: str, save: bool = True) -> Dict[str, Any]:
+        """Roll back a profile with the same staged path the console uses.
+
+        A pre-rollback snapshot is written first, so ``rollback_version`` back to
+        ``pre_rollback_version`` restores the state that was just replaced.
+        """
+        clean_name = name.strip().lower().replace(" ", "-")
+        droid = self.get_droid(clean_name)
+        report = droid.rollback(version_id)
+        if report.get("restored") and save:
+            droid.save_profile(str(self.base_dir / clean_name))
+        return report
 
     def export_version(self, name: str, version_id: str, out_path: str) -> Dict[str, Any]:
         """Export snapshot artifact."""

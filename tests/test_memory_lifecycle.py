@@ -378,9 +378,11 @@ def test_classify_query_types():
     assert policy.classify_query("When was the sensor deployed?") == "temporal"
     assert policy.classify_query("How does lidar compare to radar?") == "relational"
     assert policy.classify_query("capital of France?") == "specific_fact"
-    # Note: the ambiguous branch only fires for short keyword-free strings that
-    # are not questions (question-marked queries hit the specific_fact rule).
+    # Ambiguity is reachable and punctuation never promotes a query out of it
+    # (post-merge 4.1): "what?" is ambiguous with or without the "?".
     assert policy.classify_query("hmm there") == "ambiguous"
+    for ambiguous in ("", "   ", "what?", "what", "who?", "?"):
+        assert policy.classify_query(ambiguous) == "ambiguous", ambiguous
 
 
 def test_select_strategy_defaults_without_exploration():

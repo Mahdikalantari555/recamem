@@ -1,0 +1,102 @@
+name: offline-contracts
+
+# Model-dependent tiers are deliberately absent: no weights exist in CI, so a
+# green run here proves the offline contracts, the evidence ledger schema and
+# the OpenSpec structure only. See docs/testing.md for the other tiers.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: core-only
+            requirements: requirements-core.txt
+          - name: with-optional
+            requirements: requirements-optional.txt
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install ${{ matrix.name }}
+        run: |
+          python -m pip install --upgrade pip
+          # streamlit/pandas are console-only and the offline tier must not need
+          # them. hnswlib is a native extension that changes candidate ranking;
+          # it is exercised by the dedicated informational step below so this
+          # gate measures the documented exact-fallback configuration.
+          grep -v -E '^(streamlit|pandas|hnswlib)' ${{ matrix.requirements }} > /tmp/req.txt
+          pip install -r /tmp/req.txt
+      - name: Offline suite
+        run: PYTHONPATH=. python -m pytest tests -q 2>&1 | tee /tmp/offline-suite.log
+        env:
+          OMP_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+      - name: Report offline failures
+        # Job logs for this repository are only readable through blob storage,
+        # which is not always reachable; annotations are, so every failure is
+        # also published as a check annotation (failing test IDs first, then the
+        # first traceback).
+        if: failure()
+        run: |
+          python - <<'PY'
+          import pathlib
+          import urllib.parse
+
+          log = pathlib.Path("/tmp/offline-suite.log")
+          text = log.read_text(errors="replace") if log.exists() else "pytest log missing"
+          lines = text.splitlines()
+          failing = [line for line in lines if line.startswith(("FAILED", "ERROR"))]
+          header = "\n".join(failing[:20]) or "no FAILED/ERROR lines in the log"
+          start = next((i for i, line in enumerate(lines) if "= FAILURES =" in line), None)
+          body = "\n".join(lines[start:start + 160]) if start is not None else "\n".join(lines[-120:])
+
+          def emit(title, chunk):
+              message = urllib.parse.quote(chunk, safe="")
+              print(f"::error title={title}::{message}")
+
+          emit("failing tests", header[-6000:])
+          for index in range(0, min(len(body), 18000), 6000):
+              emit(f"offline failure detail {index // 6000 + 1}", body[index:index + 6000])
+          PY
+      - name: Native index (informational)
+        # Not part of the gate: whether the native wheel builds is a property of
+        # the runner, and an approximate index legitimately reorders near-ties.
+        continue-on-error: true
+        run: |
+          if pip install -q hnswlib; then
+            PYTHONPATH=. python -m pytest tests/test_hybrid_retrieval.py -q -k "hnsw or dense_index" || \
+              echo "::warning::hnswlib installed and the ranking subset failed; see the benchmark tier"
+          else
+            echo "hnswlib did not build on this runner; the exact fallback is covered by the suite"
+          fi
+        env:
+          OMP_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+
+  evidence-and-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Evidence ledger schema + inventory coverage
+        run: python scripts/check_release_evidence.py
+      - name: Release gate must not claim completion while tasks are open
+        run: |
+          if python scripts/check_release_evidence.py --require-complete; then
+            echo "::error::--require-complete passed; unresolved tasks cannot be considered complete"
+            exit 1
+          else
+            echo "release gate correctly reports unresolved work"
+          fi
+      - name: OpenSpec structure
+        run: python scripts/validate_openspec.py

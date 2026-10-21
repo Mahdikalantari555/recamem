@@ -178,7 +178,9 @@ def test_retrieval_policy_classify_and_select():
     assert policy.classify_query("what is gravity?") == "definitional"
     assert policy.classify_query("when did it happen?") == "temporal"
     assert policy.classify_query("how does a relate to b?") == "relational"
-    assert policy.classify_query("who?") == "specific_fact"
+    # Underspecified questions are ambiguous with or without the punctuation.
+    assert policy.classify_query("who?") == "ambiguous"
+    assert policy.classify_query("who") == "ambiguous"
     assert policy.classify_query("hi") == "ambiguous"
     assert policy.classify_query("the concrete mixer on site") == "specific_fact"
 

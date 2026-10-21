@@ -51,6 +51,27 @@ class ByteRtuBackend:
         # reset() owns (the spec only requires the live buffer to be cleared).
         self._last_prompt_bytes = b""
 
+    # -- capability contract (post-merge 3.1/3.6) ----------------------- #
+    # The frozen byte decoder is prompt-only: it has no residual-stream hook
+    # and no attention cache a caller could prime, so both optional operations
+    # are advertised as unsupported instead of being faked.
+    tokenizer_kind = "bytes"
+
+    def supports_hidden_injection(self) -> bool:
+        return False
+
+    def supports_kv_priming(self) -> bool:
+        return False
+
+    def context_window(self) -> int:
+        return int(self.max_prompt_bytes)
+
+    def output_reserve(self) -> int:
+        return int(self.max_output_bytes)
+
+    def count_tokens(self, text: str) -> int:
+        return len(text.encode("utf-8"))
+
     def tokenize(self, text: str) -> list:
         return list(text.encode("utf-8"))
 
