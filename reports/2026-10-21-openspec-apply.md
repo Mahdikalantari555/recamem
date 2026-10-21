@@ -87,3 +87,37 @@ PYTHONPATH=. python scripts/bench_sleep_recovery.py
 PYTHONPATH=. python scripts/bench_hybrid_retrieval.py
 PYTHONPATH=. python scripts/check_release_evidence.py
 ```
+
+## Archive (2026-10-21)
+
+Archived with `git mv` into `openspec/changes/archive/2026-10-21-*` (the
+`openspec` CLI is not installed in this environment, so the archive was done by
+hand following the CLI's semantics):
+
+* `2026-10-21-delta-plastic-memory` — delta specs synced to
+  `openspec/specs/adaptation/delta-memory/spec.md` and
+  `openspec/specs/adaptation/sparse-coding/spec.md`.
+* `2026-10-21-autonomous-sleep-consolidation` — synced to
+  `openspec/specs/memory/{sleep-consolidation,memory-aware-synapses,decreasing-backprop}/spec.md`.
+* `2026-10-21-edge-slm-optimization` — synced to
+  `openspec/specs/memory/hybrid-retrieval/spec.md`,
+  `openspec/specs/model/edge-optimization/spec.md` and
+  `openspec/specs/model/test-time-compute/spec.md`.
+
+Each archive directory keeps its proposal, design, delta specs and ticked
+tasks.md, plus an archive-status section recording the measured numbers and the
+targets that were missed. `inventory.json` and `reports/completion-evidence.json`
+were repointed from `openspec/changes/<change>/tasks.md` to the archived paths;
+the ledger still validates (489 entries, schema/coverage valid).
+
+`post-merge-completion` is intentionally **not** archived: sections 1.2-1.5,
+3.1-3.8 and 4.1-4.12 are unimplemented, TTC-vs-8B is blocked, and its own
+`verification/release-evidence` spec forbids archiving while dependency
+acceptance evidence is incomplete.
+
+## Merge status
+
+`origin/main` was at `f4389a3`, an ancestor of this branch: the branch had no
+open pull request and no conflict, so no automated merge could occur. The fix is
+to publish the branch to `main` explicitly (fast-forward merge, no new merge
+commit) rather than resolving a nonexistent conflict.

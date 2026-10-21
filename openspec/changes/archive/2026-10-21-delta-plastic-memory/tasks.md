@@ -33,3 +33,24 @@
 - [x] 5.1 Run adapter, DroidEngine, checkpoint, and profile test suites.
 - [x] 5.2 Run the full project test suite and verify old `associative_rtu` checkpoints still load.
 - [ ] 5.3 Benchmark CPU memory, update latency, retrieval quality, and interference for 384-D dense vs 2048-D TopK-128 codes.
+
+## Archive status (2026-10-21)
+
+Archived after implementation. Every task except `5.3` is checked with tests and
+evidence recorded in `reports/completion-evidence.json` (see
+`reports/2026-10-21-openspec-apply.md`).
+
+Measured on the fixed 20-task protocol (mock embeddings, commit `f31b00c`):
+
+| Metric | Target | Measured |
+| --- | --- | --- |
+| Delta mean memory loss | < 0.10 | **0.1198 (target missed)** |
+| Sparse delta mean memory loss | < 0.10 | 0.0420 |
+| EWC reference loss | ~0.24 | **0.1016 (reference not reproduced)** |
+| Interference overlap, dense -> sparse | not specified | 1.000 -> 0.034 |
+| Sparse code sparsity | 93.75% | 93.75% (128/2048) |
+
+The <0.10 target is retained as an unmet target, not a shipped claim. Task `5.3`
+(process CPU/RSS memory of the 2048-D codes) remains open and is tracked by
+`openspec/changes/post-merge-completion` ledger row
+`openspec/changes/delta-plastic-memory/tasks.md#5.3` (`partial`).

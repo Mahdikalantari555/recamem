@@ -36,3 +36,17 @@
 - [x] 5.2 Run the 100-correlated-pattern recovery benchmark and verify >=95% coverage without an external list.
 - [x] 5.3 Run MAS pruning and DecreasingBackprop stability tests; document configurations and quality deltas.
 - [x] 5.4 Run the full project test suite and checkpoint/profile compatibility tests.
+
+## Archive status (2026-10-21)
+
+Archived after implementation: all 22 tasks are checked with tests and evidence
+in `reports/completion-evidence.json`.
+
+Measured (commit `f31b00c`, mock embeddings, 384-D):
+
+- 100 correlated patterns: all 100 recovered, coverage 1.0, 160 replay steps,
+  `stop_reason=budget_exhausted`, expectation list scored only after replay.
+- MAS pruning removes exactly `floor(0.1 * N)` elements, is reversible, and
+  reports retrieval quality before/after with a warning on regression.
+- Decreasing backprop advances once per committed cycle and survives profile
+  reload; ReLUDown stays behind an explicit experimental flag.

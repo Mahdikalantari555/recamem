@@ -4,6 +4,16 @@ All implementation tasks start unchecked. Baseline main is `c246043`; the preced
 
 Feature task references below are relative to `openspec/changes/<change>/tasks.md`; those detailed tasks and specs remain authoritative. Record their completion separately and link their evidence here. Follow the design's migration and capability decisions throughout.
 
+**Archive status (2026-10-21).** `delta-plastic-memory`,
+`autonomous-sleep-consolidation` and `edge-slm-optimization` are implemented
+and archived under `openspec/changes/archive/2026-10-21-*`; their dependency
+tasks 5.x, 6.x and 7.x below are checked with evidence. The archive notes record
+the targets that were missed (delta memory loss, HNSW p95, Matryoshka speedup)
+and the tasks that stayed blocked (TTC versus an 8B reference). This umbrella
+change stays active: section 1.2-1.5, 3.1-3.8 and 4.1-4.12 are not implemented,
+and its own release-evidence spec forbids archiving on incomplete dependency
+acceptance.
+
 ## 1. Evidence and compatibility foundation
 
 - [x] 1.1 Create a machine-readable evidence ledger from every inventory entry with disposition, implementation paths, test IDs, owner and evidence location; verify a schema/coverage guard rejects missing entries and unsupported completion claims.

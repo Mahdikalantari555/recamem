@@ -38,3 +38,25 @@
 - [ ] 5.2 Verify lexical exact-match behavior and the existing <5 ms at 100k knowledge-store SLA on documented hardware.
 - [ ] 5.3 Run model catalog/recommendation and TTC benchmarks with provenance and configuration recorded.
 - [x] 5.4 Document optional dependencies, exact fallback, profile flags, and index/embedding version migration.
+
+## Archive status (2026-10-21)
+
+Archived after implementation. Tasks `1.4`, `2.5`, `5.2` and `5.3` are checked
+because their benchmarks ran and published results, but the numeric targets were
+**not** met and are not claimed; tasks `4.3` and `4.4` (1B+TTC versus an
+identified 8B reference) remain unchecked and blocked on unavailable weights.
+
+Measured (commit `f31b00c`, mock embeddings, 100k facts, 384-D):
+
+| Metric | Target | Measured |
+| --- | --- | --- |
+| Dense candidate p95 | < 5 ms | **13.3 ms, exact fallback (miss)** |
+| recall@5 vs exact MVM | >= 0.95 | 1.0 |
+| 64-D Matryoshka speedup, p50 | >= 6x | **4.83x (miss)** |
+| 64-D relative quality loss | <= 5% | 0.0% |
+| Reranker Precision@5 gain | +20% | +57.6% (lexical fallback scorer) |
+
+`hnswlib` has no wheel in this environment, so the HNSW path reports
+`mode == "exact-fallback"` and the timings above are brute-force numbers; no
+cross-encoder weights were available either. Superseded rows stay `partial` or
+`blocked` in the ledger.

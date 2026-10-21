@@ -5105,9 +5105,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#1.1",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#1.1",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#1.1",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#1.1",
       "reason": "DeltaPlasticAdapter implements the PlasticAdapter contract with projection/state init and dimension validation.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -5125,9 +5125,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#1.2",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#1.2",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#1.2",
       "reason": "Rank-one gated Delta Rule: S <- S + beta * outer(k, v - S^T k), beta = sigmoid(W_beta x).",
       "implementation": [
         "src/model/delta_memory.py",
@@ -5147,9 +5147,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#1.3",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#1.3",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#1.3",
       "reason": "Householder-reflected erase with bounded attenuation and a before/after/collateral report.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -5169,9 +5169,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#1.4",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#1.4",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#1.4",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#1.4",
       "reason": "Versioned delta/sparse state; newer versions and mismatched geometry are rejected, legacy associative profiles still load.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -5191,9 +5191,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#1.5",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#1.5",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#1.5",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#1.5",
       "reason": "Covers zero/full beta, repeated writes, value overwrite, selective erase and unrelated-key preservation.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -5214,9 +5214,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#2.1",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#2.1",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#2.1",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#2.1",
       "reason": "SparseCoder: 384-D input, 2048-D latent, deterministic TopK-128, reconstruction and utilization metrics.",
       "implementation": [
         "src/model/delta_memory.py"
@@ -5236,9 +5236,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#2.2",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#2.2",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#2.2",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#2.2",
       "reason": "SparseDeltaAdapter composes the coder with the delta core; FlyModelAdapter keeps the same PlasticAdapter API.",
       "implementation": [
         "src/model/delta_memory.py"
@@ -5256,9 +5256,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#2.3",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#2.3",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#2.3",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#2.3",
       "reason": "delta_rtu, sparse_delta and fly_model are registered; discovery, unknown-name errors and profile serialization are tested.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -5279,9 +5279,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#2.4",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#2.4",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#2.4",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#2.4",
       "reason": "Exact 2048-D code, exactly 128 active entries, 93.75% sparsity, stable ties and round-trip shape.",
       "implementation": [
         "src/model/delta_memory.py"
@@ -5299,9 +5299,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#3.1",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#3.1",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#3.1",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#3.1",
       "reason": "New profiles may select delta_rtu; existing profile metadata still selects associative_rtu.",
       "implementation": [
         "src/model/plastic_adapter.py",
@@ -5319,9 +5319,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#3.2",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#3.2",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#3.2",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#3.2",
       "reason": "Teaching and recall go through the adapter contract; the default profile keeps associative_rtu until migration is selected.",
       "implementation": [
         "src/model/droid.py"
@@ -5338,9 +5338,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#3.3",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#3.3",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#3.3",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#3.3",
       "reason": "docs/delta-migration.md documents selection, re-teaching migration, rollback and incompatibility behavior.",
       "implementation": [
         "docs/delta-migration.md",
@@ -5358,9 +5358,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#4.1",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#4.1",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#4.1",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#4.1",
       "reason": "Versioned 20-task protocol with fixed seeds, fixed task order, fixed splits and scoring.",
       "implementation": [
         "src/model/continual_bench.py"
@@ -5378,9 +5378,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#4.2",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#4.2",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#4.2",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#4.2",
       "reason": "Budget-matched EWC reference (one Fisher pass + one step per pattern) with a documented memory-loss formula.",
       "implementation": [
         "src/model/continual_bench.py"
@@ -5398,9 +5398,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#4.3",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#4.3",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#4.3",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#4.3",
       "reason": "Measured per-task loss, interference, latency and code utilization; delta memory loss 0.1198 missed the <0.10 target and is published as a miss.",
       "implementation": [
         "src/model/continual_bench.py",
@@ -5417,9 +5417,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#4.4",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#4.4",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#4.4",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#4.4",
       "reason": "Full configuration and per-task results are published; the ~0.24 EWC reference is labelled a target and was not reproduced.",
       "implementation": [
         "src/model/continual_bench.py",
@@ -5436,9 +5436,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#5.1",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#5.1",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#5.1",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#5.1",
       "reason": "Adapter, DroidEngine, checkpoint and profile suites pass (621 passed, 1 skipped).",
       "implementation": [
         "src/model/delta_memory.py",
@@ -5456,9 +5456,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#5.2",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#5.2",
       "status": "verified",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#5.2",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#5.2",
       "reason": "Full suite green and old associative_rtu checkpoints still load.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -5477,9 +5477,9 @@
       ]
     },
     {
-      "id": "openspec/changes/delta-plastic-memory/tasks.md#5.3",
+      "id": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#5.3",
       "status": "partial",
-      "owner": "openspec/changes/delta-plastic-memory/tasks.md#5.3",
+      "owner": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md#5.3",
       "reason": "Update latency, retrieval quality, interference and code utilization are measured; process CPU/RSS memory for the 2048-D codes was not measured.",
       "implementation": [
         "src/model/continual_bench.py",
@@ -5496,9 +5496,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#1.1",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#1.1",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#1.1",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#1.1",
       "reason": "autonomous_retrieval() is driven only by internal memory state plus a decaying self-inhibition trace.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5518,9 +5518,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#1.2",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#1.2",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#1.2",
       "reason": "Replay step/time/confidence/cancellation/duplicate controls are implemented and tested.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5541,9 +5541,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#1.3",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#1.3",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#1.3",
       "reason": "DroidEngine.sleep() returns status, duration, coverage, replay and pruning counts plus errors.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5563,9 +5563,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#1.4",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#1.4",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#1.4",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#1.4",
       "reason": "consolidate_memory() is invoked separately from fact and parameter pruning, whose counts stay distinct in the report.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5585,9 +5585,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#1.5",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#1.5",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#1.5",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#1.5",
       "reason": "Fixed correlated-pattern fixture and a 100-pattern benchmark recover all 100 patterns with no expected list passed in.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5608,9 +5608,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#2.1",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#2.1",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#2.1",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#2.1",
       "reason": "MAS importance uses the squared-L2 output objective with exactly one backward pass per sampled batch.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5630,9 +5630,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#2.2",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#2.2",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#2.2",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#2.2",
       "reason": "Eligible parameters are limited to plastic weights; the frozen anchor and buffers are excluded.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5652,9 +5652,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#2.3",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#2.3",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#2.3",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#2.3",
       "reason": "Lowest-importance 10% is pruned deterministically (floor) with importance scores and reversible masks persisted.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5674,9 +5674,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#2.4",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#2.4",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#2.4",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#2.4",
       "reason": "Ranking, single backward pass, exact prune count, checkpoint round trip and allowlist scope are covered.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5698,9 +5698,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#2.5",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#2.5",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#2.5",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#2.5",
       "reason": "Retrieval quality is sampled before and after pruning; a regression is reported with a warning instead of hidden.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5720,9 +5720,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#3.1",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#3.1",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#3.1",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#3.1",
       "reason": "lr_i = base_lr * decay_factor^i with zero-based index and validated bounds.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5742,9 +5742,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#3.2",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#3.2",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#3.2",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#3.2",
       "reason": "Schedule index and effective rate are stored in the profile and restored on load.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5766,9 +5766,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#3.3",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#3.3",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#3.3",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#3.3",
       "reason": "Monotonicity, bounds, restart continuity and optimizer integration are tested.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5790,9 +5790,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#3.4",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#3.4",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#3.4",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#3.4",
       "reason": "ReLUDown is isolated behind an explicit experimental flag.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5811,9 +5811,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#4.1",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#4.1",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#4.1",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#4.1",
       "reason": "/sleep and the CLI sleep action both call DroidEngine.sleep().",
       "implementation": [
         "src/cli.py",
@@ -5830,9 +5830,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#4.2",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#4.2",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#4.2",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#4.2",
       "reason": "Opt-in single worker per Droid with event-based stop/join and configurable idle/interval settings.",
       "implementation": [
         "src/model/droid_manager.py"
@@ -5851,9 +5851,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#4.3",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#4.3",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#4.3",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#4.3",
       "reason": "Sleep shares the engine lock with teach/recall; cancellation and profile deletion join the worker.",
       "implementation": [
         "src/model/droid_manager.py",
@@ -5874,9 +5874,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#4.4",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#4.4",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#4.4",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#4.4",
       "reason": "Repeated start calls reuse the single worker; shutdown stops every worker.",
       "implementation": [
         "src/model/droid_manager.py"
@@ -5895,9 +5895,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#5.1",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#5.1",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#5.1",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#5.1",
       "reason": "Empty store, success, cancellation, concurrent teaching and worker restart are covered.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5921,9 +5921,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#5.2",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#5.2",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#5.2",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#5.2",
       "reason": "100-pattern benchmark: 100 distinct expected IDs recovered, coverage 1.0, 160 steps, no expected list passed in.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5942,9 +5942,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#5.3",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#5.3",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#5.3",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#5.3",
       "reason": "Pruning quality deltas and schedule stability are measured; the configuration is documented in the task report.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5964,9 +5964,9 @@
       ]
     },
     {
-      "id": "openspec/changes/autonomous-sleep-consolidation/tasks.md#5.4",
+      "id": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#5.4",
       "status": "verified",
-      "owner": "openspec/changes/autonomous-sleep-consolidation/tasks.md#5.4",
+      "owner": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md#5.4",
       "reason": "Full suite is green and sleep/MAS state survives profile round trips.",
       "implementation": [
         "src/model/sleep_consolidation.py",
@@ -5988,9 +5988,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#1.1",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#1.1",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#1.1",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#1.1",
       "reason": "DenseIndex/HNSWIndex implement add/update/delete/rebuild, versioned persistence and exact fallback.",
       "implementation": [
         "src/model/hybrid_retrieval.py",
@@ -6009,9 +6009,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#1.2",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#1.2",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#1.2",
       "reason": "Index candidates feed the existing RRF path without changing recall result fields.",
       "implementation": [
         "src/model/hybrid_retrieval.py",
@@ -6029,9 +6029,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#1.3",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#1.3",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#1.3",
       "reason": "Superseded/deleted facts are filtered and rebuilds are repeatable from the authoritative store.",
       "implementation": [
         "src/model/hybrid_retrieval.py",
@@ -6049,9 +6049,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#1.4",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#1.4",
       "status": "partial",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#1.4",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#1.4",
       "reason": "100k-fact benchmark published, but hnswlib is unavailable: only the exact fallback ran (p95 13.3 ms vs <5 ms target, recall@5 1.0). Target not met.",
       "implementation": [
         "scripts/bench_hybrid_retrieval.py",
@@ -6068,9 +6068,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#1.5",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#1.5",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#1.5",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#1.5",
       "reason": "Exact mode preserved; missing dependency, corruption and restart fallbacks are tested.",
       "implementation": [
         "src/model/hybrid_retrieval.py",
@@ -6090,9 +6090,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#2.1",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#2.1",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#2.1",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#2.1",
       "reason": "CrossEncoderReranker scores a bounded candidate set and reports pre/post scores and the scorer used.",
       "implementation": [
         "src/model/hybrid_retrieval.py"
@@ -6109,9 +6109,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#2.2",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#2.2",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#2.2",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#2.2",
       "reason": "Labeled query set: P@5 0.236 -> 0.372 (+57.6% relative) with the lexical fallback scorer; no cross-encoder weights were available.",
       "implementation": [
         "scripts/bench_hybrid_retrieval.py"
@@ -6127,9 +6127,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#2.3",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#2.3",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#2.3",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#2.3",
       "reason": "MatryoshkaAnchor validates 64/384-D projection and the dual index stores both stages with one version.",
       "implementation": [
         "src/model/hybrid_retrieval.py"
@@ -6147,9 +6147,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#2.4",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#2.4",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#2.4",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#2.4",
       "reason": "Migration/re-embedding via DualIndex.migrate; incompatible embeddings raise instead of being truncated; rollback is artifact-based.",
       "implementation": [
         "src/model/hybrid_retrieval.py",
@@ -6168,9 +6168,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#2.5",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#2.5",
       "status": "partial",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#2.5",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#2.5",
       "reason": "64-D first stage measured: 4.83x p50 speedup (target >=6x, miss) with 0.0 measured quality loss on the synthetic cluster fixture (target <=5%).",
       "implementation": [
         "scripts/bench_hybrid_retrieval.py",
@@ -6187,9 +6187,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#3.1",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#3.1",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#3.1",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#3.1",
       "reason": "13-model registry with quantization, RAM estimate + source, task tags, provenance URLs and optional speed fields.",
       "implementation": [
         "src/model/edge_slm.py"
@@ -6206,9 +6206,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#3.2",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#3.2",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#3.2",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#3.2",
       "reason": "Llama 3.2 1B, Qwen2.5 1.5B, SmolLM2 1.7B and Gemma 3 1B carry source-reported values with explicit labels.",
       "implementation": [
         "src/model/edge_slm.py"
@@ -6225,9 +6225,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#3.3",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#3.3",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#3.3",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#3.3",
       "reason": "recommend(ram_gb, min_tok_s, task) filters hard constraints and returns ranked candidates with rationale and provenance.",
       "implementation": [
         "src/model/edge_slm.py"
@@ -6245,9 +6245,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#3.4",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#3.4",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#3.4",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#3.4",
       "reason": "Low-RAM, throughput-constrained, reasoning, general-chat, unknown-speed and no-match cases are covered.",
       "implementation": [
         "src/model/edge_slm.py"
@@ -6267,9 +6267,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#3.5",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#3.5",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#3.5",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#3.5",
       "reason": "Recommended entries map to a GgufBackend config with load_requested False; nothing is downloaded or loaded.",
       "implementation": [
         "src/model/edge_slm.py"
@@ -6286,9 +6286,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#4.1",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#4.1",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#4.1",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#4.1",
       "reason": "TTC branches by depth, deduplicates, scores with a verifier and enforces candidate/token/time budgets.",
       "implementation": [
         "src/model/test_time_compute.py"
@@ -6308,9 +6308,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#4.2",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#4.2",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#4.2",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#4.2",
       "reason": "The result carries the selected candidate, verifier evidence/score and consumed budget with deterministic ties.",
       "implementation": [
         "src/model/test_time_compute.py"
@@ -6328,9 +6328,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#4.3",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#4.3",
       "status": "blocked",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#4.3",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#4.3",
       "reason": "Requires an explicitly identified 8B reference model; no local weights or inference budget in this environment, so no matched-budget comparison was run.",
       "implementation": [
         "src/model/test_time_compute.py"
@@ -6342,9 +6342,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#4.4",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#4.4",
       "status": "blocked",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#4.4",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#4.4",
       "reason": "Depends on the 8B reference evaluation; superiority is not claimed without it.",
       "implementation": [],
       "tests": [],
@@ -6354,9 +6354,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#4.5",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#4.5",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#4.5",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#4.5",
       "reason": "Search never writes memory; persist_selected requires explicit approval and writes exactly one candidate.",
       "implementation": [
         "src/model/test_time_compute.py"
@@ -6374,9 +6374,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#5.1",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#5.1",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#5.1",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#5.1",
       "reason": "Knowledge-store, DroidEngine, profile and checkpoint suites pass (621 passed, 1 skipped).",
       "implementation": [
         "src/model/hybrid_retrieval.py",
@@ -6395,9 +6395,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#5.2",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#5.2",
       "status": "partial",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#5.2",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#5.2",
       "reason": "Lexical exact-match behavior is covered by the knowledge-store tests; the <5 ms at 100k knowledge-store SLA was not re-measured on this hardware.",
       "implementation": [
         "src/model/knowledge_store.py",
@@ -6414,9 +6414,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#5.3",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#5.3",
       "status": "partial",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#5.3",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#5.3",
       "reason": "Catalog/recommendation benchmark recorded with provenance; TTC was validated functionally, not benchmarked against a model.",
       "implementation": [
         "src/model/edge_slm.py",
@@ -6433,9 +6433,9 @@
       ]
     },
     {
-      "id": "openspec/changes/edge-slm-optimization/tasks.md#5.4",
+      "id": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#5.4",
       "status": "verified",
-      "owner": "openspec/changes/edge-slm-optimization/tasks.md#5.4",
+      "owner": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#5.4",
       "reason": "docs/edge-retrieval.md documents optional dependencies, exact fallback, profile flags and index/embedding version migration.",
       "implementation": [
         "docs/edge-retrieval.md"

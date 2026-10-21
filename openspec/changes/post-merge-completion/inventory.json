@@ -2748,455 +2748,455 @@
   "dependency_tasks": [
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "1.1",
       "description": "Implement `DeltaPlasticAdapter` against the existing `PlasticAdapter` interface, including projection/state initialization and dimension validation.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "1.2",
       "description": "Implement the per-head gated Delta Rule using the previous memory prediction `K^T S`, residual value, and sigmoid `W_beta` gate.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "1.3",
       "description": "Implement `erase(key, strength)` with a Householder-reflected direction, bounded attenuation, and an auditable result report.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "1.4",
       "description": "Add versioned state save/load and backward-compatibility tests for existing `associative_rtu` profile loading.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "1.5",
       "description": "Add unit tests for zero/full beta, repeated writes, changed-value overwrite, erase of a selected key, and unrelated-key preservation.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "2.1",
       "description": "Implement `SparseCoder` with a 384-D input, 2048-D latent representation, deterministic TopK 128, reconstruction, and code-usage metrics.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "2.2",
       "description": "Implement the sparse/delta composition and FlyModel-style configured adapter while retaining the `PlasticAdapter` API.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "2.3",
       "description": "Register `delta_rtu`, `sparse_delta`, and `fly_model`; test discovery, construction, unknown-name errors, and profile serialization.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "2.4",
       "description": "Add tests for exact code dimension, exactly 128 active entries, 93.75% expected sparsity, round-trip shape, and stable tie handling.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "3.1",
       "description": "Allow new profiles to choose `delta_rtu` without changing the adapter selected by existing profile metadata.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "3.2",
       "description": "Route `DroidEngine` teaching, recall, and snapshots through the adapter contract and preserve the current default until profile migration is explicitly selected.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "3.3",
       "description": "Add migration/rollback documentation and tests for incompatible checkpoint dimensions.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "4.1",
       "description": "Add a versioned 20-task benchmark with fixed seeds, task order, train/evaluation splits, and scoring protocol.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "4.2",
       "description": "Implement the EWC reference under the same budget and document how memory loss is calculated.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "4.3",
       "description": "Measure dense delta and sparse/delta memory loss, interference, latency, and code utilization; target memory loss <0.10 and compare with the ~0.24 EWC reference.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "4.4",
       "description": "Publish full benchmark configuration and per-task results; treat unverified figures as targets, not release claims.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "5.1",
       "description": "Run adapter, DroidEngine, checkpoint, and profile test suites.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "5.2",
       "description": "Run the full project test suite and verify old `associative_rtu` checkpoints still load.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "delta-plastic-memory",
-      "source": "openspec/changes/delta-plastic-memory/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-delta-plastic-memory/tasks.md",
       "task_id": "5.3",
       "description": "Benchmark CPU memory, update latency, retrieval quality, and interference for 384-D dense vs 2048-D TopK-128 codes.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "1.1",
       "description": "Implement `SleepConsolidation` with `autonomous_retrieval()` driven only by the Droid's internal memory state and a decaying self-inhibition/refractory trace.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "1.2",
       "description": "Add bounded replay-step, time, confidence, cancellation, and duplicate-retrieval controls.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "1.3",
       "description": "Add `DroidEngine.sleep()` returning a structured report with status, duration, coverage, replay counts, pruning counts, and errors.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "1.4",
       "description": "Integrate sleep with existing `consolidate_memory()` without conflating fact pruning and parameter pruning.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "1.5",
       "description": "Add fixed correlated-pattern tests proving at least 95 of 100 stored patterns are recovered without passing an expected-pattern list to the replay method.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "2.1",
       "description": "Implement MAS importance using the squared-L2 output objective and one backward pass per sampled batch.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "2.2",
       "description": "Restrict the eligible-parameter set to plastic-adapter weights; exclude the frozen anchor and buffers.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "2.3",
       "description": "Prune the lowest-importance 10% deterministically and save importance scores plus reversible masks in adapter state.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "2.4",
       "description": "Add tests for importance ranking, one-backward-pass behavior, exact prune count, checkpoint round trip, and no mutation outside the allowlist.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "2.5",
       "description": "Measure retrieval/retention quality before and after pruning; report rather than hide regressions.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "3.1",
       "description": "Implement `DecreasingBackprop` with validated `base_lr`, `decay_factor`, and zero-based index using `lr_i = base_lr * decay_factor^i`.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "3.2",
       "description": "Persist and restore the schedule index and effective learning rate in Droid profile/checkpoint metadata.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "3.3",
       "description": "Add monotonicity, parameter-boundary, restart/resume, and optimizer-integration tests.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "3.4",
       "description": "Keep any ReLUDown activation transform isolated behind an explicit experimental option until its exact reference behavior is verified.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "4.1",
       "description": "Add `/sleep` command dispatch and a CLI sleep action that invoke the same `DroidEngine.sleep()` API.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "4.2",
       "description": "Add an opt-in single auto-sleep worker per Droid with event-based stop/join and configurable idle/interval settings.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "4.3",
       "description": "Serialize sleep with teach/recall through a shared engine lock and test cancellation/profile shutdown.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "4.4",
       "description": "Ensure UI reruns and repeated start calls cannot create duplicate workers.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "5.1",
       "description": "Add lifecycle tests for an empty store, successful cycle, cancellation, concurrent teaching, and worker restart.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "5.2",
       "description": "Run the 100-correlated-pattern recovery benchmark and verify >=95% coverage without an external list.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "5.3",
       "description": "Run MAS pruning and DecreasingBackprop stability tests; document configurations and quality deltas.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "autonomous-sleep-consolidation",
-      "source": "openspec/changes/autonomous-sleep-consolidation/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-autonomous-sleep-consolidation/tasks.md",
       "task_id": "5.4",
       "description": "Run the full project test suite and checkpoint/profile compatibility tests.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "1.1",
       "description": "Define a dense-index interface and implement `HNSWIndex` with add/update/delete/rebuild, persistence/version metadata, and exact-search fallback.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "1.2",
       "description": "Integrate HNSW candidate IDs with FTS5 lexical candidates and existing RRF scoring without changing public recall result fields.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "1.3",
       "description": "Ensure superseded/deleted facts are filtered and index rebuilds are atomic and repeatable.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "1.4",
       "description": "Add 100k-fact benchmarks for p50/p95 latency, recall@5 against exact MVM, and a documented ~15 ms brute-force reference; target <5 ms and recall@5 >=0.95.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "1.5",
       "description": "Preserve current exact mode and test missing optional dependency, corrupted index, and restart/rebuild behavior.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "2.1",
       "description": "Implement optional `CrossEncoderReranker` over a bounded candidate set and expose pre/post scores.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "2.2",
       "description": "Add a fixed labeled query set and measure Precision@5 before/after reranking; target +20% relative precision.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "2.3",
       "description": "Implement `MatryoshkaAnchor` for validated 64-D and 384-D representations with versioned dual-index storage.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "2.4",
       "description": "Add migration/re-embedding and rollback behavior; prohibit silent truncation of incompatible existing embeddings.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "2.5",
       "description": "Measure 64-D first-stage latency and retrieval-quality loss against the 384-D baseline; target >=6x speed and <=5% relative quality loss.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "3.1",
       "description": "Implement `EdgeSLMRegistry` with the requested 13 models, quantization/format metadata, RAM estimates, task tags, provenance, and optional unknown speed fields.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "3.2",
       "description": "Include the source-reported reference values for Llama 3.2 1B Q4_K_M, Qwen2.5 1.5B, SmolLM2 1.7B, and Gemma 3 1B with explicit provenance labels.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "3.3",
       "description": "Implement deterministic `recommend(ram_gb, min_tok_s, task)` that filters hard RAM/speed constraints and returns task-ranked candidates with confidence/provenance.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "3.4",
       "description": "Test low-RAM, throughput-constrained, reasoning, general-chat, unknown-device-speed, and no-match cases.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "3.5",
       "description": "Integrate recommended IDs/config with `GgufBackend` without downloading or loading a model merely to display recommendations.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "4.1",
       "description": "Implement `TestTimeCompute` with diverse branching, candidate deduplication, verifier scoring, and strict depth/candidate/token/time budgets.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "4.2",
       "description": "Add a trace/result contract with selected candidate, verifier evidence/score, and consumed budget.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "4.3",
       "description": "Add fixed reasoning-task evaluation against an explicitly identified 8B reference model at the same wall-clock or token budget.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "4.4",
       "description": "Verify a 1B+search/verifier configuration has statistically higher task score than the chosen 8B baseline on the declared benchmark before claiming the target.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "4.5",
       "description": "Ensure unselected/unverified candidates are not persisted to knowledge without user approval.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "5.1",
       "description": "Run existing knowledge-store, DroidEngine, GGUF, profile, and checkpoint tests.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "5.2",
       "description": "Verify lexical exact-match behavior and the existing <5 ms at 100k knowledge-store SLA on documented hardware.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "5.3",
       "description": "Run model catalog/recommendation and TTC benchmarks with provenance and configuration recorded.",
       "evidence_status": "unimplemented_at_baseline"
     },
     {
       "change": "edge-slm-optimization",
-      "source": "openspec/changes/edge-slm-optimization/tasks.md",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md",
       "task_id": "5.4",
       "description": "Document optional dependencies, exact fallback, profile flags, and index/embedding version migration.",
       "evidence_status": "unimplemented_at_baseline"
