@@ -1,140 +1,222 @@
+"""Memory-injection helpers: prompt budgeting, strategy selection, scoped ops.
 
-from typing import List, Dict, Any, Optional
+Every function here reports what actually happened. A projection that was
+prepared but never applied is not injection, token IDs that were never fed to a
+cache are not priming, and a fallback names the capability it lacked.
+
+The heavy lifting lives in :mod:`src.model.backend_contracts`; this module keeps
+the historical entry points used by the engine, CLI and tests.
+"""
+
+from typing import Any, Dict, List, Optional
+
 import torch
 
-# ponytail: memory injection strategies - prompt stuffing, hidden state injection, KV cache priming
+from src.model.backend_contracts import (
+    AUTO,
+    HIDDEN,
+    KV_CACHE,
+    PROMPT,
+    STRATEGIES,
+    BackendCapabilities,
+    HiddenInjection,
+    KvPrefill,
+    PromptPlan,
+    QueryBudgetError,
+    StrategySelection,
+    TraceValidationError,
+    UnsupportedCapabilityError,
+    auto_preference,
+    capabilities_of,
+    count_tokens,
+    fit_prompt,
+    inject_kv_cache as _build_kv_prefill,
+    inject_hidden as _build_hidden,
+    resolve_strategy as _resolve_strategy,
+)
 
-def inject_prompt(query: str, facts: List[Dict[str, Any]], max_context_tokens: int = 3000) -> str:
-    """Format retrieved facts as structured context block prepended to user prompt."""
+__all__ = [
+    "HIDDEN",
+    "KV_CACHE",
+    "PROMPT",
+    "BackendCapabilities",
+    "HiddenInjection",
+    "KvPrefill",
+    "PromptPlan",
+    "QueryBudgetError",
+    "StrategySelection",
+    "TraceValidationError",
+    "UnsupportedCapabilityError",
+    "inject_hidden",
+    "inject_kv_cache",
+    "inject_prompt",
+    "plan_prompt",
+    "resolve_strategy",
+    "select_strategy",
+]
+
+
+def plan_prompt(
+    query: str,
+    facts: List[Dict[str, Any]],
+    *,
+    backend: Any = None,
+    capabilities: Optional[BackendCapabilities] = None,
+    max_context_tokens: Optional[int] = None,
+) -> PromptPlan:
+    """Budget a complete prompt against the backend tokenizer."""
+    return fit_prompt(
+        query,
+        facts,
+        backend=backend,
+        capabilities=capabilities,
+        max_context_tokens=max_context_tokens,
+    )
+
+
+def inject_prompt(
+    query: str,
+    facts: List[Dict[str, Any]],
+    max_context_tokens: int = 3000,
+    backend: Any = None,
+) -> str:
+    """Render ``Context: ... Query: <query>`` within the prompt budget.
+
+    The query is preserved verbatim and stays last; facts that do not fit are
+    dropped whole. An oversized query raises :class:`QueryBudgetError` instead
+    of being truncated.
+    """
     if not facts:
         return query
-    
-    # Format facts as bullet list
-    context_lines = ["Context:"]
-    total_len = len("Context:\n")
-    
-    for fact in facts:
-        text = fact.get("text", "").strip()
-        if not text:
-            continue
-        line = f"- {text}"
-        # Rough token estimation: 1 token ~ 4 chars
-        est_tokens = len(line) // 4
-        if total_len + est_tokens > max_context_tokens:
-            break
-        context_lines.append(line)
-        total_len += est_tokens
-    
-    if len(context_lines) == 1:
-        return query
-    
-    context_block = "\n".join(context_lines)
-    prompt = f"{context_block}\n\nQuery: {query}"
-    return prompt
+    plan = fit_prompt(
+        query,
+        facts,
+        backend=backend,
+        max_context_tokens=max_context_tokens,
+        output_reserve=0,
+    )
+    return plan.prompt
 
-def inject_hidden(backend, query: str, h_trace: torch.Tensor, layer_idx: int = 12) -> Dict[str, Any]:
-    """
-    Inject RTU trace vector h_t into LLM's hidden states at designated layer via addition.
-    Returns info about injection for generation.
-    """
-    # This requires access to LLM's internal hidden states
-    # For llama-cpp-python, we would need to register forward hook
-    # Since llama.cpp is C++ backend, true hidden injection is complex
-    # We implement a mock that projects h_trace to LLM hidden dim and adds to prompt embedding
-    
-    # Project h_trace to LLM hidden dim (e.g., 4096 for Llama-3B) vs RTU dim (384)
-    # Use fixed random projection per JL lemma if no learned projection
-    try:
-        # Estimate LLM hidden dim - try to get from backend model
-        llm_dim = 4096  # default for Llama-3B
-        if hasattr(backend, 'model') and hasattr(backend.model, 'n_embd'):
-            llm_dim = backend.model.n_embd()
-        
-        # Create projection matrix: 384 x D_llm
-        # For testing, use random projection
-        torch.manual_seed(42)
-        W_proj = torch.randn(384, llm_dim) * 0.02
-        
-        # Project h_trace
-        if h_trace.shape[0] != 384:
-            # Handle dim mismatch
-            if h_trace.shape[0] > 384:
-                h = h_trace[:384]
-            else:
-                h = torch.nn.functional.pad(h_trace, (0, 384 - h_trace.shape[0]))
-        else:
-            h = h_trace
-        
-        projected = h @ W_proj  # D_llm
-        
-        return {
-            "strategy": "hidden",
-            "layer_idx": layer_idx,
-            "projected_trace": projected,
-            "injection": f"Hidden injection at layer {layer_idx} with trace norm {torch.norm(h_trace):.2f}",
-            "query": query,
-        }
-    except Exception as e:
-        return {
-            "strategy": "hidden",
-            "error": str(e),
-            "query": query,
-            "fallback": "prompt",
-            "prompt": inject_prompt(query, [{"text": f"Memory trace norm: {torch.norm(h_trace):.2f}"}])
-        }
 
-def inject_kv_cache(backend, facts: List[Dict[str, Any]], query: str) -> Dict[str, Any]:
+def inject_hidden(
+    backend: Any,
+    query: str,
+    h_trace: torch.Tensor,
+    layer_idx: int = 12,
+    *,
+    allow_fallback: bool = False,
+) -> Dict[str, Any]:
+    """Prepare a scoped hidden injection for ``backend``.
+
+    Returns the injection result; it is *not* applied until the caller enters
+    the returned :class:`HiddenInjection` context (the engine does this around
+    generation). A backend without hidden support raises
+    :class:`UnsupportedCapabilityError` unless ``allow_fallback`` is set, in
+    which case the result reports ``executed="prompt"`` and the reason.
     """
-    Pre-fill KV cache with fact embeddings so model attends to them from first token.
-    Returns info about KV cache priming.
-    """
-    # KV cache priming needs access to internal cache tensors
-    # llama_cpp may expose via low-level API, but we implement mock that encodes facts separately
-    
+    caps = capabilities_of(backend)
     try:
-        # Encode facts using backend tokenizer
-        fact_texts = [f.get("text","") for f in facts]
-        combined_facts = "\n".join(fact_texts)
-        
-        # Tokenize facts
-        if hasattr(backend, 'tokenize'):
-            fact_tokens = backend.tokenize(combined_facts)
-            query_tokens = backend.tokenize(query)
-        else:
-            fact_tokens = [1,2,3]  # mock
-            query_tokens = [4,5,6]
-        
+        injection = _build_hidden(backend, h_trace, layer_idx=layer_idx)
+    except (UnsupportedCapabilityError, TraceValidationError) as exc:
+        if isinstance(exc, TraceValidationError) or not allow_fallback:
+            raise
         return {
-            "strategy": "kv_cache",
-            "fact_tokens": fact_tokens,
-            "query_tokens": query_tokens,
+            "strategy": HIDDEN,
+            "requested": HIDDEN,
+            "executed": PROMPT,
+            "applied": False,
+            "reason": str(exc),
+            "fallback": PROMPT,
+            "query": query,
+            "capabilities": caps.to_dict(),
+        }
+    info = injection.to_dict()
+    info.update({"query": query, "requested": HIDDEN, "executed": HIDDEN})
+    return info
+
+
+def inject_kv_cache(
+    backend: Any,
+    facts: List[Dict[str, Any]],
+    query: str,
+    *,
+    allow_fallback: bool = False,
+) -> Dict[str, Any]:
+    """Prepare a scoped KV prefill; the caller primes it around generation."""
+    caps = capabilities_of(backend)
+    try:
+        prefill = _build_kv_prefill(backend, facts)
+    except UnsupportedCapabilityError as exc:
+        if not allow_fallback:
+            raise
+        return {
+            "strategy": KV_CACHE,
+            "requested": KV_CACHE,
+            "executed": PROMPT,
+            "applied": False,
+            "reason": str(exc),
+            "fallback": PROMPT,
             "fact_count": len(facts),
-            "injection": f"KV cache primed with {len(facts)} facts, {len(fact_tokens)} tokens",
             "query": query,
-            "prompt": f"{combined_facts}\n\n{query}"  # Fallback to prompt stuffing if KV cache not supported
+            "capabilities": caps.to_dict(),
         }
-    except Exception as e:
-        return {
-            "strategy": "kv_cache",
-            "error": str(e),
-            "query": query,
-            "fallback": "prompt",
-            "prompt": inject_prompt(query, facts)
-        }
+    info = prefill.to_dict()
+    info.update({"query": query, "requested": KV_CACHE, "executed": KV_CACHE})
+    return info
 
-def select_strategy(fact_count: int, query_type: str, profile_config: Optional[Dict] = None) -> str:
-    """Select injection strategy based on fact count, query type, and profile config."""
-    # Check profile config override
-    if profile_config and "injection_strategy" in profile_config:
-        strat = profile_config["injection_strategy"]
-        if strat in ["prompt", "hidden", "kv_cache", "auto"]:
-            if strat != "auto":
-                return strat
-    
-    # Auto selection logic per spec: prompt for <5 facts, hidden for 5-20, kv_cache for >20 or when context constrained
-    if fact_count < 5:
-        return "prompt"
-    elif fact_count <= 20:
-        return "hidden"
-    else:
-        return "kv_cache"
+
+def resolve_strategy(
+    fact_count: int,
+    query_type: str = "specific_fact",
+    profile_config: Optional[Dict[str, Any]] = None,
+    capabilities: Optional[BackendCapabilities] = None,
+    *,
+    requested: Optional[str] = None,
+    strict: bool = False,
+) -> StrategySelection:
+    return _resolve_strategy(
+        fact_count,
+        query_type,
+        profile_config,
+        capabilities,
+        requested=requested,
+        strict=strict,
+    )
+
+
+def select_strategy(
+    fact_count: int,
+    query_type: str,
+    profile_config: Optional[Dict] = None,
+    capabilities: Optional[BackendCapabilities] = None,
+) -> str:
+    """Return the preferred strategy, or the executed one when capabilities are known.
+
+    Without a backend there is nothing to check, so this returns the request
+    that *would* be made (pinned setting first, then the documented thresholds).
+    When capabilities are supplied the answer reflects what can actually run.
+    """
+    pinned = None
+    if profile_config:
+        candidate = profile_config.get("injection_strategy")
+        if candidate in STRATEGIES:
+            pinned = candidate
+    if capabilities is None:
+        return pinned if pinned is not None else auto_preference(int(fact_count))
+    return _resolve_strategy(
+        fact_count, query_type, profile_config, capabilities, requested=None
+    ).executed
+
+
+def strategy_report(
+    fact_count: int,
+    query_type: str = "specific_fact",
+    profile_config: Optional[Dict[str, Any]] = None,
+    capabilities: Optional[BackendCapabilities] = None,
+    *,
+    requested: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Diagnostics view of strategy resolution (requested/executed/reason)."""
+    return _resolve_strategy(
+        fact_count, query_type, profile_config, capabilities, requested=requested
+    ).to_dict()

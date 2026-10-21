@@ -224,10 +224,24 @@ except:
         GgufBackend = None
 
 try:
-    from src.model.memory_injection import inject_prompt, inject_hidden, inject_kv_cache, select_strategy
+    from src.model.memory_injection import (
+        inject_prompt, inject_hidden, inject_kv_cache, select_strategy,
+        resolve_strategy, plan_prompt,
+    )
+    from src.model.backend_contracts import (
+        HiddenInjection, KvPrefill, capabilities_of,
+        UnsupportedCapabilityError, QueryBudgetError,
+    )
 except:
     try:
-        from .memory_injection import inject_prompt, inject_hidden, inject_kv_cache, select_strategy
+        from .memory_injection import (
+            inject_prompt, inject_hidden, inject_kv_cache, select_strategy,
+            resolve_strategy, plan_prompt,
+        )
+        from .backend_contracts import (
+            HiddenInjection, KvPrefill, capabilities_of,
+            UnsupportedCapabilityError, QueryBudgetError,
+        )
     except:
         def inject_prompt(q, facts, max_context_tokens=3000):
             if not facts:
@@ -238,13 +252,51 @@ except:
             return {"prompt": query, "strategy": "hidden"}
         def inject_kv_cache(backend, facts, query):
             return {"prompt": inject_prompt(query, facts), "strategy": "kv_cache"}
-        def select_strategy(fact_count, query_type, profile_config=None):
+        def select_strategy(fact_count, query_type, profile_config=None, capabilities=None):
             if fact_count <5:
                 return "prompt"
             elif fact_count <=20:
                 return "hidden"
             else:
                 return "kv_cache"
+        def resolve_strategy(fact_count, query_type="specific_fact", profile_config=None,
+                             capabilities=None, requested=None, strict=False):
+            class _S:
+                executed = select_strategy(fact_count, query_type, profile_config)
+                requested = executed
+                reason = "fallback"
+                def to_dict(self):
+                    return {"strategy": self.executed, "requested": self.requested,
+                            "executed": self.executed, "reason": self.reason,
+                            "fallback": False, "fact_count": fact_count}
+            return _S()
+        def plan_prompt(query, facts, **kwargs):
+            raise RuntimeError("prompt planning unavailable")
+        def capabilities_of(backend):
+            class _C:
+                name = "none"
+                hidden = False
+                kv_prime = False
+                prompt = True
+                prompt_only = True
+                budget = 3000
+                context_window = 4096
+                output_reserve = 512
+                def supports(self, strategy):
+                    return strategy == "prompt"
+                def to_dict(self):
+                    return {"name": "none", "hidden": False, "kv_prime": False}
+            return _C()
+        class HiddenInjection:  # pragma: no cover - import fallback only
+            def __init__(self, *args, **kwargs):
+                raise RuntimeError("backend contracts unavailable")
+        class KvPrefill:  # pragma: no cover - import fallback only
+            def __init__(self, *args, **kwargs):
+                raise RuntimeError("backend contracts unavailable")
+        class UnsupportedCapabilityError(RuntimeError):
+            pass
+        class QueryBudgetError(ValueError):
+            pass
 
 try:
     from src.model.confidence import retrieval_confidence, generation_confidence, fuse_confidence, confidence_tier
@@ -1546,65 +1598,134 @@ class DroidEngine(nn.Module):
         return self.teach(text, source="continuous_stream", surprise_threshold=0.6)
 
     def generate_with_memory(self, query: str, strategy: str = "auto", facts: Optional[List[Dict]] = None) -> Dict[str, Any]:
+        """Generate an answer with memory injected by a *capability-checked* path.
+
+        The reported strategy is what executed. An explicit unsupported mode
+        raises ``UnsupportedCapabilityError``; automatic selection falls back to
+        prompt rendering and records the reason. Hidden injection is applied
+        only for the duration of this call and KV prefill is always released,
+        including when generation raises.
+        """
         if facts is None:
             facts = self.recall(query, top_k=10, threshold=0.3)
         if not facts and isinstance(self.gguf_backend, ByteRtuBackend):
             # Never free-generate on empty retrieval (FR-004): return the same
             # no-information message the extractive path uses.
             return NO_INFORMATION_MESSAGE
-        if strategy == "auto":
+
+        backend = self.gguf_backend
+        caps = capabilities_of(backend)
+        query_type = "specific_fact"
+        if self.retrieval_policy:
             try:
-                query_type = self.retrieval_policy.classify_query(query) if self.retrieval_policy else "specific_fact"
-                strategy = select_strategy(len(facts), query_type, self.gguf_config)
-            except:
-                strategy = select_strategy(len(facts), "specific_fact", self.gguf_config)
+                query_type = self.retrieval_policy.classify_query(query)
+            except Exception:
+                query_type = "specific_fact"
+        explicit = strategy not in (None, "auto")
+        selection = resolve_strategy(
+            len(facts), query_type, self.gguf_config, caps,
+            requested=strategy if explicit else None,
+            strict=explicit,
+        )
+        executed = selection.executed
         prompt = query
-        injection_info = {}
-        if strategy == "prompt":
-            prompt = inject_prompt(query, facts)
-            injection_info = {"strategy": "prompt", "fact_count": len(facts)}
-        elif strategy == "hidden":
-            h_trace = None
-            if hasattr(self.memory, 'h_trace'):
-                h_trace = self.memory.h_trace
-            elif hasattr(self.memory, 'states'):
-                h_trace = self.memory.states
-            if h_trace is not None and self.gguf_backend is not None:
-                injection_info = inject_hidden(self.gguf_backend, query, h_trace, layer_idx=12)
-                prompt = injection_info.get("prompt", inject_prompt(query, facts))
+        injection_info: Dict[str, Any] = selection.to_dict()
+        pending = None
+        try:
+            if executed == "hidden":
+                trace = None
+                if hasattr(self.memory, "h_trace"):
+                    trace = self.memory.h_trace
+                elif hasattr(self.memory, "states"):
+                    trace = self.memory.states
+                if trace is None:
+                    raise UnsupportedCapabilityError("hidden", caps.name, "no trace available")
+                declared = getattr(backend, "injection_layer", None)
+                layer_idx = None
+                if declared is not None:
+                    layer_idx = int(declared() if callable(declared) else declared)
+                pending = HiddenInjection(backend, trace, layer_idx=layer_idx)
+                # Plan a prompt without facts: the trace carries the evidence.
+                plan = plan_prompt(query, [], backend=backend)
+                prompt = plan.prompt
+                injection_info.update(plan.to_dict())
+            elif executed == "kv_cache":
+                pending = KvPrefill(
+                    backend, [str(f.get("text", "")) for f in facts if f.get("text")]
+                )
+                plan = plan_prompt(query, facts, backend=backend)
+                prompt = plan.prompt
+                injection_info.update(plan.to_dict())
             else:
-                prompt = inject_prompt(query, facts)
-                injection_info = {"strategy": "hidden", "fallback": "prompt"}
-        elif strategy == "kv_cache":
-            if self.gguf_backend is not None:
-                injection_info = inject_kv_cache(self.gguf_backend, facts, query)
-                prompt = injection_info.get("prompt", inject_prompt(query, facts))
-            else:
-                prompt = inject_prompt(query, facts)
-                injection_info = {"strategy": "kv_cache", "fallback": "prompt"}
+                plan = plan_prompt(query, facts, backend=backend)
+                prompt = plan.prompt
+                injection_info.update(plan.to_dict())
+                injection_info["strategy"] = "prompt"
+                injection_info["executed"] = "prompt"
+                injection_info["applied"] = plan.fact_count > 0
+                injection_info["fact_count"] = plan.fact_count
+            if injection_info.get("applied") is False and executed == "prompt":
+                # Nothing fitted: report it instead of pretending injection ran.
+                injection_info["reason"] = injection_info.get("reason") or "no_facts_fit"
+        except (UnsupportedCapabilityError, QueryBudgetError, ValueError) as exc:
+            raise
+
         generated_text = ""
         token_logprobs = None
-        if self.gguf_backend is not None:
-            try:
-                generated_text = self.gguf_backend.generate(prompt, max_tokens=512, temperature=0.7, top_p=0.9)
-            except Exception as e:
-                generated_text = f"[Fallback] Based on memory: {' '.join([f['text'] for f in facts[:3]])}"
-        else:
-            if facts:
-                generated_text = " ".join([f["text"] for f in facts[:3]])
+        try:
+            if backend is not None:
+                if executed == "hidden":
+                    with pending:  # hooks live exactly for this generation
+                        generated_text = backend.generate(
+                            prompt, max_tokens=512, temperature=0.7, top_p=0.9
+                        )
+                elif executed == "kv_cache":
+                    with pending:  # prefill, generate, then reset in __exit__
+                        generated_text = backend.generate(
+                            prompt, max_tokens=512, temperature=0.7, top_p=0.9
+                        )
+                else:
+                    generated_text = backend.generate(
+                        prompt, max_tokens=512, temperature=0.7, top_p=0.9
+                    )
             else:
-                generated_text = self.chat(query)
+                if facts:
+                    generated_text = " ".join([f["text"] for f in facts[:3]])
+                else:
+                    generated_text = self.chat(query)
+        except Exception as e:
+            generated_text = f"[Fallback] Based on memory: {' '.join([f['text'] for f in facts[:3]])}"
+            injection_info["generation_error"] = str(e)
+        finally:
+            if pending is not None:
+                if hasattr(pending, "remove"):
+                    pending.remove()
+                elif hasattr(pending, "cleanup"):
+                    pending.cleanup()
+                # Report the *executed* injection after it ran, never before.
+                injection_info.update(
+                    {k: v for k, v in pending.to_dict().items()
+                     if k in {"applied", "executed", "layer_idx", "hidden_size",
+                              "primed_tokens", "tokens", "binding", "cleanup",
+                              "trace_norm", "projected_norm", "router_calls"}}
+                )
         retrieval_conf = 0.0
         if facts:
-            retrieval_conf = max([f.get("similarity",0) for f in facts]) if facts else 0.0
+            retrieval_conf = max([f.get("similarity", 0) for f in facts]) if facts else 0.0
         generation_conf = 0.7
         try:
             generation_conf = generation_confidence(token_logprobs=token_logprobs, self_consistency=0.8, entropy=0.3)
-        except:
+        except Exception:
             pass
         fused_conf = fuse_confidence(retrieval_conf, generation_conf)
         tier = confidence_tier(fused_conf)
-        return {"text": generated_text, "query": query, "strategy": strategy, "facts_used": facts[:5], "retrieval_confidence": retrieval_conf, "generation_confidence": generation_conf, "confidence": fused_conf, "confidence_tier": tier, "injection_info": injection_info, "prompt": prompt}
+        return {"text": generated_text, "query": query, "strategy": executed,
+                "requested_strategy": selection.requested,
+                "strategy_reason": selection.reason,
+                "facts_used": facts[:5], "retrieval_confidence": retrieval_conf,
+                "generation_confidence": generation_conf, "confidence": fused_conf,
+                "confidence_tier": tier, "injection_info": injection_info,
+                "capabilities": caps.to_dict(), "prompt": prompt}
 
     def estimate_confidence(self, retrieval_conf: float, generation_conf: float) -> float:
         return fuse_confidence(retrieval_conf, generation_conf)

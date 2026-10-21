@@ -1,0 +1,6 @@
+# Core install: offline contracts and the Droid engine without optional
+# backends. Everything here is required for `pytest tests` to run.
+torch>=2.0.0
+numpy>=1.24.0
+safetensors>=0.4.0
+pytest>=8.0.0

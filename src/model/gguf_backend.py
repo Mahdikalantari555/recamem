@@ -93,6 +93,62 @@ class GgufBackend:
             print(f"Generation error: {e}")
             return f"[Generation failed: {e}]"
 
+    # -- capability contract (post-merge 3.1/3.4) ----------------------- #
+    tokenizer_kind = "model"
+
+    def supports_hidden_injection(self) -> bool:
+        # llama.cpp is a C++ binding with no residual-stream access. Never
+        # advertise a hook that cannot be installed.
+        return False
+
+    def supports_kv_priming(self) -> bool:
+        # Priming requires the binding's own prefill and reset entry points.
+        model = self.model
+        return callable(getattr(model, "eval", None)) and callable(
+            getattr(model, "reset", None)
+        )
+
+    def context_window(self) -> int:
+        return int(getattr(self, "n_ctx", 4096))
+
+    def output_reserve(self) -> int:
+        return int(getattr(self, "output_reserve", 512))
+
+    def count_tokens(self, text: str) -> int:
+        return len(self.tokenize(text))
+
+    def prime_kv_cache(self, texts: List[str]) -> Dict[str, Any]:
+        """Prefill the binding's KV cache with fact tokens (real prefill).
+
+        Raises ``UnsupportedCapabilityError`` when the installed binding does
+        not expose prefill/reset, rather than returning fabricated token IDs.
+        """
+        from src.model.backend_contracts import UnsupportedCapabilityError
+
+        if not self.supports_kv_priming():
+            raise UnsupportedCapabilityError(
+                "kv_cache", type(self).__name__,
+                "installed llama.cpp binding exposes no eval()/reset()",
+            )
+        tokens: List[int] = []
+        for text in texts:
+            tokens.extend(self.tokenize(text))
+        if not tokens:
+            raise ValueError("KV prefill requires at least one fact token")
+        self.model.eval(tokens)
+        self._primed_tokens = len(tokens)
+        return {
+            "tokens": len(tokens),
+            "binding": type(self.model).__name__,
+            "mechanism": "eval",
+        }
+
+    def reset_kv_cache(self) -> None:
+        reset = getattr(self.model, "reset", None)
+        if callable(reset):
+            reset()
+        self._primed_tokens = 0
+
     def tokenize(self, text: str) -> List[int]:
         """Tokenize text to token ids."""
         if self.model is None:

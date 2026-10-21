@@ -1,0 +1,19 @@
+# Optional integrations. Install only what the deployment uses; every feature
+# below degrades to an explicit capability/fallback path when absent.
+#
+# Real embeddings (ONNX MiniLM). Without these the anchor reports is_mock=True
+# and all retrieval numbers are mock-embedding evidence.
+onnxruntime>=1.16.0
+onnx>=1.15.0
+transformers>=4.38.0
+huggingface_hub>=0.20.0
+# Local GGUF generation (llama.cpp binding) and model download.
+llama-cpp-python>=0.2.0
+# HNSW candidate index (falls back to exact MVM search without it).
+hnswlib>=0.7.0
+# Optional cross-encoder reranker (falls back to a lexical scorer).
+sentence-transformers>=2.2.0
+# Console and process metrics.
+streamlit>=1.30.0
+pandas>=2.0.0
+psutil>=5.9.0
