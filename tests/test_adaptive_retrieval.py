@@ -231,6 +231,10 @@ def test_engine_profiles_keep_independent_policies(tmp_path):
     reloaded_right = DroidEngine(name="right", db_path=str(tmp_path / "right.db"))
     reloaded_right.load_profile(str(tmp_path / "right"))
 
+    # Exploration is a separate feature (tested above); pin it off here so the
+    # assertion is about the learned preference, not a seeded coin flip.
+    for policy in (reloaded_left.retrieval_policy, reloaded_right.retrieval_policy):
+        policy.epsilon = 0.0
     assert reloaded_left.retrieval_policy.select_strategy("specific_fact") == "episodic_only"
     assert reloaded_right.retrieval_policy.select_strategy("specific_fact") != "episodic_only"
     for eng in (left, right, reloaded_left, reloaded_right):

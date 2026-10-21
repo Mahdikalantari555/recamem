@@ -697,6 +697,47 @@ with tab_memory:
                                     st.rerun()
                                 except (AttributeError, RuntimeError, ValueError) as e:
                                     st.error(f"Failed to supersede: {type(e).__name__}: {e}")
+                        # Feedback feeds the adaptive retrieval policy and the
+                        # health metrics (post-merge 4.3/4.9/4.12).
+                        with st.expander("👍👎 Retrieval feedback"):
+                            st.caption(
+                                "Approval reinforces this fact and the strategy that returned it; "
+                                "rejection records the miss. Both persist with the profile."
+                            )
+                            col_up, col_down = st.columns(2)
+                            if col_up.button(f"👍 Approve {fact_id_input}",
+                                             key=f"approve_{fact_id_input}"):
+                                try:
+                                    result = active_droid.approve(fact_id_input)
+                                    droid_mgr.save_droid(st.session_state.selected_droid_name)
+                                    st.success(
+                                        f"Approved. Strategy now "
+                                        f"{active_droid.retrieval_policy.select_strategy('specific_fact')}."
+                                    )
+                                    st.caption(f"TTT budget: {result.get('ttt', {})}")
+                                except (AttributeError, RuntimeError, ValueError) as e:
+                                    st.error(f"Approve failed: {type(e).__name__}: {e}")
+                            if col_down.button(f"👎 Reject {fact_id_input}",
+                                               key=f"reject_{fact_id_input}"):
+                                try:
+                                    active_droid.reject(fact_id_input)
+                                    droid_mgr.save_droid(st.session_state.selected_droid_name)
+                                    st.success(f"Rejection recorded for fact {fact_id_input}.")
+                                except (AttributeError, RuntimeError, ValueError) as e:
+                                    st.error(f"Reject failed: {type(e).__name__}: {e}")
+                            labelled = active_droid.knowledge.retrieval_health()
+                            if labelled.get("available"):
+                                st.caption(
+                                    f"precision@{labelled['samples']} "
+                                    f"{labelled['precision_at_k']:.2f} · MRR "
+                                    f"{labelled['mrr']:.2f} — {labelled['source']}"
+                                )
+                            else:
+                                st.caption(
+                                    f"No labelled retrieval judgements yet "
+                                    f"({labelled.get('reason')}); quality is reported as unknown."
+                                )
+
                         col_del = st.container()
                         
                         with col_del:
@@ -988,53 +1029,60 @@ with tab_memory:
             st.markdown("### 📡 Continuous Stream")
             # Keyed per profile: a Streamlit rerun reuses this worker instead of
             # starting a second daemon for the same Droid.
+            # Single owner: the engine owns the worker, the session only mirrors
+            # its status, so reruns and profile switches cannot start a second
+            # daemon for the same profile (post-merge 4.11).
             stream_key = f"continuous_stream_{st.session_state.selected_droid_name}"
-            stream = st.session_state.get(stream_key)
+            stream_status = active_droid.get_stream_status()
             col_start, col_pause, col_resume, col_stop = st.columns(4)
             if col_start.button("▶ Start", key="stream_start"):
-                if stream is not None and stream.running:
+                report = active_droid.start_continuous_stream()
+                st.session_state[stream_key] = True
+                if report.get("status") == "already_running":
                     st.info("Stream already running for this profile")
                 else:
-                    stream = ContinuousStream(active_droid)
-                    st.session_state[stream_key] = stream
-                    stream.start()
-                    st.rerun()
+                    st.success("Stream started")
+                st.rerun()
             if col_pause.button("⏸ Pause", key="stream_pause"):
-                if stream is None or not stream.running:
-                    st.warning("Stream is not running")
+                report = active_droid.pause_stream()
+                if report.get("status") != "paused":
+                    st.warning(f"Stream is not running ({report.get('status')})")
                 else:
-                    stream.pause()
                     st.rerun()
             if col_resume.button("⏵ Resume", key="stream_resume"):
-                if stream is None or not stream.running:
-                    st.warning("Stream is not running")
+                report = active_droid.resume_stream()
+                if report.get("status") != "resumed":
+                    st.warning(f"Stream is not running ({report.get('status')})")
                 else:
-                    stream.resume()
                     st.rerun()
             if col_stop.button("⏹ Stop", key="stream_stop"):
-                if stream is None or not stream.running:
+                report = active_droid.stop_continuous_stream()
+                if not report.get("joined", True):
+                    st.error("Stream worker did not stop within the timeout")
+                elif report.get("status") == "not_running":
                     st.warning("Stream is not running")
                 else:
-                    stream.stop()
                     st.session_state.pop(stream_key, None)
                     st.rerun()
 
-            if stream is not None:
-                st.json(stream.get_status())
+            if stream_status.get("alive"):
+                st.json(stream_status)
                 st.caption(f"Worker key: `{stream_key}`")
             else:
                 st.info("Stream stopped. Start it to ingest queued interaction text.")
 
             stream_text = st.text_input("Text to queue for the stream", key="stream_ingest_text")
             if st.button("📥 Queue", key="stream_ingest"):
-                if stream is None or not stream.running:
-                    st.warning("Start the stream before queueing text")
-                elif not stream_text.strip():
+                if not stream_text.strip():
                     st.warning("Enter text to queue")
-                elif stream.ingest(stream_text.strip()):
-                    st.success("Queued")
                 else:
-                    st.error("Queue is full; text dropped")
+                    report = active_droid.enqueue_stream_text(stream_text.strip())
+                    if report.get("status") == "queued":
+                        st.success("Queued")
+                    elif report.get("status") == "dropped":
+                        st.error("Queue is full; text dropped")
+                    else:
+                        st.warning("Start the stream before queueing text")
 
         # Sub-tab 5: System-1 decision panel
         with sub_tab_decide:

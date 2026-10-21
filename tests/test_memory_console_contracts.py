@@ -71,11 +71,13 @@ def test_app_wires_the_lifecycle_and_portability_apis():
         assert symbol in source, f"app.py never references {symbol}"
 
 
-def test_stream_worker_is_keyed_in_session_state():
+def test_stream_worker_is_owned_by_the_engine():
     source = APP_PY.read_text(encoding="utf-8")
     assert "continuous_stream_" in source
-    # The worker is reused rather than created unconditionally on every rerun.
-    assert "stream is not None and stream.running" in source
+    # The console delegates to the engine; it must not construct its own worker.
+    assert "active_droid.start_continuous_stream(" in source
+    assert "active_droid.stop_continuous_stream(" in source
+    assert "ContinuousStream(active_droid)" not in source
 
 
 def test_destructive_console_actions_are_confirmation_gated():

@@ -630,6 +630,34 @@ class SnapshotManager:
         except Exception:
             pass
 
+    def relocate(self, base_dir: str) -> Path:
+        """Move/point snapshots at the profile's own snapshot directory.
+
+        An engine that starts on an in-memory store keeps snapshots in a temp
+        directory; once a profile exists they belong next to it so they survive
+        restart. Existing snapshots are copied, never aliased.
+        """
+        target = Path(base_dir)
+        target.mkdir(parents=True, exist_ok=True)
+        for version_id, snapshot in list(self.snapshots.items()):
+            if not snapshot.get("persisted") or not snapshot.get("path"):
+                continue
+            source = Path(snapshot["path"])
+            destination = target / _safe_component(version_id)
+            if source.resolve() == destination.resolve():
+                continue
+            if not (source / SNAPSHOT_MANIFEST).is_file():
+                continue
+            if destination.exists():
+                shutil.rmtree(destination, ignore_errors=True)
+            shutil.copytree(source, destination)
+            try:
+                self.snapshots[version_id] = self._snapshot_from_disk(destination)
+            except Exception:
+                continue
+        self.base_dir = target
+        return target
+
     # ------------------------------------------------------------------ #
     # Rollback / branch / listing
     # ------------------------------------------------------------------ #

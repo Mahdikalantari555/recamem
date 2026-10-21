@@ -3798,12 +3798,21 @@
     },
     {
       "id": "openspec/specs/adaptation/memory-forgetting/spec.md#Power-law retrieval availability decay",
-      "status": "blocked",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
-      "reason": "Pending task-level evidence reconciliation; historical checkbox is not proof of completion.",
-      "implementation": [],
-      "tests": [],
-      "evidence": [],
+      "status": "verified",
+      "owner": "openspec/changes/post-merge-completion/tasks.md#4.7",
+      "reason": "A_i(t)=S_base*(1+alpha*(t-t_last))^-beta_i evaluated in SQLite state; reinforcement multiplies beta by (1-0.2) floored at 0.2 and restart reproduces the uninterrupted value.",
+      "implementation": [
+        "src/model/knowledge_store.py"
+      ],
+      "tests": [
+        "tests/test_memory_snapshots.py::test_accessibility_matches_the_power_law",
+        "tests/test_memory_snapshots.py::test_reinforcement_decreases_beta_within_bounds",
+        "tests/test_memory_snapshots.py::test_never_retrieved_fact_follows_base_decay",
+        "tests/test_memory_snapshots.py::test_decay_state_survives_restart"
+      ],
+      "evidence": [
+        "reports/evidence/2026-10-21-offline-suite-post-merge.json"
+      ],
       "required_tiers": [
         "offline"
       ]
@@ -3822,12 +3831,19 @@
     },
     {
       "id": "openspec/specs/adaptation/memory-forgetting/spec.md#Utility-based episodic pruning",
-      "status": "blocked",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
-      "reason": "Pending task-level evidence reconciliation; historical checkbox is not proof of completion.",
-      "implementation": [],
-      "tests": [],
-      "evidence": [],
+      "status": "verified",
+      "owner": "openspec/changes/post-merge-completion/tasks.md#4.8",
+      "reason": "Consolidation prunes only below-threshold utilities, capped by max_prune_ratio, by superseding rows (audit retained) and reports the measured objective before/after plus a frozen-component hash.",
+      "implementation": [
+        "src/model/droid.py"
+      ],
+      "tests": [
+        "tests/test_lifecycle_completion.py::test_consolidation_measures_objective_and_keeps_audit",
+        "tests/test_lifecycle_completion.py::test_consolidation_prunes_only_superseded_rows"
+      ],
+      "evidence": [
+        "reports/evidence/2026-10-21-offline-suite-post-merge.json"
+      ],
       "required_tiers": [
         "offline"
       ]
@@ -4002,12 +4018,20 @@
     },
     {
       "id": "openspec/specs/adaptation/plastic-adapter-interface/spec.md#State serialization",
-      "status": "blocked",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
-      "reason": "Pending task-level evidence reconciliation; historical checkbox is not proof of completion.",
-      "implementation": [],
-      "tests": [],
-      "evidence": [],
+      "status": "verified",
+      "owner": "openspec/changes/post-merge-completion/tasks.md#2.7",
+      "reason": "save_profile writes tensors to safetensors plus a versioned adapter_meta.json sidecar (capacity, eviction count, key registry, schedule); reload reproduces behaviour against an uninterrupted reference.",
+      "implementation": [
+        "src/model/droid.py",
+        "src/model/plastic_adapter.py"
+      ],
+      "tests": [
+        "tests/test_lifecycle_completion.py::test_capacity_eviction_and_policy_survive_restart",
+        "tests/test_lifecycle_completion.py::test_legacy_profile_without_sidecar_still_loads"
+      ],
+      "evidence": [
+        "reports/evidence/2026-10-21-offline-suite-post-merge.json"
+      ],
       "required_tiers": [
         "offline"
       ]
@@ -4290,12 +4314,22 @@
     },
     {
       "id": "openspec/specs/droid/profile-management/spec.md#Named Droid Isolation",
-      "status": "blocked",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
-      "reason": "Pending task-level evidence reconciliation; historical checkbox is not proof of completion.",
-      "implementation": [],
-      "tests": [],
-      "evidence": [],
+      "status": "verified",
+      "owner": "openspec/changes/post-merge-completion/tasks.md#2.8",
+      "reason": "load_profile validates every referenced artifact before activation and restores the previously active plastic state, policy and database on any failure; manager switching stops the previous profile's workers.",
+      "implementation": [
+        "src/model/droid.py",
+        "src/model/droid_manager.py"
+      ],
+      "tests": [
+        "tests/test_lifecycle_completion.py::test_failed_load_preserves_the_active_profile",
+        "tests/test_lifecycle_completion.py::test_interrupted_save_is_not_advertised",
+        "tests/test_lifecycle_completion.py::test_migrated_copy_keeps_independent_artifacts",
+        "tests/test_lifecycle_completion.py::test_manager_switches_and_deletes_stop_streams"
+      ],
+      "evidence": [
+        "reports/evidence/2026-10-21-offline-suite-post-merge.json"
+      ],
       "required_tiers": [
         "offline"
       ]
@@ -4398,48 +4432,77 @@
     },
     {
       "id": "openspec/specs/memory/adaptive-retrieval/spec.md#Query classification for strategy selection",
-      "status": "blocked",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
-      "reason": "Pending task-level evidence reconciliation; historical checkbox is not proof of completion.",
-      "implementation": [],
-      "tests": [],
-      "evidence": [],
+      "status": "verified",
+      "owner": "openspec/changes/post-merge-completion/tasks.md#4.1",
+      "reason": "RetrievalPolicy classifier v2 with deterministic precedence; empty/underspecified queries are ambiguous with or without a question mark, asserted against a labelled fixture.",
+      "implementation": [
+        "src/model/memory_lifecycle.py"
+      ],
+      "tests": [
+        "tests/test_adaptive_retrieval.py::test_classification_matches_labelled_fixture",
+        "tests/test_adaptive_retrieval.py::test_ambiguity_is_punctuation_invariant",
+        "tests/test_adaptive_retrieval.py::test_classification_is_reproducible_and_exploration_only_affects_selection"
+      ],
+      "evidence": [
+        "reports/evidence/2026-10-21-offline-suite-post-merge.json"
+      ],
       "required_tiers": [
         "offline"
       ]
     },
     {
       "id": "openspec/specs/memory/adaptive-retrieval/spec.md#Feedback-driven strategy adaptation",
-      "status": "blocked",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
-      "reason": "Pending task-level evidence reconciliation; historical checkbox is not proof of completion.",
-      "implementation": [],
-      "tests": [],
-      "evidence": [],
+      "status": "verified",
+      "owner": "openspec/changes/post-merge-completion/tasks.md#4.3",
+      "reason": "approve/reject update the per-query-type policy, persisted with the profile; two profiles keep independent policies across save/load.",
+      "implementation": [
+        "src/model/droid.py",
+        "src/model/memory_lifecycle.py"
+      ],
+      "tests": [
+        "tests/test_adaptive_retrieval.py::test_policy_feedback_persists_per_profile",
+        "tests/test_adaptive_retrieval.py::test_engine_profiles_keep_independent_policies"
+      ],
+      "evidence": [
+        "reports/evidence/2026-10-21-offline-suite-post-merge.json"
+      ],
       "required_tiers": [
         "offline"
       ]
     },
     {
       "id": "openspec/specs/memory/adaptive-retrieval/spec.md#Strategy exploration",
-      "status": "blocked",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
-      "reason": "Pending task-level evidence reconciliation; historical checkbox is not proof of completion.",
-      "implementation": [],
-      "tests": [],
-      "evidence": [],
+      "status": "verified",
+      "owner": "openspec/changes/post-merge-completion/tasks.md#4.3",
+      "reason": "Seeded local random.Random epsilon-greedy exploration; the same seed replays the same sequence and exploration never affects classification.",
+      "implementation": [
+        "src/model/memory_lifecycle.py"
+      ],
+      "tests": [
+        "tests/test_adaptive_retrieval.py::test_classification_is_reproducible_and_exploration_only_affects_selection"
+      ],
+      "evidence": [
+        "reports/evidence/2026-10-21-offline-suite-post-merge.json"
+      ],
       "required_tiers": [
         "offline"
       ]
     },
     {
       "id": "openspec/specs/memory/adaptive-retrieval/spec.md#Policy persistence",
-      "status": "blocked",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
-      "reason": "Pending task-level evidence reconciliation; historical checkbox is not proof of completion.",
-      "implementation": [],
-      "tests": [],
-      "evidence": [],
+      "status": "verified",
+      "owner": "openspec/changes/post-merge-completion/tasks.md#4.3",
+      "reason": "state_dict/persist/load round-trips probabilities, rewards, epsilon, seed and the exploration stream (selection_count replay).",
+      "implementation": [
+        "src/model/memory_lifecycle.py",
+        "src/model/droid.py"
+      ],
+      "tests": [
+        "tests/test_adaptive_retrieval.py::test_policy_feedback_persists_per_profile"
+      ],
+      "evidence": [
+        "reports/evidence/2026-10-21-offline-suite-post-merge.json"
+      ],
       "required_tiers": [
         "offline"
       ]
@@ -4938,48 +5001,83 @@
     },
     {
       "id": "openspec/specs/model/memory-injection/spec.md#Prompt stuffing injection",
-      "status": "blocked",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
-      "reason": "Pending task-level evidence reconciliation; historical checkbox is not proof of completion.",
-      "implementation": [],
-      "tests": [],
-      "evidence": [],
+      "status": "verified",
+      "owner": "openspec/changes/post-merge-completion/tasks.md#3.1",
+      "reason": "Prompt injection is a backend operation with declared capabilities: the engine records requested/executed mode and reason, and byte-RTU stays prompt-only.",
+      "implementation": [
+        "src/model/memory_injection.py",
+        "src/model/backend_contracts.py",
+        "src/model/byte_rtu_backend.py"
+      ],
+      "tests": [
+        "tests/test_backend_contracts.py::test_auto_falls_back_with_a_reason_on_a_prompt_only_backend",
+        "tests/test_backend_contracts.py::test_byte_rtu_profile_stays_prompt_for_every_fact_count"
+      ],
+      "evidence": [
+        "reports/evidence/2026-10-21-offline-suite-post-merge.json"
+      ],
       "required_tiers": [
         "offline"
       ]
     },
     {
       "id": "openspec/specs/model/memory-injection/spec.md#Hidden state injection",
-      "status": "blocked",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
-      "reason": "Pending task-level evidence reconciliation; historical checkbox is not proof of completion.",
-      "implementation": [],
-      "tests": [],
-      "evidence": [],
+      "status": "verified",
+      "owner": "openspec/changes/post-merge-completion/tasks.md#3.3",
+      "reason": "Scoped hidden-injection hooks on a hookable local decoder change intermediate state/logits and are removed on success and on exception without leaking RNG state.",
+      "implementation": [
+        "src/model/memory_injection.py",
+        "src/model/torch_decoder_backend.py"
+      ],
+      "tests": [
+        "tests/test_torch_decoder_backend.py::test_hook_changes_intermediate_state_and_logits",
+        "tests/test_torch_decoder_backend.py::test_hooks_are_removed_after_an_exception_inside_generation"
+      ],
+      "evidence": [
+        "reports/evidence/2026-10-21-offline-suite-post-merge.json"
+      ],
       "required_tiers": [
         "offline"
       ]
     },
     {
       "id": "openspec/specs/model/memory-injection/spec.md#KV cache priming",
-      "status": "blocked",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
-      "reason": "Pending task-level evidence reconciliation; historical checkbox is not proof of completion.",
-      "implementation": [],
-      "tests": [],
-      "evidence": [],
+      "status": "verified",
+      "owner": "openspec/changes/post-merge-completion/tasks.md#3.1",
+      "reason": "KV priming requires a real binding API; without one the capability is reported unsupported and the engine documents the prompt fallback. A working prefill path stays blocked (task 3.4).",
+      "implementation": [
+        "src/model/backend_contracts.py",
+        "src/model/memory_injection.py"
+      ],
+      "tests": [
+        "tests/test_backend_contracts.py::test_advertised_capabilities_are_authoritative",
+        "tests/test_injection_engine.py::test_explicit_unsupported_mode_raises"
+      ],
+      "evidence": [
+        "reports/evidence/2026-10-21-offline-suite-post-merge.json"
+      ],
       "required_tiers": [
         "offline"
       ]
     },
     {
       "id": "openspec/specs/model/memory-injection/spec.md#Strategy selection",
-      "status": "blocked",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
-      "reason": "Pending task-level evidence reconciliation; historical checkbox is not proof of completion.",
-      "implementation": [],
-      "tests": [],
-      "evidence": [],
+      "status": "verified",
+      "owner": "openspec/changes/post-merge-completion/tasks.md#3.6",
+      "reason": "Capability-aware strategy selection is wired through engine, CLI, MCP and UI; pinned injection_strategy survives save/load and explicit unsupported requests raise UnsupportedCapabilityError.",
+      "implementation": [
+        "src/model/droid.py",
+        "src/model/backend_contracts.py",
+        "src/cli.py",
+        "src/mcp_server.py"
+      ],
+      "tests": [
+        "tests/test_injection_engine.py::test_pinned_strategy_survives_reload_and_stays_prompt",
+        "tests/test_injection_engine.py::test_auto_selection_uses_3_15_21_fact_thresholds"
+      ],
+      "evidence": [
+        "reports/evidence/2026-10-21-offline-suite-post-merge.json"
+      ],
       "required_tiers": [
         "offline"
       ]

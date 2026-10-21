@@ -1,0 +1,58 @@
+name: offline-contracts
+
+# Model-dependent tiers are deliberately absent: no weights exist in CI, so a
+# green run here proves the offline contracts, the evidence ledger schema and
+# the OpenSpec structure only. See docs/testing.md for the other tiers.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: core-only
+            requirements: requirements-core.txt
+          - name: with-optional
+            requirements: requirements-optional.txt
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install ${{ matrix.name }}
+        run: |
+          python -m pip install --upgrade pip
+          # streamlit/pandas/psutil are console-only; the core job must not need them.
+          grep -v -E '^(streamlit|pandas)' ${{ matrix.requirements }} > /tmp/req.txt
+          pip install -r /tmp/req.txt
+      - name: Offline suite
+        run: PYTHONPATH=. python -m pytest tests -q
+        env:
+          OMP_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+
+  evidence-and-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Evidence ledger schema + inventory coverage
+        run: python scripts/check_release_evidence.py
+      - name: Release gate must not claim completion while tasks are open
+        run: |
+          if python scripts/check_release_evidence.py --require-complete; then
+            echo "::error::--require-complete passed; unresolved tasks cannot be considered complete"
+            exit 1
+          else
+            echo "release gate correctly reports unresolved work"
+          fi
+      - name: OpenSpec structure
+        run: python scripts/validate_openspec.py

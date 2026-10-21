@@ -91,6 +91,7 @@ def test_restore_brings_back_database_tensors_and_policy(tmp_path):
     engine = _engine(tmp_path)
     engine.teach("The mixer is on site B")
     original_ids = _facts(engine)
+    engine.retrieval_policy.epsilon = 0.0
     engine.retrieval_policy.update("specific_fact", "episodic_only", reward=1.0)
     engine.retrieval_policy.update("specific_fact", "episodic_only", reward=1.0)
     before = {k: v.clone() for k, v in engine.memory.state_dict().items()
@@ -109,6 +110,8 @@ def test_restore_brings_back_database_tensors_and_policy(tmp_path):
 
     assert manager.restore_snapshot(engine, "v1") is True, manager.last_error
     assert _facts(engine) == original_ids
+    # Epsilon is part of the restored policy; pin it for a deterministic check.
+    engine.retrieval_policy.epsilon = 0.0
     assert engine.retrieval_policy.select_strategy("specific_fact") == policy_before
     for key, value in before.items():
         torch.testing.assert_close(engine.memory.state_dict()[key], value)

@@ -453,8 +453,10 @@ class DroidEngine(nn.Module):
                     from src.model.rtu import PlasticAssociativeRTU
                     self.memory = PlasticAssociativeRTU(dim=dim, **adapter_kwargs)
                 else:
+                    kwargs = {k: v for k, v in dict(adapter_kwargs).items() if k != "dim"}
+                    kwargs.setdefault("dim", dim)
                     try:
-                        self.memory = get_adapter(plastic_adapter, dim=dim, **adapter_kwargs)
+                        self.memory = get_adapter(plastic_adapter, **kwargs)
                     except KeyError as exc:
                         raise InvalidProfileError(
                             f"Plastic adapter {plastic_adapter!r} is not registered; "
@@ -1872,7 +1874,13 @@ class DroidEngine(nn.Module):
                             self.memory.update_associative_memory(emb, surprise_factor=1.0)
                 except Exception as e:
                     pass
-            return {"status": "approved", "fact_id": fact_id}
+            return {
+                "status": "approved",
+                "fact_id": fact_id,
+                "strategy": self._last_retrieval_strategy,
+                "ttt": self.ttt_status(),
+                "health": self.knowledge.retrieval_health(),
+            }
         except Exception as e:
             return {"error": str(e), "fact_id": fact_id}
 
@@ -1891,7 +1899,12 @@ class DroidEngine(nn.Module):
                     self.retrieval_policy.update(qt, self._last_retrieval_strategy, reward=-1.0)
                 except:
                     pass
-            return {"status": "rejected", "fact_id": fact_id}
+            return {
+                "status": "rejected",
+                "fact_id": fact_id,
+                "strategy": self._last_retrieval_strategy,
+                "ttt": self.ttt_status(),
+            }
         except Exception as e:
             return {"error": str(e), "fact_id": fact_id}
 
@@ -1901,6 +1914,9 @@ class DroidEngine(nn.Module):
             if emb.dim() > 1:
                 emb = emb.squeeze(0)
             emb = emb / torch.linalg.vector_norm(emb).clamp(min=1e-6)
+            # Erase the superseded association before teaching the correction so
+            # the plastic memory cannot keep answering with the old value.
+            self._erase_corrected_fact(old_fact_id)
             new_id = self.knowledge.insert_fact(new_text, "correction", time.time(), self.step_count, 1.0, emb)
             self.knowledge.supersede(old_fact_id, new_id)
             try:
@@ -1992,6 +2008,15 @@ class DroidEngine(nn.Module):
                 stream["running"] = True
                 return {"status": "resumed"}
             return {"status": "no_stream"}
+
+    def enqueue_stream_text(self, text: str) -> Dict[str, Any]:
+        """Queue text for the engine-owned worker (console 'Queue' button)."""
+        stream = self.continuous_stream
+        if not isinstance(stream, ContinuousStream) or not stream.running:
+            return {"status": "not_running"}
+        queued = stream.ingest(text)
+        return {"status": "queued" if queued else "dropped",
+                "queue_depth": stream.get_status()["queue_depth"]}
 
     def get_stream_status(self) -> Dict[str, Any]:
         stream = self.continuous_stream
@@ -2332,6 +2357,14 @@ class DroidEngine(nn.Module):
             except Exception:
                 mas_manifest = None
 
+        # 4c. Snapshot directories travel with the profile so a rollback still
+        # works after a restart (post-merge 4.4/4.5).
+        try:
+            if self.snapshot_manager is not None:
+                self.snapshot_manager.relocate(str(p / "snapshots"))
+        except Exception:
+            pass
+
         # 5. Manifest last.
         config: Dict[str, Any] = {
             "name": self.name,
@@ -2652,8 +2685,10 @@ class DroidEngine(nn.Module):
                     f"{adapter_name!r}; refusing to substitute the default adapter"
                 ) from exc
             if current_identity != adapter_name:
+                constructor = {k: v for k, v in dict(adapter_kwargs).items() if k != "dim"}
+                constructor.setdefault("dim", self.dim)
                 try:
-                    self.memory = get_adapter(adapter_name, dim=self.dim, **adapter_kwargs)
+                    self.memory = get_adapter(adapter_name, **constructor)
                 except Exception as exc:
                     raise InvalidProfileError(
                         f"Could not construct plastic adapter {adapter_name!r} from "
@@ -2773,6 +2808,11 @@ class DroidEngine(nn.Module):
         if log_file.exists():
             with open(log_file, "r") as f:
                 self.logs = json.load(f)
+        if self.snapshot_manager is not None:
+            try:
+                self.snapshot_manager.base_dir = p / "snapshots"
+            except Exception:
+                pass
         snap_file = p / "snapshots.json"
         if snap_file.exists():
             try:
