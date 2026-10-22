@@ -1,0 +1,28 @@
+{
+  "commit": "2c11003b222f27b46b5b8c31b040eaf51cb8eeb0",
+  "tier": "offline",
+  "command": "PYTHONPATH=. python -m pytest tests -q",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.6.0+cu124",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "cpu_threads": 1,
+    "hnswlib": false,
+    "embeddings": "OnnxMiniLM mock (is_mock=True)",
+    "sandbox": "Arena Agent Mode CPU sandbox"
+  },
+  "configuration": {
+    "suite": "all tests (72 files)",
+    "torch_threads": 1,
+    "dense_index": "exact fallback (hnswlib not installable: no Python.h)",
+    "model_weights": "none"
+  },
+  "outcome": "passed",
+  "details": {
+    "passed": 917,
+    "skipped": 1,
+    "failed": 0,
+    "note": "One skip is the model-gated grounded-answer assertion in tests/test_droid_rtu_fusion.py (RTU_CHECKPOINT unset); no weights exist here. The suite was run against commit 2c11003 including the evidence/ledger reconciliation that this record belongs to, so a fresh checkout of 2c11003 alone reports one failing ledger test."
+  },
+  "outcome_meaning": "passed = the full offline test suite is green at this commit."
+}

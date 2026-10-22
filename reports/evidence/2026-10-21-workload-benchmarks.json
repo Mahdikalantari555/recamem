@@ -1,0 +1,201 @@
+{
+  "tier": "benchmark",
+  "outcome": "passed",
+  "commit": "2c11003b222f27b46b5b8c31b040eaf51cb8eeb0",
+  "command": "PYTHONPATH=. python scripts/bench_workloads.py",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.6.0+cu124",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+    "cpu_count": 2,
+    "threads": 1,
+    "hnswlib": "absent",
+    "onnxruntime": "absent",
+    "streamlit": "1.66.1",
+    "llama_cpp": "absent"
+  },
+  "configuration": {
+    "retrieval_facts": [
+      10000,
+      50000,
+      100000
+    ],
+    "quick": false,
+    "dense_index_mode": "exact-fallback",
+    "note": "Measurements on this runner. hnswlib/onnxruntime/llama_cpp are absent, so index and reranker numbers describe the documented fallbacks."
+  },
+  "measurements": {
+    "environment": {
+      "python": "3.11.2",
+      "torch": "2.6.0+cu124",
+      "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+      "cpu_count": 2,
+      "threads": 1,
+      "hnswlib": "absent",
+      "onnxruntime": "absent",
+      "streamlit": "1.66.1",
+      "llama_cpp": "absent"
+    },
+    "retrieval_latency": [
+      {
+        "facts": 10000,
+        "p50_ms": 2.071,
+        "p95_ms": 2.376,
+        "runs_ms": [
+          2.376,
+          2.074,
+          2.071,
+          1.974,
+          1.99
+        ],
+        "target_ms": 5.0,
+        "met": true
+      },
+      {
+        "facts": 50000,
+        "p50_ms": 6.864,
+        "p95_ms": 8.868,
+        "runs_ms": [
+          8.868,
+          7.636,
+          6.864,
+          5.93,
+          5.267
+        ],
+        "target_ms": 5.0,
+        "met": false
+      },
+      {
+        "facts": 100000,
+        "p50_ms": 14.97,
+        "p95_ms": 17.456,
+        "runs_ms": [
+          16.885,
+          14.92,
+          14.97,
+          14.361,
+          17.456
+        ],
+        "target_ms": 5.0,
+        "met": false
+      }
+    ],
+    "lexical_sla": {
+      "facts": 100000,
+      "p50_ms": 15.398,
+      "p95_ms": 16.888,
+      "target_ms": 5.0,
+      "met": false
+    },
+    "dense_index": {
+      "facts": 20000,
+      "mode": "exact-fallback",
+      "p50_ms": 1.351,
+      "p95_ms": 3.296,
+      "recall_at_5": 1.0,
+      "target_p95_ms": 5.0,
+      "target_recall": 0.95,
+      "met": true
+    },
+    "matryoshka": {
+      "facts": 20000,
+      "baseline_p50_ms": 7.181,
+      "first_stage_p50_ms": 1.205,
+      "speedup": 5.96,
+      "baseline_quality": 1.0,
+      "first_stage_quality": 1.0,
+      "relative_quality_loss": 0.0,
+      "target_speedup": 6.0,
+      "target_loss": 0.05,
+      "met": false
+    },
+    "sparse_memory": {
+      "code_dim": 2048,
+      "active_per_row": 128,
+      "sparsity": 0.9375,
+      "code_bytes": 262144,
+      "traced_peak_kib": 192.1,
+      "encode_p50_ms": 6.107,
+      "target_sparsity": 0.9375,
+      "met": true
+    },
+    "surprise_gate": {
+      "propositions": 200,
+      "episodic_absorbed": 200,
+      "reduction": 0.0,
+      "target_reduction": 0.4,
+      "met": false
+    },
+    "decision_head": {
+      "k=5": {
+        "p50_ms": 0.0335,
+        "p95_ms": 0.077
+      },
+      "k=10": {
+        "p50_ms": 0.0337,
+        "p95_ms": 0.0532
+      },
+      "k=20": {
+        "p50_ms": 0.0341,
+        "p95_ms": 0.0658
+      }
+    },
+    "adapter_instantiation": {
+      "factory_p50_ms": 7.18,
+      "direct_p50_ms": 7.158,
+      "ratio": 1.0,
+      "target_ms": 10.0,
+      "met": true
+    },
+    "edge_slm": {
+      "catalog": {
+        "models": 13,
+        "with_quantization": 13,
+        "with_task_tags": 13,
+        "with_provenance_url": 4,
+        "with_tok_s": 1,
+        "unknown_tok_s": 12
+      },
+      "recommend_p50_ms": 0.046,
+      "recommend_p95_ms": 0.089,
+      "catalog_read_budget_ms": 20.0,
+      "catalog_read_met": true,
+      "ttc_search_p50_ms": 0.06,
+      "ttc_search_p95_ms": 0.084,
+      "ttc_candidates": 6,
+      "ttc_stop_reason": "search_complete",
+      "ttc_consumed": {
+        "candidates": 6,
+        "depth": 3,
+        "tokens": 48,
+        "seconds": 6.190400000605223e-05
+      },
+      "ttc_budget_s": 5.0,
+      "ttc_within_budget": true,
+      "note": "model-free stub generator: measures routing and search overhead only"
+    },
+    "lifecycle": {
+      "merge_2x10k": {
+        "seconds": 7.4,
+        "target_seconds": 5.0,
+        "status": "merged",
+        "writes": 10000,
+        "met": false
+      },
+      "distill_10k_to_2k": {
+        "seconds": 3.927,
+        "target_seconds": 10.0,
+        "semantic_facts": 4000,
+        "met": true
+      },
+      "stream_100_messages": {
+        "seconds": 0.011,
+        "messages_per_minute": 558915.8,
+        "target_messages_per_minute": 100,
+        "met": true
+      }
+    }
+  }
+}

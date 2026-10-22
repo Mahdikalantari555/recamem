@@ -239,6 +239,11 @@ class DroidManager:
         clean_b = name_b.strip().lower().replace(" ", "-")
         clean_new = new_name.strip().lower().replace(" ", "-")
 
+        if clean_new in {clean_a, clean_b}:
+            raise ValueError("merged profile must have a new name, not a source name")
+        if (self.base_dir / clean_new).exists():
+            raise ValueError(f"profile {clean_new!r} already exists; refusing to overwrite it")
+
         droid_a = self.get_droid(clean_a)
         droid_b = self.get_droid(clean_b)
 
@@ -262,12 +267,31 @@ class DroidManager:
             # Load it
             new_droid = DroidEngine(name=clean_new)
             new_droid.load_profile(str(dst_new))
+            # The copied manifest still names the source profile; the merged
+            # profile owns its own identity and audit trail.
+            new_droid.name = clean_new
             self.cached_instances[clean_new] = new_droid
         else:
             new_droid = self.create_droid(clean_new)
 
-        # Now merge B into new_droid
+        # Now merge B into new_droid. A refusal (manual conflicts, incompatible
+        # adapter) must not leave a half-written profile behind.
         merge_result = new_droid.merge_memory(droid_b, policy=policy)
+        new_droid.last_merge_result = merge_result
+        if merge_result.get("status") != "merged":
+            self.cached_instances.pop(clean_new, None)
+            new_droid.knowledge.close()
+            shutil.rmtree(str(dst_new), ignore_errors=True)
+            return new_droid
+        new_droid.merge_of = merge_result.get("merge_of", [clean_a, clean_b])
+        config_path = dst_new / "config.json"
+        try:
+            manifest = json.loads(config_path.read_text()) if config_path.exists() else {}
+        except (ValueError, OSError):
+            manifest = {}
+        manifest["merge_of"] = new_droid.merge_of
+        manifest["merge_history"] = list(getattr(new_droid, "merge_history", []))
+        config_path.write_text(json.dumps(manifest, indent=2))
         new_droid.save_profile(str(dst_new))
 
         return new_droid

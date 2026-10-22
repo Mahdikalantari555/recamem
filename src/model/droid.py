@@ -1779,6 +1779,9 @@ class DroidEngine(nn.Module):
                     "source_unchanged": other_droid._profile_fingerprint() == source_before,
                 }
             writes = 0
+            skipped = 0
+            duplicates = 0
+            invalid = 0
             try:
                 weight_a = self.knowledge.active_count()
                 weight_b = other_droid.knowledge.active_count()
@@ -1809,38 +1812,63 @@ class DroidEngine(nn.Module):
                     "new_version": None,
                     "source_unchanged": other_droid._profile_fingerprint() == source_before,
                 }
-            other_facts = [
-                f for f in other_droid.knowledge.get_audit_trail()
-                if not f.get("superseded")
-            ]
-            for fact in other_facts:
+            # One read of the source, then one batched write. The previous
+            # loop committed per fact and swallowed every error, so a merge
+            # could take minutes and still report "merged".
+            rows = other_droid.knowledge.conn.execute(
+                "SELECT f.id, f.text, f.source, f.novelty, f.origin, v.vec"
+                " FROM facts f JOIN facts_vecs v ON v.id = f.id"
+                " WHERE f.superseded = 0"
+            ).fetchall()
+            pending = []
+            for fact_id, text, source, novelty, origin, blob in rows:
                 try:
-                    vec = other_droid.knowledge.conn.execute(
-                        "SELECT vec FROM facts_vecs WHERE id=?", (fact["id"],)
-                    ).fetchone()
-                    if not vec:
-                        continue
-                    v = torch.frombuffer(bytearray(vec[0]), dtype=torch.float32).reshape(
+                    vector = torch.frombuffer(bytearray(blob), dtype=torch.float32).reshape(
                         self.dim
                     )
-                    if self.knowledge.find_similar(v, threshold=0.9):
-                        continue
-                    self.knowledge.insert_fact(
-                        fact["text"], fact.get("source", "merge"), time.time(),
-                        self.step_count, fact.get("novelty", 0.5), v,
-                    )
-                    writes += 1
-                except Exception:
+                except (RuntimeError, ValueError):
+                    skipped += 1
                     continue
+                pending.append({
+                    "text": text,
+                    "source": source or "merge",
+                    "timestamp": time.time(),
+                    "step": self.step_count,
+                    "novelty": novelty,
+                    "origin": origin,
+                    "vec": vector,
+                })
+            report = self.knowledge.bulk_insert_facts(pending, dedupe_threshold=0.9)
+            writes = report["inserted"]
+            duplicates = report["duplicate"]
+            invalid = report["invalid"]
             new_version = f"merge_{int(time.time())}"
             self.create_snapshot(new_version)
+            # Auditable merge (memory/merge-engine#Merge audit trail): the new
+            # version records both sources, the policy and every resolution.
+            audit = {
+                "merge_of": [self.name, other_droid.name],
+                "new_version": new_version,
+                "policy": policy,
+                "conflict_count": len(conflicts),
+                "resolutions": merge_result.get("resolutions", []),
+                "writes": writes,
+                "at": time.time(),
+            }
+            self.merge_history = list(getattr(self, "merge_history", [])) + [audit]
+            self.last_merge = audit
+            self.current_version = new_version
             return {
                 "status": "merged",
                 "new_version": new_version,
+                "merge_of": audit["merge_of"],
+                "merge_audit": audit,
                 "conflicts": conflicts,
                 "conflict_count": len(conflicts),
                 "resolutions": merge_result.get("resolutions", []),
                 "writes": writes,
+                "duplicates_skipped": duplicates,
+                "invalid_skipped": invalid + skipped,
                 "source_unchanged": other_droid._profile_fingerprint() == source_before,
                 "target_preexisting": self_before,
             }
@@ -2519,6 +2547,10 @@ class DroidEngine(nn.Module):
             config["adapter_version"] = int(self.memory._adapter_version)
         if self.migrations:
             config["migrations"] = self.migrations
+        if getattr(self, "merge_history", None):
+            config["merge_history"] = list(self.merge_history)
+        if getattr(self, "merge_of", None):
+            config["merge_of"] = list(self.merge_of)
         # Write constructor kwargs for round-trip (task 2.12)
         try:
             if hasattr(self, 'adapter_kwargs') and self.adapter_kwargs:
@@ -2585,6 +2617,7 @@ class DroidEngine(nn.Module):
                      "byte_rtu_checkpoint", "sleep_config", "logs", "gguf_backend",
                      "mas", "byte_rtu_backend"):
             state[name] = getattr(self, name, None)
+        state["merge_history"] = clone_state(getattr(self, "merge_history", []))
         return state
 
     def _restore_live_profile_state(self, state: Dict[str, Any]) -> None:
@@ -2622,6 +2655,8 @@ class DroidEngine(nn.Module):
                      "mas", "byte_rtu_backend"):
             if name in state:
                 setattr(self, name, state[name])
+        if "merge_history" in state:
+            self.merge_history = clone_state(state["merge_history"])
 
     @staticmethod
     def _validate_profile_artifacts(p: Path, config: Dict[str, Any],
@@ -2848,6 +2883,13 @@ class DroidEngine(nn.Module):
             if record not in self.migrations:
                 self.migrations.append(record)
         self.adapter_kwargs = dict(adapter_kwargs)
+        # Merge provenance round-trips with the profile it describes.
+        if isinstance(config.get("merge_history"), list):
+            self.merge_history = list(config["merge_history"])
+        if isinstance(config.get("merge_of"), list):
+            self.merge_of = list(config["merge_of"])
+        elif getattr(self, "merge_history", None):
+            self.merge_of = list(self.merge_history[-1].get("merge_of", []))
 
         weights: Dict[str, Any] = {}
         try:

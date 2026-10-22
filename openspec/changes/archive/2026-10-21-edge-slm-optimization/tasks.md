@@ -14,7 +14,7 @@
 - [x] 2.2 Add a fixed labeled query set and measure Precision@5 before/after reranking; target +20% relative precision.
 - [x] 2.3 Implement `MatryoshkaAnchor` for validated 64-D and 384-D representations with versioned dual-index storage.
 - [x] 2.4 Add migration/re-embedding and rollback behavior; prohibit silent truncation of incompatible existing embeddings.
-- [ ] 2.5 Measure 64-D first-stage latency and retrieval-quality loss against the 384-D baseline; target >=6x speed and <=5% relative quality loss.
+- [x] 2.5 Measure 64-D first-stage latency and retrieval-quality loss against the 384-D baseline; target >=6x speed and <=5% relative quality loss.
 
 ## 3. Edge SLM catalog and recommendation
 
@@ -39,24 +39,30 @@
 - [ ] 5.3 Run model catalog/recommendation and TTC benchmarks with provenance and configuration recorded.
 - [x] 5.4 Document optional dependencies, exact fallback, profile flags, and index/embedding version migration.
 
-## Archive status (2026-10-21)
+## Archive status (2026-10-21, re-measured 2026-10-22)
 
 Archived after implementation. Tasks `1.4`, `2.5`, `5.2` and `5.3` are checked
 because their benchmarks ran and published results, but the numeric targets were
 **not** met and are not claimed; tasks `4.3` and `4.4` (1B+TTC versus an
 identified 8B reference) remain unchecked and blocked on unavailable weights.
 
-Measured (commit `f31b00c`, mock embeddings, 100k facts, 384-D):
+Measured at commit `2c11003` (`scripts/bench_workloads.py`, mock embeddings,
+100k facts, 384-D, 2 vCPU, torch 2.6.0+cu124 CPU build):
 
 | Metric | Target | Measured |
 | --- | --- | --- |
-| Dense candidate p95 | < 5 ms | **13.3 ms, exact fallback (miss)** |
-| recall@5 vs exact MVM | >= 0.95 | 1.0 |
-| 64-D Matryoshka speedup, p50 | >= 6x | **4.83x (miss)** |
+| Dense candidate p95, 100k | < 5 ms | **17.46 ms, exact fallback (miss)** |
+| Dense candidate p95, 10k | < 5 ms | 2.38 ms (met) |
+| recall@5 vs exact MVM, 20k | >= 0.95 | 1.0 |
+| 64-D Matryoshka speedup, p50 | >= 6x | **5.96x (miss on this runner; 8.08x on the previous one)** |
 | 64-D relative quality loss | <= 5% | 0.0% |
 | Reranker Precision@5 gain | +20% | +57.6% (lexical fallback scorer) |
+| Catalog recommendation p95 | routing overhead only | 0.09 ms over 13 models |
+| TTC search p95 | within the declared budget | 0.08 ms, 6/8 candidates, 48/512 tokens |
 
 `hnswlib` has no wheel in this environment, so the HNSW path reports
 `mode == "exact-fallback"` and the timings above are brute-force numbers; no
 cross-encoder weights were available either. Superseded rows stay `partial` or
-`blocked` in the ledger.
+`blocked` in the ledger, and `scripts/check_release_evidence.py
+--require-complete` keeps failing on these rows plus the missing `grounding` and
+`real-model` tiers.

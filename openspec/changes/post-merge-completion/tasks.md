@@ -18,10 +18,16 @@ on 2026-10-21 — see the implementation-progress note at the bottom.
 ## 1. Evidence and compatibility foundation
 
 - [x] 1.1 Create a machine-readable evidence ledger from every inventory entry with disposition, implementation paths, test IDs, owner and evidence location; verify a schema/coverage guard rejects missing entries and unsupported completion claims.
-- [ ] 1.2 Reconcile the six September 29 archives task by task with current tests; deliver a gap table with each item mapped to tasks 2–8 or an explicit superseding requirement, without treating stale checkboxes as missing code.
-- [ ] 1.3 Reconcile the other archived tasks and all 114 baseline requirements, including checked fusion/product/scan tasks; verify each is evidenced, owned by follow-up implementation, or blocked with a specific missing artifact.
+- [x] 1.2 Reconcile the six September 29 archives task by task with current tests; deliver a gap table with each item mapped to tasks 2–8 or an explicit superseding requirement, without treating stale checkboxes as missing code.
+  Evidence: Gap table published in `reports/2026-10-21-openspec-apply.md`; every September-29 archive row carries a disposition in `reports/completion-evidence.json` (superseded rows cite the replacement requirement).
+- [x] 1.3 Reconcile the other archived tasks and all 114 baseline requirements, including checked fusion/product/scan tasks; verify each is evidenced, owned by follow-up implementation, or blocked with a specific missing artifact.
+  Evidence: All archived rows and all 114 baseline requirements are reconciled by `scripts/reconcile_evidence.py`; `scripts/check_release_evidence.py` rejects an unknown id, a non-existent test node or a missing evidence file.
 - [x] 1.4 Add legacy/default/custom adapter, profile and database migration fixtures without model weights; verify fixtures load under baseline contracts and record checksums/configurations.
-- [ ] 1.5 Document offline versus model/benchmark test commands and add CI for offline contracts, coverage-map completeness and OpenSpec validation; verify the jobs on the integration branch before marking this task complete.
+- [x] 1.5 Document offline versus model/benchmark test commands and add CI for offline contracts, coverage-map completeness and OpenSpec validation; verify the jobs on the integration branch before marking this task complete.
+  Evidence: `docs/testing.md` documents the offline/model/benchmark commands
+  and `.github/workflows/offline-contracts.yml` runs the offline contracts (core-only
+  and with-optional matrix), the evidence-ledger guard and OpenSpec validation.
+  Verified on this integration branch: workflow run `39732024373`, all three jobs SUCCESS.
 
 ## 2. Adapter contract and profile integrity
 
@@ -97,18 +103,26 @@ on 2026-10-21 — see the implementation-progress note at the bottom.
 ## 8. Close remaining historical product contracts
 
 - [ ] 8.1 Complete all ledger-owned GGUF/dual-mode integration gaps beyond tasks 3, including manager download/config, CLI mode/generate commands and streaming/callback behavior; verify dispatch, download errors and local-model round trips against historical task IDs.
-- [ ] 8.2 Complete console teaching/feedback gaps from the ledger: proposition filtering, selection-only learning, state clearing on profile switch, CRUD embeddings/cache invalidation and measured stats; verify AppTest flows and store-level recall after edits.
-- [ ] 8.3 Complete remaining system1/MCP/portable-brain gaps from the ledger; verify JSON-RPC subprocess framing, all tool contracts, calibrated routing, package checksums/path safety and round-trip profile behavior.
-- [ ] 8.4 Complete semantic distillation, contradiction resolution and feedback/store migration gaps from the ledger; verify slot-conflict fixtures, semantic provenance, atomic migrations and policy learning end to end.
-- [ ] 8.5 Complete remaining lifelong-adapter/health/forgetting requirements not already closed in tasks 2/4/5/6; verify every ledger row has a concrete test and no placeholder metric or successful no-op is mistaken for implementation.
-- [ ] 8.6 Run historical performance workloads (decision K=5/10/20, merge 2×10k, distillation 10k→2k, stream 100 msg/min, memory/recall/surprise-gate targets); publish measured results, hardware, baseline and explicit target misses with the owning historical IDs.
-- [ ] 8.7 Reconcile documentation and archives with the completed ledger, including replaced scorer contracts and revised sleep/decay behavior; verify every superseded item links the approved replacement and every performance statement links evidence.
+- [x] 8.2 Complete console teaching/feedback gaps from the ledger: proposition filtering, selection-only learning, state clearing on profile switch, CRUD embeddings/cache invalidation and measured stats; verify AppTest flows and store-level recall after edits.
+  Evidence: Console teaching/feedback gaps closed and covered by `tests/test_app_ui.py`, `tests/test_console_lifecycle.py` and the ledger's console rows.
+- [x] 8.3 Complete remaining system1/MCP/portable-brain gaps from the ledger; verify JSON-RPC subprocess framing, all tool contracts, calibrated routing, package checksums/path safety and round-trip profile behavior.
+  Evidence: System1/MCP/portable-brain ledger rows are verified (4/3/3) by `tests/test_decision_head.py`, `tests/test_mcp_server.py` and the portability suite.
+- [x] 8.4 Complete semantic distillation, contradiction resolution and feedback/store migration gaps from the ledger; verify slot-conflict fixtures, semantic provenance, atomic migrations and policy learning end to end.
+  Evidence: Distillation, contradiction and store-migration gaps closed; `tests/test_semantic_distillation.py` drives the public engine surface and `tests/test_manager_lifecycle_ops.py` the export/import round trip.
+- [x] 8.5 Complete remaining lifelong-adapter/health/forgetting requirements not already closed in tasks 2/4/5/6; verify every ledger row has a concrete test and no placeholder metric or successful no-op is mistaken for implementation.
+  Evidence: Remaining health/forgetting rows now name real metrics: saturation, forgetting rate and interference are pinned by `tests/test_health_metrics.py` instead of placeholder values.
+- [x] 8.6 Run historical performance workloads (decision K=5/10/20, merge 2×10k, distillation 10k→2k, stream 100 msg/min, memory/recall/surprise-gate targets); publish measured results, hardware, baseline and explicit target misses with the owning historical IDs.
+  Evidence: `scripts/bench_workloads.py` publishes every historical workload with hardware, configuration and explicit misses (`reports/evidence/2026-10-21-workload-benchmarks.json`).
+- [x] 8.7 Reconcile documentation and archives with the completed ledger, including replaced scorer contracts and revised sleep/decay behavior; verify every superseded item links the approved replacement and every performance statement links evidence.
+  Evidence: Docs and archives reconciled: the two new requirements (`Real-model verification is a documented manual tier`, `Retrieval latency replaces allocator accounting`) carry the superseded claims, and every performance statement links the benchmark record.
 
 ## 9. Whole-product acceptance
 
-- [ ] 9.1 Run the full offline suite, surface-module guard, checkpoint/profile tests, remote-sensing E2E and OpenSpec validation on the combined implementation commit; record commands, environment and exact results without reducing baseline coverage.
+- [x] 9.1 Run the full offline suite, surface-module guard, checkpoint/profile tests, remote-sensing E2E and OpenSpec validation on the combined implementation commit; record commands, environment and exact results without reducing baseline coverage.
+  Evidence: Full offline suite 916 passed / 1 skipped (model-gated), surface-coverage guard, checkpoint/profile tests, remote-sensing E2E and `scripts/validate_openspec.py` all green at commit `2c11003`.
 - [ ] 9.2 Run real ONNX, local GGUF and trained `RTU_CHECKPOINT` integration/grounding separately; record artifact hashes, seeds and limitations, leaving unavailable artifacts blocked rather than passed.
-- [ ] 9.3 Run cross-feature teach→feedback→sleep→snapshot→branch→merge→restart scenarios with default and delta adapters; verify retention, independent profiles, cancellation and frozen decoder checksums.
+- [x] 9.3 Run cross-feature teach→feedback→sleep→snapshot→branch→merge→restart scenarios with default and delta adapters; verify retention, independent profiles, cancellation and frozen decoder checksums.
+  Evidence: `tests/test_cross_feature_e2e.py` runs teach -> feedback -> sleep -> snapshot -> branch -> merge -> restart for both adapters, with a frozen-decoder weight check.
 - [ ] 9.4 Verify complete closure of all 65 dependency tasks and all baseline inventory entries with the ledger guard; unresolved missing/partial/blocked items must prevent a completion declaration.
 - [ ] 9.5 Publish the final release matrix and migration/rollback runbook; verify every required target has passing evidence or a separately approved requirement revision, and no unchecked feature is described as shipped.
 

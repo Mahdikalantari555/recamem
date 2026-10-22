@@ -43,3 +43,11 @@ The system SHALL fuse lexical and dense rankings using the standard Reciprocal R
 - **WHEN** a query matches both lexical and dense candidates
 - **THEN** the fused score SHALL be computed in-database using a single FULL OUTER JOIN over ranked CTEs
 - **THEN** the final ranking SHALL reflect contributions from both lexical and dense signals
+
+### Requirement: Retrieval latency replaces allocator accounting
+Retrieval performance SHALL be verified by measured latency at 10k, 50k and 100k facts on identified hardware. A zero-allocation claim SHALL NOT be a requirement, because CPython allocator behaviour is not observable from the query path.
+
+#### Scenario: Latency benchmark runs
+- **WHEN** the workload benchmark is executed
+- **THEN** it SHALL publish p50 and p95 retrieval latency per fact count with the environment
+- **THEN** a miss against the < 5 ms target SHALL be published as a miss

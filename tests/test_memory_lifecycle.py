@@ -350,7 +350,10 @@ def test_semantic_store_distills_clusters(store):
     assert len(distilled) == 2
     clustered = [item for item in distilled if len(item["source_cluster_ids"]) == 2]
     assert len(clustered) == 1
-    assert clustered[0]["confidence"] == pytest.approx(0.8)
+    # Confidence is measured (mean intra-cluster cosine), not the historical
+    # 0.8 constant. These two facts share a vector, so the cluster is perfect.
+    assert clustered[0]["confidence"] == pytest.approx(1.0)
+    assert all(0.0 < item["confidence"] <= 1.0 for item in distilled)
     # Highest-novelty member represents the cluster.
     assert clustered[0]["text"] == "Rivers carve valleys over very long time scales"
 

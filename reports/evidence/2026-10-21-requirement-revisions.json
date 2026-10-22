@@ -1,0 +1,103 @@
+{
+  "commit": "2c11003b222f27b46b5b8c31b040eaf51cb8eeb0",
+  "tier": "offline",
+  "command": "PYTHONPATH=. python scripts/reconcile_evidence.py --apply",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.6.0+cu124",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "sandbox": "Arena Agent Mode CPU sandbox"
+  },
+  "configuration": {
+    "revisions": 5,
+    "approved_by": "repository owner directive: 'Do it all' (complete the remediation plan)",
+    "scope": "requirement revisions only; no target threshold was loosened and no measurement was promoted to a claim"
+  },
+  "outcome": "approved",
+  "details": {
+    "revisions": [
+      {
+        "id": "openspec/specs/memory/test-time-training/spec.md#Test-time training budget",
+        "supersedes": [
+          "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#6.3",
+          "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#6.4"
+        ],
+        "original_claim": "The per-call TTT budget is enforced in recall() and measured per path.",
+        "revised_requirement": "Every plastic path (recall, approve, reject, correct) consumes the same step and rate budget through one gate, and exhaustion is reported.",
+        "rationale": "The historical wording named recall() only; the implementation centralised the budget, so evidence now cites the single gate rather than one call site.",
+        "implementation": [
+          "src/model/droid.py"
+        ],
+        "tests": [
+          "tests/test_adaptive_retrieval.py::test_ttt_budget_is_shared_and_hard_bounded"
+        ]
+      },
+      {
+        "id": "openspec/specs/adaptation/memory-forgetting/spec.md#Power-law retrieval availability decay",
+        "supersedes": [
+          "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#7.3"
+        ],
+        "original_claim": "Forgetting is measured as the fraction of facts outside a rolling usage window.",
+        "revised_requirement": "Availability decays as a power law of elapsed time and access count; the forgetting-rate metric counts facts whose decayed accessibility is below the documented threshold.",
+        "rationale": "The rolling-window fraction was replaced by a decayed accessibility score; the historical task cannot be satisfied as written.",
+        "implementation": [
+          "src/model/droid.py",
+          "src/model/memory_lifecycle.py"
+        ],
+        "tests": [
+          "tests/test_health_metrics.py::test_forgetting_rate_matches_the_decayed_accessibility_formula"
+        ]
+      },
+      {
+        "id": "openspec/specs/adaptation/memory-health/spec.md#Retrieval quality metric",
+        "supersedes": [
+          "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#7.5"
+        ],
+        "original_claim": "retrieval_quality is a placeholder 0.5 value in the health payload.",
+        "revised_requirement": "precision@k and MRR are computed from persisted labelled feedback and report None with an explicit reason when there are no judgements.",
+        "rationale": "A constant is not a measurement; the metric now depends on labelled data and the insufficient-evidence case is explicit.",
+        "implementation": [
+          "src/model/knowledge_store.py",
+          "src/model/droid.py"
+        ],
+        "tests": [
+          "tests/test_health_metrics.py::test_health_reports_unavailable_retrieval_quality_without_judgements"
+        ]
+      },
+      {
+        "id": "openspec/specs/model/memory-injection/spec.md#Hidden state injection",
+        "supersedes": [
+          "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#2.3"
+        ],
+        "original_claim": "Hidden-state injection is required of the GGUF backend.",
+        "revised_requirement": "Hidden injection is offered only for a hookable PyTorch decoder; a GGUF binding must report the capability unsupported and never fake it.",
+        "rationale": "A llama.cpp binding exposes no residual-stream hook, so the historical requirement could only be met by fabricating success.",
+        "implementation": [
+          "src/model/memory_injection.py",
+          "src/model/backend_contracts.py",
+          "src/model/torch_decoder_backend.py"
+        ],
+        "tests": [
+          "tests/test_injection_engine.py::test_resolution_is_json_friendly_and_never_claims_hidden_on_prompt_only"
+        ]
+      },
+      {
+        "id": "openspec/specs/model/memory-injection/spec.md#KV cache priming",
+        "supersedes": [
+          "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#2.4"
+        ],
+        "original_claim": "KV priming succeeds for any configured backend.",
+        "revised_requirement": "KV priming is a declared backend capability: unsupported bindings fail explicitly, and a priming call that cannot prove cache consumption is an error.",
+        "rationale": "Metadata-only success hid a no-op; the capability contract makes the limit visible.",
+        "implementation": [
+          "src/model/memory_injection.py",
+          "src/model/gguf_backend.py"
+        ],
+        "tests": [
+          "tests/test_injection_engine.py::test_kv_mode_prefills_before_generation_and_resets_after"
+        ]
+      }
+    ]
+  },
+  "outcome_meaning": "approved = each superseded historical claim names a replacement requirement that the main specs carry and that has its own passing evidence."
+}
