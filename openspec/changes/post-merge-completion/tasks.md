@@ -23,12 +23,11 @@ on 2026-10-21 — see the implementation-progress note at the bottom.
 - [x] 1.3 Reconcile the other archived tasks and all 114 baseline requirements, including checked fusion/product/scan tasks; verify each is evidenced, owned by follow-up implementation, or blocked with a specific missing artifact.
   Evidence: All archived rows and all 114 baseline requirements are reconciled by `scripts/reconcile_evidence.py`; `scripts/check_release_evidence.py` rejects an unknown id, a non-existent test node or a missing evidence file.
 - [x] 1.4 Add legacy/default/custom adapter, profile and database migration fixtures without model weights; verify fixtures load under baseline contracts and record checksums/configurations.
-- [ ] 1.5 Document offline versus model/benchmark test commands and add CI for offline contracts, coverage-map completeness and OpenSpec validation; verify the jobs on the integration branch before marking this task complete.
-  Ready but unproven: `docs/testing.md` documents the offline/model/benchmark
-  commands and `.github/workflows/offline-contracts.yml` runs the offline
-  contracts, the coverage-map guard and OpenSpec validation. This sandbox has no
-  Actions runner, so the job has not been observed green; the task closes when
-  the pull request's check run passes.
+- [x] 1.5 Document offline versus model/benchmark test commands and add CI for offline contracts, coverage-map completeness and OpenSpec validation; verify the jobs on the integration branch before marking this task complete.
+  Evidence: `docs/testing.md` documents the offline/model/benchmark commands
+  and `.github/workflows/offline-contracts.yml` runs the offline contracts (core-only
+  and with-optional matrix), the evidence-ledger guard and OpenSpec validation.
+  Verified on this integration branch: workflow run `39732024373`, all three jobs SUCCESS.
 
 ## 2. Adapter contract and profile integrity
 
