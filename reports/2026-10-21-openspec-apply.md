@@ -183,3 +183,72 @@ Ledger: 489 entries, 70 `verified` (12 new rows flipped from `blocked` with
 implementation paths, existing test node IDs and the offline evidence record);
 `scripts/check_release_evidence.py` still exits 0 in schema mode and
 `--require-complete` still exits 1, as intended.
+
+## Addendum (2026-10-22, third run): reconciliation, workloads and closure
+
+Branch: `arena/a4e77c3f-test-model-thing-torch`
+Code commit: `2c11003` (suite and benchmarks were run against it)
+
+### Suite and structure
+
+```
+PYTHONPATH=. python -m pytest tests -q   ->  917 passed, 1 skipped (55 s)
+PYTHONPATH=. python scripts/validate_openspec.py -> structure valid
+```
+
+The single skip is the model-gated grounded-answer assertion in
+`tests/test_droid_rtu_fusion.py`: `RTU_CHECKPOINT` is unset and no weights exist
+in this sandbox. It is reported as a skip, never as a pass.
+
+### Ledger reconciliation
+
+`scripts/reconcile_evidence.py --apply` rewrote all 424 inventory rows from the
+current tree instead of from prose similarity:
+
+```
+424 rows: superseded=11, verified=413
+reports/completion-evidence.json: 489 entries, schema/coverage valid
+```
+
+Every `verified` row now points at a test node that `scripts/check_release_evidence.py`
+confirms exists (the guard rejects invented ids), at an implementation file on
+disk, and at an evidence record with a full commit hash. The 11 superseded rows
+each name the replacement requirement that the main specs carry.
+
+### Workloads (`reports/evidence/2026-10-21-workload-benchmarks.json`)
+
+| Metric | Target | Measured | Status |
+| --- | --- | --- | --- |
+| Retrieval p95, 10k facts | < 5 ms | 2.38 ms | met |
+| Retrieval p95, 50k facts | < 5 ms | 8.87 ms | **miss** |
+| Retrieval p95, 100k facts | < 5 ms | 17.46 ms | **miss** (exact fallback) |
+| Lexical p95, 100k facts | < 5 ms | 16.89 ms | **miss** |
+| Dense index recall@5, 20k | >= 0.95 | 1.0 | met |
+| Matryoshka 64-D speedup | >= 6x | 5.96x | **miss on this runner** (8.08x previously) |
+| Matryoshka quality loss | <= 5% | 0.0% | met |
+| Catalog recommendation p95 | routing overhead | 0.09 ms | met |
+| TTC search p95 | within budget | 0.08 ms, 6/8 candidates | met |
+| Merge 2x10k facts | <= 5 s | 7.4 s | **miss** (was 286 s / 0 writes before the JOIN rewrite) |
+| Distill 10k -> 2k | <= 10 s | 3.93 s | met |
+| Stream, 100 messages | >= 100 msg/min | 558,916 msg/min | met |
+| Decision head p50, K=5/10/20 | — | 0.034 ms at every K | published, no target |
+| Surprise-gate insert reduction | >= 0.4 | 0.0 | **miss** |
+
+Misses are recorded as misses with the configuration that produced them. No
+threshold was loosened and no measurement was promoted to a claim.
+
+### What still blocks a completion declaration
+
+`scripts/check_release_evidence.py --require-complete` still exits 1:
+
+* `edge-slm-optimization#1.4` and `#5.2` — measured, targets missed (above);
+* `edge-slm-optimization#4.3`/`#4.4` — matched-budget 1B+TTC versus an
+  identified 8B reference; no weights and no inference budget here;
+* `real-model` and `grounding` tiers — need a GGUF checkpoint, real ONNX
+  weights, or a trained `RTU_CHECKPOINT`, none of which exist in the repo;
+* `post-merge-completion` 3.4, 3.7, 7.9, 7.10, 8.1, 9.2, 9.4, 9.5 stay
+  unchecked for the same reasons, and 1.5 waits on this pull request's CI job.
+
+`openspec/changes/post-merge-completion` therefore stays **active**: its own
+release-evidence requirement forbids archiving on incomplete dependency
+acceptance.

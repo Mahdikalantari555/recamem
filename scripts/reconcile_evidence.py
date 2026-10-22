@@ -134,10 +134,10 @@ AREA = {
         "tests/test_lifecycle_completion.py::test_consolidation_measures_objective_and_keeps_audit",
     ],
     "2026-09-29-plastic-memory-lifelong#7.2": [
-        "tests/test_health_metrics.py::test_saturation_combines_fact_ratio_and_associative_norm",
+        "tests/test_health_metrics.py::test_saturation_is_active_facts_over_the_capacity_bound",
     ],
     "2026-09-29-plastic-memory-lifelong#7.4": [
-        "tests/test_health_metrics.py::test_interference_is_mean_pairwise_cosine",
+        "tests/test_health_metrics.py::test_interference_is_the_mean_off_diagonal_cosine",
     ],
     "2026-09-29-system1-mcp-surface#T1.2": [
         "tests/test_decision_head.py::test_decide_returns_argmax_prototype",
@@ -264,10 +264,10 @@ AREA = {
         "tests/test_manager_lifecycle_ops.py::test_manager_merges_exports_and_imports_a_version",
     ],
     "memory/semantic-store#Semantic retrieval with higher precision": [
-        "tests/test_semantic_distillation.py::test_retrieve_semantic_prefers_distilled_facts",
+        "tests/test_semantic_distillation.py::test_retrieve_semantic_returns_propositions_after_distillation",
     ],
     "memory/semantic-store#Continuous distillation": [
-        "tests/test_semantic_distillation.py::test_distillation_is_idempotent_for_an_unchanged_store",
+        "tests/test_semantic_distillation.py::test_distill_to_semantic_is_idempotent",
     ],
     "memory/test-time-training#Test-time training budget": [
         "tests/test_adaptive_retrieval.py::test_ttt_budget_is_shared_and_hard_bounded",
