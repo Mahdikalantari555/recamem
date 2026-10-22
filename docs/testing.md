@@ -11,6 +11,19 @@ every contract. `scripts/check_release_evidence.py` uses the same tier names.
 | `concurrency-migration` | nothing extra (threads only) | `pytest tests -q -k "stream or migration or snapshot"` |
 | `benchmark` | dedicated hardware and datasets | `python scripts/bench_hybrid_retrieval.py`, `benchmark.py` |
 
+## Real-model download (manual tier)
+
+Weights are never committed (`/models/`, `*.gguf`, `*.onnx` are git-ignored). The
+download is an explicit action that needs Hugging Face access:
+
+```bash
+.venv/bin/python scripts/fetch_real_model.py   # default: openbmb/MiniCPM5-1B-GGUF, MiniCPM5-1B-Q4_K_M.gguf
+```
+
+Every attempt writes `reports/evidence/<date>-*.json` with `status: downloaded` (bytes and
+SHA-256) or `status: blocked` (the exception). A blocked record is not a pass. The script
+exits 1 when blocked.
+
 ## Offline core install
 
 ```bash

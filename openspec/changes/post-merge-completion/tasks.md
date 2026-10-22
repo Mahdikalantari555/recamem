@@ -192,3 +192,20 @@ Console note: `streamlit` is not installed here, so `app.py` is validated
 structurally (`tests/test_console_lifecycle.py`, `tests/test_memory_console_contracts.py`)
 and every action it triggers is executed through `DroidEngine`/`DroidManager`.
 No `AppTest` run is claimed.
+
+## Implementation progress (2026-10-22, real-model attempt)
+
+Attempted to download `openbmb/MiniCPM5-1B-GGUF` (`MiniCPM5-1B-Q4_K_M.gguf`) from Hugging Face.
+The sandbox cannot complete a TLS connection to `huggingface.co` (or any Hugging Face CDN or
+mirror), so no MiniCPM weights were obtained. The attempt is recorded by
+`scripts/fetch_real_model.py` in `reports/evidence/2026-10-22-minicpm5-1b-download.json`
+(`status: blocked`). Full details are in `reports/2026-10-22-real-model-verification.md`.
+
+Checkboxes are deliberately left unchecked:
+
+* 3.4, 3.7, 8.1, 9.2 — blocked on a local GGUF file (and, for 9.2, the ONNX anchor and a trained RTU checkpoint); no real-model result is claimed.
+* 7.10 — blocked on the identified 8B reference model and its compute budget.
+* 9.4, 9.5 — open because the above remain open.
+
+The change is not archived: sections 3.4–9.5 are open, and the release-evidence spec forbids
+archiving as fully implemented while dependency acceptance is incomplete.
