@@ -1,0 +1,17 @@
+{
+  "attempted_at_utc": "2026-10-22T06:44:53Z",
+  "bytes": null,
+  "error": {
+    "message": "An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.",
+    "type": "LocalEntryNotFoundError"
+  },
+  "filename": "MiniCPM5-1B-Q4_K_M.gguf",
+  "huggingface_hub_version": "2.2.0",
+  "local_dir": "models/minicpm5-1b",
+  "path": null,
+  "python": "3.11.2",
+  "repo_id": "openbmb/MiniCPM5-1B-GGUF",
+  "sha256": null,
+  "status": "blocked",
+  "tier": "real-model"
+}

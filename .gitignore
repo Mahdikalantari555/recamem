@@ -13,3 +13,13 @@
 /exports/
 .memdb/
 /reports/
+# Real model weights for the manual real-model tier (docs/testing.md).
+# Downloaded by scripts/fetch_real_model.py; never committed.
+/models/
+*.gguf
+*.ggml
+*.onnx
+*.onnx.data
+*.pt
+*.pth
+*.bin
