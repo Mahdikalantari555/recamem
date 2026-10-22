@@ -780,40 +780,36 @@ class MergeEngine:
         # Simplified: use existing _is_contradiction logic from droid.py if available
         # For now, detect by checking similar facts with different objects
         conflicts = []
+        from src.model.droid import _svo_slots, _is_contradiction
+
         try:
-            # Get all facts from both stores
-            facts_a = store_a.get_audit_trail()
-            facts_b = store_b.get_audit_trail()
-            # For each fact in A, find similar in B
-            for fa in facts_a:
-                if fa.get("superseded"):
+            facts_a = [f for f in store_a.get_audit_trail() if not f.get("superseded")]
+            facts_b = [f for f in store_b.get_audit_trail() if not f.get("superseded")]
+        except Exception:
+            # An unreadable store means "no detectable conflicts", not a crash:
+            # the merge itself still reports its own refusal reasons.
+            return []
+
+        # A contradiction needs the same subject *and* the same functional
+        # predicate, so only facts sharing that slot are compared. The previous
+        # nested loop scored every pair, which is quadratic: merging 2x10k facts
+        # spent minutes re-parsing the same sentences.
+        slots_b = {}
+        for fact_b in facts_b:
+            subject, predicate = _svo_slots(fact_b["text"])
+            slots_b.setdefault((subject, predicate), []).append(fact_b)
+
+        for fact_a in facts_a:
+            subject, predicate = _svo_slots(fact_a["text"])
+            for fact_b in slots_b.get((subject, predicate), []):
+                if not _is_contradiction(fact_a["text"], fact_b["text"]):
                     continue
-                # Find similar in B via embedding? For simplicity, use text overlap
-                for fb in facts_b:
-                    if fb.get("superseded"):
-                        continue
-                    # Check if same subject-predicate but different object
-                    # Use simple heuristic: high overlap but not identical
-                    # Reuse _svo_slots if available
-                    try:
-                        from src.model.droid import _svo_slots, _is_contradiction
-                        if _is_contradiction(fa["text"], fb["text"]):
-                            conflicts.append({
-                                "type": "SlotClash" if "capital" in fa["text"].lower() or "is" in fa["text"].lower() else "Polarity",
-                                "fact_a": fa,
-                                "fact_b": fb,
-                                "subject": _svo_slots(fa["text"])[0],
-                            })
-                    except:
-                        # Fallback: check if texts share subject but differ
-                        if fa["text"][:20].lower() == fb["text"][:20].lower() and fa["text"] != fb["text"]:
-                            conflicts.append({
-                                "type": "SlotClash",
-                                "fact_a": fa,
-                                "fact_b": fb,
-                            })
-        except Exception as e:
-            print(f"Conflict detection error: {e}")
+                conflicts.append({
+                    "type": "SlotClash" if predicate else "Polarity",
+                    "fact_a": fact_a,
+                    "fact_b": fact_b,
+                    "subject": subject,
+                })
         return conflicts
 
     @staticmethod
@@ -939,6 +935,11 @@ class SemanticStore:
 
     def distill(self, similarity_threshold: float = 0.85) -> List[Dict]:
         """Distill episodic facts into semantic propositions by clustering similar facts."""
+        # A full distill rebuilds the semantic store, so re-running it on an
+        # unchanged memory is idempotent instead of appending near-duplicates.
+        clear = getattr(self.ks, "clear_semantic", None)
+        if callable(clear):
+            clear()
         # Get all active facts
         facts = [f for f in self.ks.get_audit_trail() if not f.get("superseded")]
         if not facts:
@@ -952,29 +953,41 @@ class SemanticStore:
             if len(ids) == 0:
                 return []
             
-            # Build id -> fact mapping
+            # Build id -> fact mapping, and a position index: ``ids.index(fid)``
+            # inside the cluster loop was a linear scan per member.
             id_to_fact = {f["id"]: f for f in facts}
+            id_to_position = {fid: position for position, fid in enumerate(ids)}
             
-            # Cluster: group facts with cosine >= threshold
+            # Cluster: group facts with cosine >= threshold.
+            #
+            # The similarity rows are computed one BLOCK of queries at a time.
+            # A row-at-a-time ``torch.mv`` per fact re-read the whole matrix and
+            # spent most of its time in Python; the blocked matmul is the same
+            # arithmetic with BLAS doing the work.
             clusters = []
-            visited = set()
+            block = 512
+            block_start = None
+            block_rows = None
+            # Membership masks instead of per-pair ``.item()`` calls: the old
+            # inner loop cost one Python->torch hop for every (seed, fact) pair,
+            # which dominated the whole distillation at 100k pairs.
+            present = torch.tensor([fid in id_to_fact for fid in ids], dtype=torch.bool)
+            visited_mask = torch.zeros(len(ids), dtype=torch.bool)
             for i, fid in enumerate(ids):
-                if fid in visited or fid not in id_to_fact:
+                if visited_mask[i] or not present[i]:
                     continue
-                cluster = [fid]
-                visited.add(fid)
-                # Find similar
-                sims = torch.mv(vecs, vecs[i])
-                for j, fid2 in enumerate(ids):
-                    if fid2 in visited or fid2 not in id_to_fact:
-                        continue
-                    if sims[j].item() >= similarity_threshold:
-                        cluster.append(fid2)
-                        visited.add(fid2)
-                clusters.append(cluster)
+                if block_start is None or not (block_start <= i < block_start + block):
+                    block_start = i
+                    block_rows = vecs[block_start:block_start + block] @ vecs.T
+                scores = block_rows[i - block_start]
+                selected = (scores >= similarity_threshold) & present & ~visited_mask
+                chosen = torch.nonzero(selected).flatten().tolist()
+                visited_mask[chosen] = True
+                clusters.append([ids[j] for j in chosen])
             
             # For each cluster, produce one semantic proposition (consensus)
             semantic_facts = []
+            pending = []
             for cluster in clusters:
                 if not cluster:
                     continue
@@ -988,7 +1001,9 @@ class SemanticStore:
                 rep = max(cluster_facts, key=lambda f: f.get("novelty",0) + f.get("access_count",1)*0.1)
                 # Create semantic fact
                 # Need embedding for semantic fact - use average of cluster embeddings
-                cluster_indices = [ids.index(fid) for fid in cluster if fid in ids]
+                cluster_indices = [
+                    id_to_position[fid] for fid in cluster if fid in id_to_position
+                ]
                 if cluster_indices:
                     avg_vec = vecs[cluster_indices].mean(dim=0)
                 else:
@@ -1002,19 +1017,39 @@ class SemanticStore:
                     # Resolve by keeping highest novelty
                     rep = max(cluster_facts, key=lambda f: f.get("novelty",0))
                 
-                sid = self.ks.insert_semantic_fact(
-                    text=rep["text"],
-                    source_cluster_ids=cluster,
-                    confidence=0.8,  # heuristic
-                    vec=avg_vec
-                )
-                semantic_facts.append({
-                    "id": sid,
+                # Confidence is the mean intra-cluster cosine: a measured
+                # number, not a constant. A singleton cluster has no pair to
+                # compare, so it reports the representative's own norm (1.0).
+                if len(cluster_indices) > 1:
+                    cluster_vecs = vecs[cluster_indices]
+                    sims = cluster_vecs @ cluster_vecs.T
+                    mask = ~torch.eye(sims.shape[0], dtype=torch.bool)
+                    confidence = float(sims[mask].mean().item())
+                else:
+                    confidence = 1.0
+                confidence = max(0.0, min(1.0, confidence))
+
+                pending.append({
                     "text": rep["text"],
                     "source_cluster_ids": cluster,
-                    "confidence": 0.8,
+                    "confidence": confidence,
+                    "vec": avg_vec,
                 })
-            
+            if pending:
+                self.ks.bulk_insert_semantic_facts(pending)
+                rows = self.ks.conn.execute(
+                    "SELECT id, text, source_cluster_ids, confidence FROM semantic_facts"
+                    " ORDER BY id"
+                ).fetchall()
+                semantic_facts = [
+                    {
+                        "id": row[0],
+                        "text": row[1],
+                        "source_cluster_ids": json.loads(row[2]) if row[2] else [],
+                        "confidence": row[3],
+                    }
+                    for row in rows
+                ]
             return semantic_facts
         except Exception as e:
             print(f"Distillation error: {e}")

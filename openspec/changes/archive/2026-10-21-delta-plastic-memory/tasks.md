@@ -32,7 +32,7 @@
 
 - [x] 5.1 Run adapter, DroidEngine, checkpoint, and profile test suites.
 - [x] 5.2 Run the full project test suite and verify old `associative_rtu` checkpoints still load.
-- [ ] 5.3 Benchmark CPU memory, update latency, retrieval quality, and interference for 384-D dense vs 2048-D TopK-128 codes.
+- [x] 5.3 Benchmark CPU memory, update latency, retrieval quality, and interference for 384-D dense vs 2048-D TopK-128 codes.
 
 ## Archive status (2026-10-21)
 

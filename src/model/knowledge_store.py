@@ -355,6 +355,14 @@ class KnowledgeStore:
         validate_origin(origin)
         with self._write_lock:
             v = vec.detach().float().reshape(-1)
+            if v.numel() != self.dim:
+                # A wrong-width vector previously corrupted the dense blob and
+                # only failed later, at read time, as an opaque reshape error.
+                raise ValueError(
+                    f"vector width {v.numel()} does not match store dimension {self.dim}"
+                )
+            if not torch.isfinite(v).all():
+                raise ValueError("vector contains non-finite values")
             norm = torch.linalg.vector_norm(v).clamp(min=1e-8)
             v = v / norm
             self.conn.execute("BEGIN")
@@ -379,6 +387,118 @@ class KnowledgeStore:
             self._vec_cache = None
             return fid
 
+    def semantic_count(self) -> int:
+        """Number of distilled semantic facts."""
+        row = self.conn.execute("SELECT COUNT(*) FROM semantic_facts").fetchone()
+        return int(row[0]) if row else 0
+
+    def clear_semantic(self) -> int:
+        """Delete every distilled semantic fact; returns the deleted count."""
+        with self._write_lock:
+            before = self.semantic_count()
+            self.conn.execute("DELETE FROM semantic_facts")
+            self.conn.commit()
+        return before
+
+    def bulk_insert_semantic_facts(self, rows: List[Dict[str, Any]]) -> int:
+        """Insert distilled semantic facts in one transaction."""
+        inserted = 0
+        with self._write_lock:
+            self.conn.execute("BEGIN")
+            try:
+                for row in rows:
+                    vec = torch.as_tensor(row["vec"]).detach().float().reshape(-1)
+                    if vec.numel() != self.dim or not torch.isfinite(vec).all():
+                        continue
+                    vec = vec / torch.linalg.vector_norm(vec).clamp(min=1e-8)
+                    self.conn.execute(
+                        "INSERT INTO semantic_facts(text, source_cluster_ids, confidence,"
+                        " created_at, access_count) VALUES (?,?,?,?,?)",
+                        (
+                            row["text"],
+                            json.dumps([int(i) for i in row["source_cluster_ids"]]),
+                            float(row["confidence"]),
+                            float(row.get("created_at", time.time())),
+                            1,
+                        ),
+                    )
+                    self.conn.execute(
+                        "INSERT INTO semantic_vecs(id, vec) VALUES (?,?)",
+                        (self.conn.execute("SELECT last_insert_rowid()").fetchone()[0],
+                         vec.numpy().tobytes()),
+                    )
+                    inserted += 1
+                self.conn.commit()
+            except Exception:
+                self.conn.rollback()
+                raise
+        return inserted
+
+    def bulk_insert_facts(
+        self,
+        rows: List[Dict[str, Any]],
+        dedupe_threshold: Optional[float] = None,
+    ) -> Dict[str, int]:
+        """Insert many facts in one transaction.
+
+        Merging 10k facts through ``insert_fact`` committed once per row, which
+        turned a merge into minutes of fsync. This batches the writes, keeps the
+        same normalisation/validation, and reports skipped rows instead of
+        dropping them silently.
+
+        ``rows`` items need ``text``, ``source``, ``timestamp``, ``step``,
+        ``novelty`` and ``vec``. Returns ``{"inserted", "duplicate", "invalid"}``.
+        """
+        inserted = duplicate = invalid = 0
+        matrix, _ids = self._load_dense()
+        matrix = matrix if len(matrix) else None
+        with self._write_lock:
+            self.conn.execute("BEGIN")
+            try:
+                for row in rows:
+                    try:
+                        vec = torch.as_tensor(row["vec"]).detach().float().reshape(-1)
+                        if vec.numel() != self.dim or not torch.isfinite(vec).all():
+                            invalid += 1
+                            continue
+                        vec = vec / torch.linalg.vector_norm(vec).clamp(min=1e-8)
+                        if dedupe_threshold is not None and matrix is not None:
+                            if float(torch.mv(matrix, vec).max().item()) >= dedupe_threshold:
+                                duplicate += 1
+                                continue
+                        origin = row.get("origin") or (
+                            row.get("source") if row.get("source") in ORIGINS else "user_text"
+                        )
+                        validate_origin(origin)
+                        cursor = self.conn.execute(
+                            "INSERT INTO facts(text, source, timestamp, step, novelty,"
+                            " access_count, last_retrieved, origin, source_url, source_query)"
+                            " VALUES (?,?,?,?,?,?,?,?,?,?)",
+                            (
+                                row["text"], row.get("source", "merge"),
+                                float(row.get("timestamp", time.time())),
+                                int(row.get("step", 0)), float(row.get("novelty", 0.5)),
+                                1, float(row.get("timestamp", time.time())), origin,
+                                row.get("source_url"), row.get("source_query"),
+                            ),
+                        )
+                        self.conn.execute(
+                            "INSERT INTO facts_vecs(id, vec) VALUES (?,?)",
+                            (cursor.lastrowid, vec.numpy().tobytes()),
+                        )
+                        inserted += 1
+                    except Exception:
+                        invalid += 1
+                self.conn.commit()
+            except Exception:
+                self.conn.rollback()
+                raise
+            finally:
+                # The dense cache is stale after any successful write.
+                self._vec_cache = None
+                self._id_cache = None
+        return {"inserted": inserted, "duplicate": duplicate, "invalid": invalid}
+
     def insert_semantic_fact(
         self,
         text: str,
@@ -388,6 +508,14 @@ class KnowledgeStore:
     ) -> int:
         with self._write_lock:
             v = vec.detach().float().reshape(-1)
+            if v.numel() != self.dim:
+                # A wrong-width vector previously corrupted the dense blob and
+                # only failed later, at read time, as an opaque reshape error.
+                raise ValueError(
+                    f"vector width {v.numel()} does not match store dimension {self.dim}"
+                )
+            if not torch.isfinite(v).all():
+                raise ValueError("vector contains non-finite values")
             norm = torch.linalg.vector_norm(v).clamp(min=1e-8)
             v = v / norm
             self.conn.execute("BEGIN")
@@ -963,7 +1091,11 @@ class KnowledgeStore:
         results = []
         for rank, idx in enumerate(top.indices.tolist()):
             score = top.values[rank].item()
-            if score < threshold:
+            # The default threshold is 0.0, documented as "no filter". Applying
+            # it as a floor silently dropped every hit whose cosine happened to
+            # be negative, which made a semantic-only profile answer nothing.
+            # A positive threshold is a real floor and still filters.
+            if threshold > 0 and score < threshold:
                 continue
             row = self.conn.execute(
                 "SELECT id, text, source_cluster_ids, confidence, created_at, access_count FROM semantic_facts WHERE id=?",

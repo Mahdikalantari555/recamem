@@ -14,7 +14,7 @@
 - [x] 2.2 Add a fixed labeled query set and measure Precision@5 before/after reranking; target +20% relative precision.
 - [x] 2.3 Implement `MatryoshkaAnchor` for validated 64-D and 384-D representations with versioned dual-index storage.
 - [x] 2.4 Add migration/re-embedding and rollback behavior; prohibit silent truncation of incompatible existing embeddings.
-- [ ] 2.5 Measure 64-D first-stage latency and retrieval-quality loss against the 384-D baseline; target >=6x speed and <=5% relative quality loss.
+- [x] 2.5 Measure 64-D first-stage latency and retrieval-quality loss against the 384-D baseline; target >=6x speed and <=5% relative quality loss.
 
 ## 3. Edge SLM catalog and recommendation
 

@@ -51,3 +51,17 @@ The system SHALL store GGUF model path/repo_id and parameters in Droid profile c
 - **WHEN** the download fails
 - **THEN** the console SHALL show the exception message and the attempted target path
 - **THEN** the console SHALL NOT report success or silently fall back to a different mechanism without saying so
+
+### Requirement: Real-model verification is a documented manual tier
+Automated verification SHALL NOT require GGUF weights. The backend capability matrix SHALL report `llama_cpp` and any model path as unavailable when they are absent, and real-model loading, streaming and KV prefill SHALL be verified only by the documented manual procedure in `docs/testing.md` and `docs/backend-contracts.md`.
+
+#### Scenario: No weights in the environment
+- **WHEN** `llama_cpp` or a model file is unavailable
+- **THEN** the capability matrix SHALL report KV priming and hidden injection unsupported
+- **THEN** the offline suite SHALL pass against the documented stub contract instead of skipping silently
+- **THEN** no generation, streaming or latency claim SHALL be recorded as verified
+
+#### Scenario: Manual tier is executed
+- **WHEN** an operator supplies a local GGUF artifact
+- **THEN** the manual procedure SHALL record the binding version, the artifact checksum and the observed output
+- **THEN** only that record SHALL count as real-model evidence
