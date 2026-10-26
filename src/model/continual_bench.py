@@ -355,6 +355,84 @@ def run_benchmark(config: Optional[BenchmarkConfig] = None) -> Dict[str, Any]:
     return results
 
 
+def evaluate_domain_retention_matrix(
+    memory_arm: Any,
+    domain_stream: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Run sequential multi-domain ingestion (`5 x 5` retention matrix + forgetting)."""
+    memory_arm.reset()
+    n_domains = len(domain_stream)
+    matrix: List[List[float]] = [[0.0 for _ in range(n_domains)] for _ in range(n_domains)]
+    best_by_domain: Dict[int, float] = {}
+
+    for stage_idx, dom in enumerate(domain_stream):
+        dom_name = str(dom.get("domain_name", f"domain_{stage_idx}"))
+        for fact in dom.get("facts", []):
+            memory_arm.ingest(
+                str(fact["text"]),
+                metadata={"entity_key": fact["entity_key"], "domain": dom_name, "force": True},
+            )
+        # Measure retention across all domains seen up to `stage_idx`
+        for eval_idx in range(stage_idx + 1):
+            eval_dom = domain_stream[eval_idx]
+            facts = eval_dom.get("facts", [])
+            hits_ok = 0
+            for fact in facts:
+                q_res = memory_arm.query(str(fact["entity_key"]), top_k=2)
+                top_text = str(q_res["hits"][0]["text"]) if q_res.get("hits") else ""
+                if str(fact["answer"]).lower() in top_text.lower():
+                    hits_ok += 1
+            acc = hits_ok / float(max(1, len(facts)))
+            matrix[stage_idx][eval_idx] = acc
+            best_by_domain[eval_idx] = max(best_by_domain.get(eval_idx, 0.0), acc)
+
+    final_by_domain = {d_idx: matrix[n_domains - 1][d_idx] for d_idx in range(n_domains)} if n_domains else {}
+    forgetting = compute_memory_loss(best_by_domain, final_by_domain) if final_by_domain else 0.0
+    avg_final = statistics.mean(final_by_domain.values()) if final_by_domain else 0.0
+    footprint = memory_arm.footprint_bytes().to_dict() if hasattr(memory_arm, "footprint_bytes") else {}
+    return {
+        "retention_matrix": matrix,
+        "average_final_accuracy": avg_final,
+        "backward_forgetting": forgetting,
+        "final_by_domain": final_by_domain,
+        "footprint": footprint,
+    }
+
+
+def evaluate_contradiction_updates(
+    memory_arm: Any,
+    contradiction_pairs: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Evaluate supersession/overwrite accuracy when contradicting facts arrive."""
+    memory_arm.reset()
+    for item in contradiction_pairs:
+        memory_arm.ingest(
+            str(item["initial_fact"]),
+            metadata={"entity_key": item["entity_key"], "force": True},
+        )
+    for item in contradiction_pairs:
+        memory_arm.erase_or_supersede(str(item["entity_key"]), str(item["updated_fact"]))
+
+    updated_correct = 0
+    stale_errors = 0
+    for item in contradiction_pairs:
+        q_res = memory_arm.query(str(item["query"]), top_k=1)
+        top_text = str(q_res["hits"][0]["text"]) if q_res.get("hits") else ""
+        if str(item["expected_new"]).lower() in top_text.lower():
+            updated_correct += 1
+        elif str(item["stale_old"]).lower() in top_text.lower():
+            stale_errors += 1
+
+    total = max(1, len(contradiction_pairs))
+    footprint = memory_arm.footprint_bytes().to_dict() if hasattr(memory_arm, "footprint_bytes") else {}
+    return {
+        "contradiction_update_accuracy": updated_correct / float(total),
+        "stale_answer_rate": stale_errors / float(total),
+        "num_pairs": len(contradiction_pairs),
+        "footprint": footprint,
+    }
+
+
 __all__ = [
     "BENCHMARK_VERSION",
     "BenchmarkConfig",
@@ -363,4 +441,6 @@ __all__ = [
     "build_task_stream",
     "compute_memory_loss",
     "run_benchmark",
+    "evaluate_domain_retention_matrix",
+    "evaluate_contradiction_updates",
 ]
