@@ -55,7 +55,7 @@ evaluation and operations
   doctor               readiness report (anchor, backend, storage)
   serve --web          versioned loopback API + built frontend
   run                  headless runner (one JSON object per prompt)
-  ui                   desktop app (Tauri), or the browser fallback
+  ui                   WebUI in browser (default); --tauri to try native shell
   migrate <dir>        copy legacy droids/ profiles into the recamem home
 """
 
@@ -263,7 +263,7 @@ def cmd_serve(args) -> int:
 
 
 def cmd_ui(args) -> int:
-    """Launch the Tauri desktop shell, or fall back to the browser."""
+    """Launch the WebUI (browser). Tauri is opt-in via --tauri and falls back to browser."""
     from recamem import api
     from recamem.paths import repo_root
 
@@ -271,44 +271,51 @@ def cmd_ui(args) -> int:
         "recamem.exe" if os.name == "nt" else "recamem"
     )
     dist = api.default_static_dir()
-    shell = "tauri" if binary.is_file() else "browser"
+    port = args.port or 8000
+    url = f"http://127.0.0.1:{port}/"
 
     if args.dry_run:
-        print(f"shell={shell}")
+        print(f"shell={'tauri' if (args.tauri and binary.is_file()) else 'browser'}")
         print(f"dist={dist} exists={'yes' if dist.is_dir() else 'no'}")
         print(f"binary={binary} exists={'yes' if binary.is_file() else 'no'}")
-        print(f"url=http://127.0.0.1:{args.port or 8000}/")
+        print(f"url={url}")
         return 0
 
-    if shell == "tauri":
+    # Opt-in Tauri attempt; on any failure fall through to the browser.
+    if args.tauri and binary.is_file():
         import subprocess
 
-        return subprocess.call([str(binary)])
+        try:
+            rc = subprocess.call([str(binary)])
+            if rc == 0:
+                return 0
+        except Exception:
+            pass
+        print("recamem ui: Tauri shell exited; falling back to browser.", file=sys.stderr)
 
     if not dist.is_dir():
         print(
-            f"error: the desktop shell is not built and {dist} is missing;\n"
-            "       run `npm --prefix web install && npm --prefix web run build`\n"
-            "       (or install the Rust toolchain and build src-tauri) and retry.",
+            f"error: web assets missing at {dist};\n"
+            "       run `npm --prefix web install && npm --prefix web run build` and retry.",
             file=sys.stderr,
         )
         return 1
     if args.no_browser:
-        return api.serve(
-            host="127.0.0.1", port=args.port or 8000, profile=args.name, static=True
-        )
+        return api.serve(host="127.0.0.1", port=port, profile=args.name, static=True)
+
     import threading
     import webbrowser
 
     server = api.create_server(
-        host="127.0.0.1",
-        port=args.port or 8000,
-        profile=args.name,
-        static_dir=str(dist),
+        host="127.0.0.1", port=port, profile=args.name, static_dir=str(dist),
     )
-    url = f"http://127.0.0.1:{server.server_address[1]}/"
-    print(f"recamem ui: browser fallback at {url}")
-    webbrowser.open(url)
+    real_url = f"http://127.0.0.1:{server.server_address[1]}/"
+    print(f"recamem ui: WebUI at {real_url}")
+    print("Open that URL in your browser (auto-open attempted).")
+    try:
+        webbrowser.open(real_url)
+    except Exception:
+        pass
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -387,6 +394,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_ui.add_argument("--port", type=int, default=8000)
     p_ui.add_argument("--name", default="droid-alpha")
     p_ui.add_argument("--no-browser", action="store_true")
+    p_ui.add_argument("--tauri", action="store_true", help="try the native Tauri shell first (falls back to browser)")
     p_ui.add_argument("--dry-run", action="store_true", help="print the resolved shell and exit")
     p_ui.set_defaults(func=cmd_ui)
     return parser
