@@ -10,7 +10,7 @@ import torch
 
 from src.model.rtu import Model, Layer, Encoder, Decoder
 
-# ponytail: minimal PyTorch runtime for test-model-thing matching MLX CLI.
+# RecaMem: PyTorch runtime for the RecaMem memory engine (optional embedded micro-model).
 
 class Runtime:
     def __init__(self, path: str, threshold: float, **kwargs):
@@ -132,7 +132,7 @@ class Runtime:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description='test-model-thing')
+    parser = argparse.ArgumentParser(description='recamem')
     parser.add_argument('path')
     parser.add_argument('mode', choices=['train', 'chat'])
 

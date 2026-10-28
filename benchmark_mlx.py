@@ -100,7 +100,7 @@ def run(path: str, epochs: int, split: float, data: str):
         benchmark(model, held, False, head, optimizer, lossfn)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description = 'CoLA benchmark for test-model-thing')
+    parser = argparse.ArgumentParser(description = 'CoLA benchmark for recamem')
 
     parser.add_argument('path')
     parser.add_argument('epochs', type = int)

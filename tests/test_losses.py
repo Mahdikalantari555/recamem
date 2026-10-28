@@ -57,7 +57,7 @@ def test_total_loss_composition():
     assert 'stop' in losses
 
 def test_ce_only_loss_skips_variance_pred_and_stop():
-    """ce_only keeps only the crossentropy term (upstream jrz97619761/test-model-thing --ce-only)."""
+    """ce_only keeps only the crossentropy term (ported --ce-only flag)."""
     dim = 32
     x = torch.randn(dim)
     output = torch.randn(256)

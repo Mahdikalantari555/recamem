@@ -75,7 +75,7 @@ $$
 \mathcal{L}_{ce} = -\text{output}[n] + \log\sum\text{output}
 $$
 
-Ports from upstream `jrz97619761/test-model-thing`. The variance term is the anti-collapse
+Ports the `--ce-only` crossentropy-only flag. The variance term is the anti-collapse
 regularizer that keeps state scale near unit variance, so dropping it trades stability for a pure
 language-modelling objective — do not combine `--ce-only` with aggressive learning rates.
 

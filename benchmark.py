@@ -114,7 +114,7 @@ def run(path: str, epochs: int, split: float, data: str):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='CoLA benchmark for test-model-thing')
+    parser = argparse.ArgumentParser(description='CoLA benchmark for recamem')
     parser.add_argument('path')
     parser.add_argument('epochs', type=int)
     parser.add_argument('split', type=float)

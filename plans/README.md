@@ -1,4 +1,4 @@
-# Plans — test-model-thing → PyTorch
+# Plans — RecaMem
 
 This folder holds the **specification** before any code is written.
 Guiding decisions, fixed up front:

@@ -292,7 +292,7 @@ class Runtime:
             if save: self.model.save(self.path)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description = 'test-model-thing')
+    parser = argparse.ArgumentParser(description = 'recamem (MLX reference)')
     parser.add_argument('path')
     parser.add_argument('mode', choices = ['train', 'chat'])
 
