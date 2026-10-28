@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -20,7 +21,6 @@ LEGACY_COMMANDS = {
     "teach",
     "sleep",
     "decide",
-    "serve",
     "package",
     "eval",
     "research",
@@ -29,7 +29,7 @@ LEGACY_COMMANDS = {
     "generate",
 }
 
-NEW_COMMANDS = {"ingest", "recall", "doctor", "migrate", "rtu"}
+NEW_COMMANDS = {"ingest", "recall", "doctor", "migrate", "rtu", "run", "ui", "serve"}
 
 USAGE = """recamem <command> [options]
 
@@ -53,6 +53,9 @@ evaluation and operations
   serve                start the MCP stdio server or the REST daemon
   package              export, import or list .droid archives
   doctor               readiness report (anchor, backend, storage)
+  serve --web          versioned loopback API + built frontend
+  run                  headless runner (one JSON object per prompt)
+  ui                   desktop app (Tauri), or the browser fallback
   migrate <dir>        copy legacy droids/ profiles into the recamem home
 """
 
@@ -115,9 +118,15 @@ def cmd_doctor(args) -> int:
             detail="mock embeddings selected explicitly; no real anchor is loaded",
         )
     else:
+        started = time.perf_counter()
         try:
             anchor = OnnxMiniLM()
-            anchor_item.update(ready=True, detail=f"model={anchor.model_path}")
+            load_seconds = time.perf_counter() - started
+            anchor_item.update(
+                ready=True,
+                detail=f"model={anchor.model_path}",
+                load_seconds=round(load_seconds, 4),
+            )
         except AnchorUnavailableError as exc:
             anchor_item.update(ready=False, detail=str(exc))
     items.append(anchor_item)
@@ -150,11 +159,40 @@ def cmd_doctor(args) -> int:
     )
     items.append({"item": "network", "ready": True, "detail": "offline by default; no request made"})
 
+    # Memory stats: profiles under the home and the facts they hold. Read-only,
+    # never opens a writer, never fabricates a number.
+    profiles = sorted(d for d in home.iterdir() if d.is_dir() and not d.name.startswith(".")) if home.is_dir() else []
+    facts = 0
+    unreadable = []
+    import sqlite3
+
+    for profile in profiles:
+        for candidate in ("knowledge.db", "facts.db", "episodic.db"):
+            db = profile / candidate
+            if not db.is_file():
+                continue
+            try:
+                with sqlite3.connect(f"file:{db}?mode=ro", uri=True) as conn:
+                    facts += int(conn.execute("SELECT COUNT(*) FROM facts").fetchone()[0])
+            except sqlite3.Error:
+                unreadable.append(str(db))
+            break
+    items.append(
+        {
+            "item": "memory",
+            "ready": True,
+            "detail": f"profiles={len(profiles)} facts={facts}"
+            + (f" unreadable={len(unreadable)}" if unreadable else ""),
+        }
+    )
+
     print(f"anchor={mode if mode == 'mock' else ('real' if anchor_item['ready'] else 'unavailable')}")
     print(f"anchor_detail={anchor_item['detail']}")
     print(f"storage={storage_detail}")
     print(f"profiles={home}")
     print(f"selected_core={manifest}")
+    print(f"profiles_count={len(profiles)}")
+    print(f"facts={facts}")
     print("generation_backend=none")
     print("offline=yes")
     ready = all(item["ready"] for item in items[1:]) and bool(anchor_item["ready"])
@@ -183,6 +221,100 @@ def cmd_rtu(args) -> int:
         text = backend.generate(args.prompt, max_tokens=args.max_tokens)
         print(f"prompt={args.prompt}")
         print(f"generated={text}")
+    return 0
+
+
+def cmd_run(args) -> int:
+    from recamem import runner
+
+    return runner.main(
+        [
+            *(["--prompt", args.prompt] if args.prompt is not None else []),
+            "--name", args.name,
+            *(["--base-dir", args.base_dir] if args.base_dir else []),
+            "--mode", args.mode,
+            "--top-k", str(args.top_k),
+        ]
+    )
+
+
+def cmd_serve(args) -> int:
+    if args.mcp:
+        from src.mcp_server import MCPServer
+
+        MCPServer(base_dir=args.base_dir).run_stdio()
+        return 0
+    if not (args.rest or args.web):
+        print("Must specify --mcp, --rest or --web", file=sys.stderr)
+        return 1
+    from recamem import api
+
+    try:
+        return api.serve(
+            host=args.host,
+            port=args.port or 8000,
+            base_dir=args.base_dir,
+            profile=args.name,
+            static=args.web,
+        )
+    except api.ApiError as exc:
+        print(f"error: {exc.message}", file=sys.stderr)
+        return 1
+
+
+def cmd_ui(args) -> int:
+    """Launch the Tauri desktop shell, or fall back to the browser."""
+    from recamem import api
+    from recamem.paths import repo_root
+
+    binary = repo_root() / "src-tauri" / "target" / "release" / (
+        "recamem.exe" if os.name == "nt" else "recamem"
+    )
+    dist = api.default_static_dir()
+    shell = "tauri" if binary.is_file() else "browser"
+
+    if args.dry_run:
+        print(f"shell={shell}")
+        print(f"dist={dist} exists={'yes' if dist.is_dir() else 'no'}")
+        print(f"binary={binary} exists={'yes' if binary.is_file() else 'no'}")
+        print(f"url=http://127.0.0.1:{args.port or 8000}/")
+        return 0
+
+    if shell == "tauri":
+        import subprocess
+
+        return subprocess.call([str(binary)])
+
+    if not dist.is_dir():
+        print(
+            f"error: the desktop shell is not built and {dist} is missing;\n"
+            "       run `npm --prefix web install && npm --prefix web run build`\n"
+            "       (or install the Rust toolchain and build src-tauri) and retry.",
+            file=sys.stderr,
+        )
+        return 1
+    if args.no_browser:
+        return api.serve(
+            host="127.0.0.1", port=args.port or 8000, profile=args.name, static=True
+        )
+    import threading
+    import webbrowser
+
+    server = api.create_server(
+        host="127.0.0.1",
+        port=args.port or 8000,
+        profile=args.name,
+        static_dir=str(dist),
+    )
+    url = f"http://127.0.0.1:{server.server_address[1]}/"
+    print(f"recamem ui: browser fallback at {url}")
+    webbrowser.open(url)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
     return 0
 
 
@@ -232,6 +364,31 @@ def build_parser() -> argparse.ArgumentParser:
     p_rtu.add_argument("--dim", type=int, default=64)
     p_rtu.add_argument("--layers", type=int, default=2)
     p_rtu.set_defaults(func=cmd_rtu)
+
+    p_run = subparsers.add_parser("run", help="Headless runner: one JSON object per prompt")
+    p_run.add_argument("--prompt", default=None, help="run a single prompt and exit")
+    p_run.add_argument("--name", default="droid-alpha")
+    p_run.add_argument("--base-dir", default=None)
+    p_run.add_argument("--mode", default="chat", choices=["chat", "recall", "teach"])
+    p_run.add_argument("--top-k", type=int, default=3)
+    p_run.set_defaults(func=cmd_run)
+
+    p_serve = subparsers.add_parser("serve", help="MCP stdio server, REST API or web app")
+    p_serve.add_argument("--mcp", action="store_true", help="serve MCP over stdio")
+    p_serve.add_argument("--rest", action="store_true", help="serve the versioned loopback API")
+    p_serve.add_argument("--web", action="store_true", help="serve the API and web/dist")
+    p_serve.add_argument("--host", default="127.0.0.1")
+    p_serve.add_argument("--port", type=int, default=8000)
+    p_serve.add_argument("--name", default="droid-alpha")
+    p_serve.add_argument("--base-dir", default=None)
+    p_serve.set_defaults(func=cmd_serve)
+
+    p_ui = subparsers.add_parser("ui", help="Launch the desktop app (browser fallback)")
+    p_ui.add_argument("--port", type=int, default=8000)
+    p_ui.add_argument("--name", default="droid-alpha")
+    p_ui.add_argument("--no-browser", action="store_true")
+    p_ui.add_argument("--dry-run", action="store_true", help="print the resolved shell and exit")
+    p_ui.set_defaults(func=cmd_ui)
     return parser
 
 

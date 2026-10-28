@@ -56,6 +56,20 @@ the expected path. Mock embeddings are used only when explicitly selected
 The old `src/model/*` engine imports and `python -m src.cli` still work through
 deprecation shims for one release; see `docs/migration.md`.
 
+## Surfaces
+
+```bash
+recamem run --prompt "What is the calibration constant?" --name demo   # headless JSON
+recamem serve --rest            # versioned loopback API on 127.0.0.1:8000
+npm --prefix web install && npm --prefix web run build
+recamem serve --web             # API + built frontend
+recamem ui                      # Tauri desktop shell, browser fallback
+```
+
+The runner and the API need core dependencies only; the desktop app needs Node to
+build the frontend and Rust/Tauri for the shell. `docs/surfaces.md` documents the
+contracts, the loopback-only rules and what is blocked without a Rust toolchain.
+
 ## Verify
 
 ```bash
@@ -72,7 +86,9 @@ missing path rather than passed.
 
 `docs/migration.md`, `docs/plasticity.md`, `docs/recall.md`,
 `docs/forgetting.md`, `docs/sleep.md`, `docs/ingest.md`, `docs/benchmarks.md`,
-`docs/testing.md`, `docs/release-evidence.md`, `docs/ui-design.md`.
+`docs/surfaces.md`, `docs/testing.md`, `docs/release-evidence.md`,
+`docs/ui-design.md`. The Phase 0 defect ledger is
+`reports/recamem-defect-ledger.md`.
 
 ## License
 

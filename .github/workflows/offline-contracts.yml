@@ -34,6 +34,14 @@ jobs:
           # gate measures the documented exact-fallback configuration.
           grep -v -E '^(streamlit|pandas|hnswlib)' ${{ matrix.requirements }} > /tmp/req.txt
           pip install -r /tmp/req.txt
+      - name: Runner smoke (headless, core deps only)
+        # surfaces 10.5: the runner must work without Node, Streamlit or Tauri.
+        run: |
+          export RECAMEM_ANCHOR=mock RECAMEM_HOME="$(mktemp -d)"
+          out=$(python scripts/run_recamem.py --prompt "hello" --name ci)
+          echo "$out"
+          python -c "import json,sys; payload=json.loads(sys.argv[1]); assert payload['prompt']=='hello'; assert 'response' in payload" "$out"
+          printf 'a\nb\n' | python scripts/run_recamem.py --name ci | wc -l
       - name: Offline gate
         run: PYTHONPATH=. python scripts/offline_gate.py
       - name: Offline suite
