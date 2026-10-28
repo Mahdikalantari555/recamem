@@ -12,6 +12,30 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("mcp_server")
 
+#: Canonical ``recamem_*`` tool names (mcp-server capability).
+CANONICAL_TOOLS: tuple = (
+    "recamem_recall_memory",
+    "recamem_teach_fact",
+    "recamem_decide_action",
+    "recamem_list_droids",
+    "recamem_inspect_state",
+    "recamem_generate_with_memory",
+    "recamem_research_topic",
+)
+
+#: Deprecated aliases that keep working for one release.
+TOOL_ALIASES: Dict[str, str] = {
+    name.removeprefix("recamem_"): name for name in CANONICAL_TOOLS
+}
+DOCUMENTED_TOOLS: tuple = CANONICAL_TOOLS + tuple(TOOL_ALIASES)
+
+
+def canonical_tool_name(name: Optional[str]) -> Optional[str]:
+    """Map a deprecated alias to its canonical ``recamem_*`` name."""
+    if name is None:
+        return None
+    return TOOL_ALIASES.get(name, name)
+
 class MCPServer:
     """Stdio JSON-RPC 2.0 MCP server exposing Droid memory primitives."""
 
@@ -56,7 +80,7 @@ class MCPServer:
     def handle_tools_list(self, params: Dict[str, Any]) -> Dict[str, Any]:
         tools = [
             {
-                "name": "recall_memory",
+                "name": "recamem_recall_memory",
                 "description": "Sub-5ms factual lookup from plastic memory",
                 "inputSchema": {
                     "type": "object",
@@ -69,7 +93,7 @@ class MCPServer:
                 }
             },
             {
-                "name": "teach_fact",
+                "name": "recamem_teach_fact",
                 "description": "Incremental on-device learning with automatic contradiction detection",
                 "inputSchema": {
                     "type": "object",
@@ -82,7 +106,7 @@ class MCPServer:
                 }
             },
             {
-                "name": "decide_action",
+                "name": "recamem_decide_action",
                 "description": "Non-autoregressive System-1 option scoring",
                 "inputSchema": {
                     "type": "object",
@@ -95,7 +119,7 @@ class MCPServer:
                 }
             },
             {
-                "name": "list_droids",
+                "name": "recamem_list_droids",
                 "description": "List available Droid profiles",
                 "inputSchema": {
                     "type": "object",
@@ -103,7 +127,7 @@ class MCPServer:
                 }
             },
             {
-                "name": "inspect_state",
+                "name": "recamem_inspect_state",
                 "description": "Audit trace buffers, plastic weight norms, and fact counts",
                 "inputSchema": {
                     "type": "object",
@@ -113,7 +137,7 @@ class MCPServer:
                 }
             },
             {
-                "name": "generate_with_memory",
+                "name": "recamem_generate_with_memory",
                 "description": "Slow path generation with memory injection (if GGUF backend available)",
                 "inputSchema": {
                     "type": "object",
@@ -126,7 +150,7 @@ class MCPServer:
                 }
             },
             {
-                "name": "research_topic",
+                "name": "recamem_research_topic",
                 "description": "Acquire knowledge about a topic from an external web source and learn it into the named Droid",
                 "inputSchema": {
                     "type": "object",
@@ -138,26 +162,40 @@ class MCPServer:
                 }
             }
         ]
-        return {"tools": tools}
+        # Every canonical tool is exposed as ``recamem_<name>``; the earlier
+        # unprefixed names stay callable for one release and are marked
+        # deprecated (mcp-server capability).
+        for tool in tools:
+            tool["deprecated"] = False
+        aliases = []
+        for tool in list(tools):
+            old = tool["name"].removeprefix("recamem_")
+            alias = dict(tool)
+            alias["name"] = old
+            alias["deprecated"] = True
+            alias["replaced_by"] = tool["name"]
+            aliases.append(alias)
+        return {"tools": tools + aliases}
 
     def handle_tools_call(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        name = params.get("name")
+        requested = params.get("name")
+        name = canonical_tool_name(requested)
         arguments = params.get("arguments", {})
 
         try:
-            if name == "recall_memory":
+            if name == "recamem_recall_memory":
                 return self._tool_recall_memory(arguments)
-            elif name == "teach_fact":
+            elif name == "recamem_teach_fact":
                 return self._tool_teach_fact(arguments)
-            elif name == "decide_action":
+            elif name == "recamem_decide_action":
                 return self._tool_decide_action(arguments)
-            elif name == "list_droids":
+            elif name == "recamem_list_droids":
                 return self._tool_list_droids(arguments)
-            elif name == "inspect_state":
+            elif name == "recamem_inspect_state":
                 return self._tool_inspect_state(arguments)
-            elif name == "generate_with_memory":
+            elif name == "recamem_generate_with_memory":
                 return self._tool_generate_with_memory(arguments)
-            elif name == "research_topic":
+            elif name == "recamem_research_topic":
                 return self._tool_research_topic(arguments)
             else:
                 return {
@@ -245,7 +283,7 @@ class MCPServer:
                                     emb = emb.squeeze(0)
                                 emb = emb / (torch.linalg.vector_norm(emb).clamp(min=1e-8))
                                 option_embs[opt] = emb.tolist()
-                            except:
+                            except Exception:  # noqa: BLE001
                                 pass
                         if option_embs:
                             dh = DecisionHead(prototypes=option_embs, dim=q_emb.numel())
@@ -309,7 +347,7 @@ class MCPServer:
                 try:
                     health = droid.get_memory_health()
                     state["health"] = health
-                except:
+                except Exception:  # noqa: BLE001
                     pass
             
             return {"content": [{"type": "text", "text": json.dumps(state, indent=2)}]}
@@ -413,7 +451,7 @@ class MCPServer:
                     }
                     sys.stdout.write(json.dumps(response) + "\n")
                     sys.stdout.flush()
-                except:
+                except Exception:  # noqa: BLE001
                     pass
             except Exception as e:
                 logger.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
@@ -425,7 +463,7 @@ class MCPServer:
                     }
                     sys.stdout.write(json.dumps(response) + "\n")
                     sys.stdout.flush()
-                except:
+                except Exception:  # noqa: BLE001
                     pass
 
 def main():

@@ -7,7 +7,7 @@ import pytest
 
 from src.model.droid import DroidEngine, RECALL_SCORE_WEIGHTS, score_candidate
 from src.model.knowledge_store import KnowledgeStore
-from src.model.onnx_anchor import OnnxMiniLM
+from src.model.onnx_anchor import AnchorUnavailableError, OnnxMiniLM
 from src.model.rtu import PlasticAssociativeRTU
 
 # 2.1: effective_lr changes plastic step
@@ -244,34 +244,18 @@ def test_scorer_replaces_hardcoded_boosts():
 
 # 2.10: mock anchor explicit
 def test_mock_anchor_explicit():
-    anchor = OnnxMiniLM()
-    # Should have is_mock attribute
-    assert hasattr(anchor, 'is_mock')
-    assert isinstance(anchor.is_mock, bool)
-    # use_mock alias
-    assert hasattr(anchor, 'use_mock')
-    assert anchor.is_mock == anchor.use_mock
-    # If is_mock True, should have warned
-    # Test fallback path warns
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        # Force mock by using non-existent cache dir
-        a2 = OnnxMiniLM(cache_dir="/tmp/nonexistent_cache_test_12345")
-        # Should be mock and have warned
-        assert a2.is_mock is True
-        assert len(w) >= 1
-        assert any("mock" in str(ww.message).lower() for ww in w)
-    # Inference fallback also warns
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        # Create anchor that will fallback on inference (mock)
-        a3 = OnnxMiniLM(cache_dir="/tmp/nonexistent_cache_test_12345")
-        a3.session = None  # force mock path, but embed should still work
-        # embed should not warn again when already mock? But if session None, it uses mock without additional warning per current impl (only warns on exception)
-        # So we test embed still returns normalized vector
-        emb = a3.embed("test sentence")
-        assert emb.shape == (384,)
-        assert abs(float(torch.norm(emb).item()) - 1.0) < 1e-4
+    """Mock embeddings exist only when selected; a missing model fails fast."""
+    anchor = OnnxMiniLM(mode="mock")
+    assert anchor.is_mock is True
+    assert anchor.use_mock is True
+    emb = anchor.embed("test sentence")
+    assert emb.shape == (384,)
+    assert abs(float(torch.norm(emb).item()) - 1.0) < 1e-4
+
+    # A real anchor with no model on disk raises by name and never degrades.
+    with pytest.raises(AnchorUnavailableError) as excinfo:
+        OnnxMiniLM(cache_dir="/tmp/nonexistent_cache_test_12345", mode="real")
+    assert "Model not found" in str(excinfo.value)
 
 # 2.11: Streamlit badge reads flag (we test anchor_is_mock in engine)
 def test_anchor_is_mock_in_engine():

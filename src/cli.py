@@ -230,9 +230,9 @@ def cmd_decide(args):
                     import torch
                     emb = emb / (torch.linalg.vector_norm(emb).clamp(min=1e-8))
                     option_embs[opt] = emb.tolist()
-                except:
+                except Exception:  # noqa: BLE001
                     pass
-        except:
+        except Exception:  # noqa: BLE001
             pass
         
         if option_embs:
@@ -294,7 +294,7 @@ def cmd_serve(args):
                 body = self.rfile.read(content_length)
                 try:
                     data = json_lib.loads(body.decode('utf-8'))
-                except:
+                except Exception:  # noqa: BLE001
                     self.send_response(400)
                     self.end_headers()
                     return
@@ -807,9 +807,14 @@ def cmd_generate(args):
         print("GGUF backend not available, falling back to chat", file=sys.stderr)
         print(droid.chat(args.query))
 
-def main(argv: Optional[List[str]] = None):
+def main(argv: Optional[List[str]] = None, _deprecation_notice: bool = False):
+    if _deprecation_notice:
+        print(
+            "deprecated: `python -m src.cli` is deprecated; use `recamem` instead",
+            file=sys.stderr,
+        )
     parser = argparse.ArgumentParser(prog='tmt-droid', description='Unified headless CLI for Droid')
-    parser.add_argument('--base-dir', default='droids', help='Droids base directory')
+    parser.add_argument('--base-dir', default=None, help='Profiles directory (default: recamem home, or legacy droids/)')
     subparsers = parser.add_subparsers(dest='command', required=True)
     
     # chat
@@ -911,7 +916,15 @@ def main(argv: Optional[List[str]] = None):
     p_gen.set_defaults(func=cmd_generate)
     
     args = parser.parse_args(argv)
+    if getattr(args, "base_dir", None) in (None, ""):
+        # Profiles live in the recamem home, or in a legacy droids/ directory
+        # that already exists (recamem/identity).
+        from recamem.identity import default_base_dir
+
+        args.base_dir = str(default_base_dir())
     return args.func(args)
 
 if __name__ == '__main__':
-    sys.exit(main() or 0)
+    # The historical module entry point keeps working for one release and names
+    # its replacement (recamem/identity).
+    sys.exit(main(_deprecation_notice=True) or 0)

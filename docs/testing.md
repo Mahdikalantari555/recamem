@@ -91,3 +91,34 @@ console-only and `hnswlib` is excluded because a native approximate index
 changes candidate ranking. An extra *informational* step builds `hnswlib` when
 the runner can and re-runs the HNSW/ranking subset; it does not gate the build.
 Model-dependent tiers are not part of the job because no weights exist in CI.
+
+
+## Offline gate
+
+Verification for recamem runs without weights, network or a GPU:
+
+```bash
+PYTHONPATH=. python scripts/offline_gate.py
+```
+
+The gate checks that
+
+* every evidence-ledger row names a test that exists (`check_release_evidence`),
+* the MCP `tools/list` advertisement equals the documented names plus the
+  documented deprecated aliases,
+* the CLI subcommand set matches `recamem.cli`,
+* documentation contains no hand-written test count,
+* every third-party import on the default code path is declared in
+  `pyproject.toml`,
+* the `real_model` gate exists in `tests/conftest.py`.
+
+Exit code 0 means pass, 1 means fail. `.github/workflows/offline-contracts.yml`
+runs the suite plus this gate on every pull request.
+
+## Blocked semantics
+
+Mock embeddings are opt-in only (`--anchor mock`, `mode="mock"`,
+`RECAMEM_ANCHOR=mock`). The real anchor fails fast with `AnchorUnavailableError`
+naming the missing path, and `GgufBackend` raises `GgufLoadError` instead of
+substituting a mock model. Tests that need real weights are marked `real_model`
+and report **blocked**, never passed; the gate summary counts them separately.

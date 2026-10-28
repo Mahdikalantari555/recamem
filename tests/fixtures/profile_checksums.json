@@ -23,13 +23,14 @@
       "rtu_dim",
       "rtu_layers",
       "rtu_spread",
+      "schema_version",
       "sleep",
       "step_count",
       "surprise_threshold",
       "test_time_training",
       "total_facts"
     ],
-    "config_sha256": "635f1705783b9984dc7584f8053ba3adc8dce305634ca864d226088f74398243",
+    "config_sha256": "2e5dcd916d6762528a4f434a1a55d4956fabf123046806249c11b3ade88a30c4",
     "db_tables": [
       "facts",
       "facts_fts",
@@ -47,7 +48,8 @@
       "semantic_fts_docsize",
       "semantic_fts_idx",
       "semantic_vecs",
-      "sqlite_sequence"
+      "sqlite_sequence",
+      "store_meta"
     ],
     "fact_rows": 1,
     "has_adapter_meta": true,
@@ -78,13 +80,14 @@
       "rtu_dim",
       "rtu_layers",
       "rtu_spread",
+      "schema_version",
       "sleep",
       "step_count",
       "surprise_threshold",
       "test_time_training",
       "total_facts"
     ],
-    "config_sha256": "4a5f5a7dc15b9b8cbab573e2c0f65a46ea188e45c7a216b45ae5904bb3cab3ba",
+    "config_sha256": "db8ca88f02e196259fab3af42609b8939d5be8b6bd3a340a75f93272d1b1650f",
     "db_tables": [
       "facts",
       "facts_fts",
@@ -102,7 +105,8 @@
       "semantic_fts_docsize",
       "semantic_fts_idx",
       "semantic_vecs",
-      "sqlite_sequence"
+      "sqlite_sequence",
+      "store_meta"
     ],
     "fact_rows": 1,
     "has_adapter_meta": true,

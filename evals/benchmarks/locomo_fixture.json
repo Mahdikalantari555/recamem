@@ -1,0 +1,6 @@
+{"dataset_source": "fixture", "questions": [
+  {"question": "Where did Caroline go on her trip?", "answer": "Kyoto",
+   "context": ["Caroline took a trip to Kyoto in the spring of 2023."]},
+  {"question": "What does Melanie collect?", "answer": "stamps",
+   "context": ["Melanie collects stamps from every country she visits."]}
+]}

@@ -49,7 +49,7 @@ from src.model.edge_slm import EdgeSLMRegistry
 
 anchor_report = {}
 from src.model.onnx_anchor import OnnxMiniLM
-anchor = OnnxMiniLM()
+anchor = OnnxMiniLM(mode="mock")
 anchor_report = {"is_mock": bool(getattr(anchor, "is_mock", False))}
 
 index = build_dense_index("auto", dim=8)

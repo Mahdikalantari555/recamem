@@ -23,7 +23,9 @@ import types
 import pytest
 
 from src.model import gguf_backend as gguf_module
-from src.model.gguf_backend import GgufBackend, MockLlama
+from src.model.gguf_backend import GgufBackend, GgufLoadError, MockLlama
+pytestmark = pytest.mark.phase0
+
 
 
 # --------------------------------------------------------------------------- #
@@ -37,19 +39,24 @@ def test_module_import_does_not_require_llama_cpp(monkeypatch):
     assert hasattr(fresh, "GgufBackend")
     assert hasattr(fresh, "MockLlama")
     # The fresh module's mock is independent of the package-level import path.
-    backend = fresh.GgufBackend()
-    assert "Mock generation" in backend.generate("hello")
+    backend = fresh.GgufBackend(mock=True)
+    assert backend.is_mock is True
+    assert "Mock LLM output" in backend.generate("hello")
 
 
-def test_missing_llama_cpp_falls_back_to_mock(monkeypatch, tmp_path):
+def test_missing_llama_cpp_raises_instead_of_mocking(monkeypatch, tmp_path):
     monkeypatch.setitem(sys.modules, "llama_cpp", None)
     model_file = tmp_path / "tiny.gguf"
     model_file.write_bytes(b"gguf")
 
-    backend = GgufBackend(model_path=str(model_file))
+    with pytest.raises(GgufLoadError) as excinfo:
+        GgufBackend(model_path=str(model_file))
+    assert "llama-cpp-python is not installed" in str(excinfo.value)
+
+    # The explicit mock stays available and is labelled.
+    backend = GgufBackend(model_path=str(model_file), mock=True)
     assert isinstance(backend.model, MockLlama)
-    assert backend.model_path == str(model_file)
-    # The mock is usable end to end.
+    assert backend.is_mock is True
     assert "Mock LLM output" in backend.generate("hello", max_tokens=8)
 
 
@@ -96,9 +103,10 @@ def test_load_model_forwards_arguments_to_llama(monkeypatch, tmp_path):
     assert calls["seed"] == 11
 
 
-def test_constructor_ignores_missing_model_path():
-    backend = GgufBackend(model_path="/definitely/not/here.gguf")
-    assert backend.model is None
+def test_constructor_rejects_missing_model_path():
+    with pytest.raises(GgufLoadError) as excinfo:
+        GgufBackend(model_path="/definitely/not/here.gguf")
+    assert "/definitely/not/here.gguf" in str(excinfo.value)
 
 
 def test_constructor_auto_downloads_when_repo_given(monkeypatch, tmp_path):
@@ -113,8 +121,8 @@ def test_constructor_auto_downloads_when_repo_given(monkeypatch, tmp_path):
     monkeypatch.setattr(GgufBackend, "download_model", fake_download)
     monkeypatch.setitem(sys.modules, "llama_cpp", None)
 
-    backend = GgufBackend(repo_id="org/model", filename="model.gguf")
-    assert isinstance(backend.model, MockLlama)
+    with pytest.raises(GgufLoadError):
+        GgufBackend(repo_id="org/model", filename="model.gguf")
 
 
 def test_constructor_survives_download_failure(monkeypatch):
@@ -122,8 +130,9 @@ def test_constructor_survives_download_failure(monkeypatch):
         raise RuntimeError("offline")
 
     monkeypatch.setattr(GgufBackend, "download_model", boom)
-    backend = GgufBackend(repo_id="org/model", filename="model.gguf", verbose=True)
-    assert backend.model is None
+    with pytest.raises(GgufLoadError) as excinfo:
+        GgufBackend(repo_id="org/model", filename="model.gguf", verbose=True)
+    assert "offline" in str(excinfo.value)
 
 
 # --------------------------------------------------------------------------- #
@@ -139,11 +148,10 @@ class _RecordingModel:
         return {"choices": [{"text": self.text}]}
 
 
-def test_generate_without_model_returns_mock_string():
+def test_generate_without_model_raises_named_error():
     backend = GgufBackend()
-    out = backend.generate("what is radar?")
-    assert out.startswith("[Mock generation for: what is radar")
-    assert out.endswith("...]")
+    with pytest.raises(GgufLoadError):
+        backend.generate("what is radar?")
 
 
 def test_generate_builds_completion_call():

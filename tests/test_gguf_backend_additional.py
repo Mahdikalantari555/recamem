@@ -12,32 +12,32 @@ from unittest import mock
 
 import pytest
 
-from src.model.gguf_backend import GgufBackend
+from src.model.gguf_backend import GgufBackend, GgufLoadError
 
 
-def test_constructor_stores_arguments_and_loads_nothing_without_path():
-    backend = GgufBackend(
-        model_path="/tmp/does-not-exist.gguf",
-        repo_id="repo",
-        filename="model.gguf",
-        n_ctx=2048,
-        n_gpu_layers=0,
-        verbose=True,
-    )
-    assert backend.model_path == "/tmp/does-not-exist.gguf"
-    assert backend.repo_id == "repo"
-    assert backend.filename == "model.gguf"
+def test_constructor_stores_arguments_and_refuses_a_missing_path():
+    with pytest.raises(GgufLoadError):
+        GgufBackend(
+            model_path="/tmp/does-not-exist.gguf",
+            repo_id="repo",
+            filename="model.gguf",
+            n_ctx=2048,
+            n_gpu_layers=0,
+            verbose=True,
+        )
+    backend = GgufBackend(n_ctx=2048, n_gpu_layers=0, verbose=True)
+    assert backend.repo_id is None
+    assert backend.filename is None
     assert backend.n_ctx == 2048
     assert backend.n_gpu_layers == 0
     assert backend.verbose is True
     assert backend.model is None
 
 
-def test_generate_without_a_model_returns_mock_text():
+def test_generate_without_a_model_raises_named_error():
     backend = GgufBackend()
-    out = backend.generate("hello world", max_tokens=16, temperature=0.7)
-    assert isinstance(out, str)
-    assert "hello world" in out
+    with pytest.raises(GgufLoadError):
+        backend.generate("hello world", max_tokens=16, temperature=0.7)
 
 
 def test_tokenize_and_detokenize_without_a_model():
@@ -91,7 +91,8 @@ def test_download_model_missing_huggingface_hub_raises_clear_error():
 
 def test_backend_imports_and_constructs_without_llama_cpp():
     # `llama_cpp` is not installed in this environment; importing the module
-    # and constructing the backend must not crash.
+    # and constructing the backend must not crash, and no mock is invented.
     assert "llama_cpp" not in sys.modules
     backend = GgufBackend()
-    assert backend.generate("anything") == f"[Mock generation for: anything...]"
+    with pytest.raises(GgufLoadError):
+        backend.generate("anything")

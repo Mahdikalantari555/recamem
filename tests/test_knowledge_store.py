@@ -168,7 +168,7 @@ def test_an_existing_database_gains_the_provenance_columns_and_keeps_its_rows(tm
 
 
 def test_origin_vocabulary_is_closed_and_an_unknown_origin_is_rejected():
-    assert ORIGINS == ("user_text", "chat", "continuous_stream", "web")
+    assert ORIGINS == ("user_text", "chat", "continuous_stream", "web", "ingest")
     with pytest.raises(ValueError) as excinfo:
         validate_origin("scraped")
     assert "scraped" in str(excinfo.value)

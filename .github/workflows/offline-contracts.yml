@@ -34,6 +34,8 @@ jobs:
           # gate measures the documented exact-fallback configuration.
           grep -v -E '^(streamlit|pandas|hnswlib)' ${{ matrix.requirements }} > /tmp/req.txt
           pip install -r /tmp/req.txt
+      - name: Offline gate
+        run: PYTHONPATH=. python scripts/offline_gate.py
       - name: Offline suite
         run: PYTHONPATH=. python -m pytest tests -q 2>&1 | tee /tmp/offline-suite.log
         env:

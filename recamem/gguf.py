@@ -1,0 +1,285 @@
+
+import os
+import time
+from pathlib import Path
+from typing import Optional, List, Dict, Any, Callable
+
+# ponytail: GGUF backend using llama-cpp-python with optional GPU offload
+
+
+class GgufLoadError(RuntimeError):
+    """A GGUF model could not be loaded (missing file or missing runtime).
+
+    Raised instead of substituting a mock model. Mock generation runs only when
+    the caller explicitly selects it (``mock=True``).
+    """
+
+
+class GgufBackend:
+    """GGUF model loading, inference, and management via llama.cpp"""
+    
+    def __init__(self, model_path: Optional[str] = None,
+                 repo_id: Optional[str] = None,
+                 filename: Optional[str] = None,
+                 n_ctx: int = 4096,
+                 n_gpu_layers: int = -1,
+                 verbose: bool = False,
+                 mock: bool = False,
+                 **params):
+        self.model_path = model_path
+        self.repo_id = repo_id
+        self.filename = filename
+        self.n_ctx = n_ctx
+        self.n_gpu_layers = n_gpu_layers
+        self.params = params
+        self.verbose = verbose
+        self.model = None
+        self.tokenizer = None
+        self.is_mock = bool(mock)
+
+        if self.is_mock:
+            # Explicit mock only: labelled in the capability matrix.
+            self.model = MockLlama(model_path or "<explicit-mock>")
+            self.model_path = model_path or "<explicit-mock>"
+            return
+
+        # Load the model if a path was provided. A configured path that does
+        # not exist is an error, not a silent mock (model/gguf-backend).
+        if model_path:
+            if not os.path.exists(model_path):
+                raise GgufLoadError(
+                    f"GGUF model not found at {model_path}; refusing to fall back to a mock model"
+                )
+            self.load_model(model_path)
+        elif repo_id and filename:
+            try:
+                path = self.download_model(repo_id, filename)
+            except Exception as exc:
+                raise GgufLoadError(
+                    f"GGUF model {repo_id}/{filename} could not be downloaded: {exc}"
+                ) from exc
+            self.load_model(path)
+
+    def load_model(self, model_path: str):
+        """Load a GGUF model from a local path using llama-cpp-python.
+
+        Every failure raises :class:`GgufLoadError` naming the path or the
+        missing runtime. No mock is substituted (model/gguf-backend).
+        """
+        if not os.path.exists(model_path):
+            raise GgufLoadError(f"GGUF model not found at {model_path}")
+        try:
+            from llama_cpp import Llama
+        except ImportError as exc:
+            raise GgufLoadError(
+                f"llama-cpp-python is not installed, so {model_path} cannot be loaded; "
+                "install the optional [gguf] extra or select mock=True explicitly"
+            ) from exc
+        try:
+            self.model = Llama(
+                model_path=model_path,
+                n_ctx=self.n_ctx,
+                n_gpu_layers=self.n_gpu_layers,
+                verbose=self.verbose,
+                **self.params
+            )
+        except Exception as exc:
+            raise GgufLoadError(f"Failed to load GGUF model {model_path}: {exc}") from exc
+        self.model_path = model_path
+        self.is_mock = isinstance(self.model, MockLlama)
+        if self.verbose:
+            print(f"Loaded GGUF model from {model_path}")
+
+    def generate(self, prompt: str, max_tokens: int = 512, 
+                 temperature: float = 0.7, top_p: float = 0.9,
+                 top_k: int = 40, repeat_penalty: float = 1.1,
+                 stream: bool = False, callback: Optional[Callable] = None) -> str:
+        """Generate tokens with optional streaming callback."""
+        if self.model is None:
+            raise GgufLoadError(
+                "No GGUF model is loaded; construct GgufBackend(model_path=...) "
+                "or GgufBackend(mock=True) explicitly"
+            )
+        
+        try:
+            # Prepare generation kwargs
+            kwargs = {
+                "prompt": prompt,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "top_p": top_p,
+                "top_k": top_k,
+                "repeat_penalty": repeat_penalty,
+            }
+            
+            if stream and callback:
+                # Streaming mode
+                full_text = ""
+                for output in self.model.create_completion(**kwargs, stream=True):
+                    token = output["choices"][0]["text"]
+                    full_text += token
+                    callback(token)
+                return full_text
+            else:
+                result = self.model.create_completion(**kwargs)
+                return result["choices"][0]["text"]
+        except Exception as e:
+            print(f"Generation error: {e}")
+            return f"[Generation failed: {e}]"
+
+    # -- capability contract (post-merge 3.1/3.4) ----------------------- #
+    tokenizer_kind = "model"
+
+    def capability_report(self) -> Dict[str, Any]:
+        """Truthful capability matrix entry for this backend instance."""
+        return {
+            "backend": "mock" if self.is_mock else "gguf",
+            "is_mock": bool(self.is_mock),
+            "loaded": self.model is not None,
+            "model_path": self.model_path,
+            "supports_hidden_injection": self.supports_hidden_injection(),
+            "supports_kv_priming": self.supports_kv_priming(),
+        }
+
+    def supports_hidden_injection(self) -> bool:
+        # llama.cpp is a C++ binding with no residual-stream access. Never
+        # advertise a hook that cannot be installed.
+        return False
+
+    def supports_kv_priming(self) -> bool:
+        # Priming requires the binding's own prefill and reset entry points.
+        model = self.model
+        return callable(getattr(model, "eval", None)) and callable(
+            getattr(model, "reset", None)
+        )
+
+    def context_window(self) -> int:
+        return int(getattr(self, "n_ctx", 4096))
+
+    def output_reserve(self) -> int:
+        return int(getattr(self, "output_reserve", 512))
+
+    def count_tokens(self, text: str) -> int:
+        return len(self.tokenize(text))
+
+    def prime_kv_cache(self, texts: List[str]) -> Dict[str, Any]:
+        """Prefill the binding's KV cache with fact tokens (real prefill).
+
+        Raises ``UnsupportedCapabilityError`` when the installed binding does
+        not expose prefill/reset, rather than returning fabricated token IDs.
+        """
+        from recamem.backend_contracts import UnsupportedCapabilityError
+
+        if not self.supports_kv_priming():
+            raise UnsupportedCapabilityError(
+                "kv_cache", type(self).__name__,
+                "installed llama.cpp binding exposes no eval()/reset()",
+            )
+        tokens: List[int] = []
+        for text in texts:
+            tokens.extend(self.tokenize(text))
+        if not tokens:
+            raise ValueError("KV prefill requires at least one fact token")
+        self.model.eval(tokens)
+        self._primed_tokens = len(tokens)
+        return {
+            "tokens": len(tokens),
+            "binding": type(self.model).__name__,
+            "mechanism": "eval",
+        }
+
+    def reset_kv_cache(self) -> None:
+        reset = getattr(self.model, "reset", None)
+        if callable(reset):
+            reset()
+        self._primed_tokens = 0
+
+    def tokenize(self, text: str) -> List[int]:
+        """Tokenize text to token ids."""
+        if self.model is None:
+            # Mock tokenization: split by whitespace and hash
+            return [hash(w) % 10000 for w in text.split()]
+        try:
+            return self.model.tokenize(text.encode('utf-8'))
+        except Exception:  # noqa: BLE001
+            return [ord(c) for c in text[:100]]
+
+    def detokenize(self, tokens: List[int]) -> str:
+        """Detokenize token ids to text."""
+        if self.model is None:
+            return f"[Mock detokenize {len(tokens)} tokens]"
+        try:
+            return self.model.detokenize(tokens).decode('utf-8', errors='ignore')
+        except Exception:  # noqa: BLE001
+            return "".join([chr(t % 256) for t in tokens])
+
+    def get_kv_cache(self):
+        """Get current KV cache (if supported)."""
+        if self.model is None:
+            return None
+        try:
+            # llama-cpp-python may expose kv cache via model._model or similar
+            # This is version-dependent, return None if not available
+            return getattr(self.model, 'kv_cache', None)
+        except Exception:  # noqa: BLE001
+            return None
+
+    def set_kv_cache(self, kv):
+        """Set KV cache (if supported)."""
+        if self.model is None:
+            return
+        try:
+            # Attempt to set cache
+            if hasattr(self.model, 'kv_cache'):
+                self.model.kv_cache = kv
+        except Exception:  # noqa: BLE001
+            pass
+
+    def download_model(self, repo_id: str, filename: str, local_dir: str = "models") -> str:
+        """Download model from Hugging Face Hub using huggingface_hub."""
+        try:
+            from huggingface_hub import hf_hub_download
+            Path(local_dir).mkdir(parents=True, exist_ok=True)
+            path = hf_hub_download(repo_id=repo_id, filename=filename, local_dir=local_dir)
+            return path
+        except ImportError:
+            # Fallback: try to use snapshot_download or manual
+            raise ImportError("huggingface_hub not installed, cannot download model")
+        except Exception as e:
+            # If filename contains wildcard, need to list files
+            if "*" in filename:
+                try:
+                    from huggingface_hub import list_repo_files, hf_hub_download
+                    files = list_repo_files(repo_id)
+                    # Simple glob matching: find file containing pattern without *
+                    pattern = filename.replace("*", "")
+                    matched = [f for f in files if pattern in f and f.endswith(".gguf")]
+                    if matched:
+                        # Pick first or smallest?
+                        matched.sort()
+                        chosen = matched[0]
+                        Path(local_dir).mkdir(parents=True, exist_ok=True)
+                        path = hf_hub_download(repo_id=repo_id, filename=chosen, local_dir=local_dir)
+                        return path
+                except Exception as e2:
+                    print(f"Wildcard download failed: {e2}")
+            raise e
+
+
+class MockLlama:
+    """Mock Llama for testing without actual GGUF model."""
+    def __init__(self, model_path: str):
+        self.model_path = model_path
+        self.n_ctx = 4096
+    
+    def create_completion(self, prompt: str, max_tokens: int = 512, **kwargs):
+        # Mock generation: echo prompt with some transformation
+        # For testing, return prompt + " [generated]"
+        text = f"Based on context, here is synthesis for: {prompt[:100]}... [Mock LLM output with {max_tokens} tokens]"
+        return {"choices": [{"text": text}]}
+    
+    def tokenize(self, text: bytes):
+        return [ord(c) % 1000 for c in text.decode('utf-8', errors='ignore')[:100]]
+    
+    def detokenize(self, tokens):
+        return "".join([chr(t % 128) for t in tokens]).encode('utf-8')
