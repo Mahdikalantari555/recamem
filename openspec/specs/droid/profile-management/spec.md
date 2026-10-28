@@ -6,17 +6,15 @@ Enables creating, selecting, saving, and switching between named Droid instances
 ## Requirements
 
 ### Requirement: Named Droid Isolation
-The system SHALL support creating and switching between multiple Droid instances stored under `droids/<droid-name>/`. Each profile SHALL declare an `engine` of `droid`, `byte_rtu`, or `hybrid`, the relative path of its byte-RTU checkpoint when it owns one, and a `fusion_mode`. Every artifact a profile requires SHALL live inside that profile's directory; no artifact SHALL be shared between profiles. The system SHALL write all artifacts before writing `config.json`, and SHALL write the manifest atomically. Loading a profile whose manifest declares an artifact that is absent, or whose `config.json` is missing or corrupt, SHALL raise a named error and SHALL NOT fall back to random initialization or an empty profile.
-
-The system SHALL support creating and switching between multiple Droid instances stored under `droids/<droid-name>/`. Each profile SHALL record the plastic adapter type it was constructed with in `config.json`, and loading a profile SHALL read that recorded value rather than inferring the adapter from whatever class happens to be live. A profile without the field SHALL load with the current default adapter, preserving older profiles.
+The system SHALL support creating and switching between multiple agent profiles stored under the recamem home, `~/.recamem/agents/<name>/` by default, and loading legacy profiles under `droids/<name>/` in place. Each profile SHALL declare an `engine` of `droid`, `byte_rtu`, or `hybrid`, the relative path of its byte-RTU checkpoint when it owns one, a `fusion_mode`, the plastic adapter type it was constructed with, and a `schema_version`. Every artifact a profile requires SHALL live inside that profile's directory; no artifact SHALL be shared between profiles. The system SHALL write all artifacts before writing `config.json`, and SHALL write the manifest atomically. Loading a profile whose manifest declares an artifact that is absent, or whose `config.json` is missing or corrupt, SHALL raise a named error and SHALL NOT fall back to random initialization or an empty profile. A profile without a recorded adapter type SHALL load with the current default adapter.
 
 #### Scenario: Switching active Droid
-- **WHEN** user selects a different Droid (e.g. `droid-remote-sensing`) from the profile selector
-- **THEN** the active RTU memory state, logs, and metadata SHALL switch cleanly to the target profile without cross-contamination
+- **WHEN** user selects a different profile from the profile selector
+- **THEN** the active memory state, logs, and metadata SHALL switch cleanly to the target profile without cross-contamination
 
 #### Scenario: Memory round-trip persistence
-- **WHEN** a Droid absorbs knowledge and is saved
-- **THEN** re-loading that Droid SHALL restore its exact internal memory states and audit log history
+- **WHEN** a profile absorbs knowledge and is saved
+- **THEN** re-loading that profile SHALL restore its exact internal memory states and audit log history
 
 #### Scenario: Fused profile round trip
 - **WHEN** a profile is created with `create_droid(name, byte_rtu=True)`, taught, and saved
@@ -53,3 +51,11 @@ The system SHALL support creating and switching between multiple Droid instances
 #### Scenario: Legacy profile without the adapter field
 - **WHEN** a profile's `config.json` has no `plastic_adapter` field
 - **THEN** loading SHALL succeed with the default adapter and SHALL NOT raise
+
+### Requirement: Profile schema version and upgrade
+The system SHALL read a profile's `schema_version` before loading any other field. An unknown newer version SHALL raise a named error. An older version SHALL be upgraded by an explicit step that preserves every stored value.
+
+#### Scenario: Newer profile is refused
+- **WHEN** a profile declares a schema version higher than the running code supports
+- **THEN** loading SHALL raise a named error giving both versions
+- **THEN** the profile files SHALL NOT be modified

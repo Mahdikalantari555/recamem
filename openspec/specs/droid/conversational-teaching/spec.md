@@ -63,3 +63,15 @@ The system SHALL attach truth maintenance metadata (`superseded`, `valid_until`,
 - **THEN** the stored fact record SHALL include `superseded: false`, `valid_until: null`, and `superseded_by: null` fields
 - **WHEN** a fact is superseded by a later contradiction
 - **THEN** the stored fact record SHALL update `superseded: true`, `valid_until: <timestamp>`, and `superseded_by: <fact_id>`
+
+### Requirement: Teaching uses the shared abbreviation-safe segmenter
+The system SHALL segment text for `teach()` and for the chat teaching path with the same abbreviation-safe segmentation used by ingestion. It SHALL NOT use a bare sentence-boundary regex for that purpose.
+
+#### Scenario: Teaching keeps a title intact
+- **WHEN** the user teaches "The project lead is Dr. Mina Rostami."
+- **THEN** the stored fact SHALL read "The project lead is Dr. Mina Rostami."
+- **THEN** the stored fact SHALL NOT end at "Dr."
+
+#### Scenario: Learning rate recorded for each write
+- **WHEN** a teaching call stores facts
+- **THEN** the train log SHALL record the learning rate applied to each stored write, as required by the schedule requirement above
