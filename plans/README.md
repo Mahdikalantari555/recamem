@@ -23,8 +23,8 @@ Read order: `01_source_analysis.md` → the contracts → verification.
 Post-reproduction tracks (not part of the port):
 
 - `09_recamem_plan.md` — rebrand + two-tier plasticity umbrella plan.
-- `10_droid_rtu_fusion.md` — focused slice of 09: fuse the raw byte RTU with the
-  droid memory engine (`ByteRtuBackend`, frozen at inference).
+- `10_droid_rtu_fusion.md` — focused slice of 09: fuse the raw byte RTU with the droid memory engine.
+- `11_recamem_surfaces.md` — Tauri desktop UI + standalone runner (Tailwind+shadcn).
 
 Every spec used to mark items that must be confirmed against the MLX runtime
 as `[VERIFY]`. **All seven are now RESOLVED** — MLX cannot execute in this
