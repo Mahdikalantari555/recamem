@@ -32,3 +32,13 @@ are reported as `blocked`, not passed:
 
 Install `llama-cpp-python` and a local GGUF artifact to unblock; do not weaken
 the offline gate.
+
+## GGUF model artifact (user-provided)
+
+- Path: `/mnt/d/AI/.lmstudio/models/OpenBMB/dspark-MiniCPM-V-4_7-1B-F16/dspark-MiniCPM-V-4_7-1B-F16.gguf`
+- Size: ~418 MB (F16, MiniCPM-V 4.7 1B)
+- Status: artifact present, but `llama-cpp-python` (and `cmake`) are not
+  installed, so the GGUF backend reports `blocked` rather than loading it.
+- To unblock tasks 3.4/3.7/8.1/9.2: install `cmake` + `llama-cpp-python`
+  (core deps only for the rest of the engine), then point the backend at the
+  path above via `recamem generate --model <path>` or the profile config.
