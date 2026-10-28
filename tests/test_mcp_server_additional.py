@@ -195,14 +195,18 @@ def test_handle_tools_list_names_all_seven_tools():
     server = MCPServer(base_dir="droids")
     tools = server.handle_tools_list({})["tools"]
     names = [tool["name"] for tool in tools]
-    assert names == [
-        "recall_memory",
-        "teach_fact",
-        "decide_action",
-        "list_droids",
-        "inspect_state",
-        "generate_with_memory",
-        "research_topic",
+    assert names[:7] == [
+        "recamem_recall_memory",
+        "recamem_teach_fact",
+        "recamem_decide_action",
+        "recamem_list_droids",
+        "recamem_inspect_state",
+        "recamem_generate_with_memory",
+        "recamem_research_topic",
+    ]
+    assert names[7:] == [
+        "recall_memory", "teach_fact", "decide_action", "list_droids",
+        "inspect_state", "generate_with_memory", "research_topic",
     ]
     for tool in tools:
         assert "inputSchema" in tool

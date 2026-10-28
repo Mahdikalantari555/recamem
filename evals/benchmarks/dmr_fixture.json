@@ -1,0 +1,4 @@
+{"dataset_source": "fixture", "questions": [
+  {"question": "Which document mentions the calibration constant?", "answer": "lab.md",
+   "context": ["The calibration constant is recorded in lab.md."]}
+]}

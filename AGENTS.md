@@ -1,16 +1,20 @@
 # Repository Instructions for AI Agents (RecaMem)
 
 ## Environment & Toolchain
-- **Python Environment**: ALWAYS use the `ai` conda environment:
-  - Python: `/home/asus/miniforge3/envs/ai/bin/python`
-  - Pytest: `/home/asus/miniforge3/envs/ai/bin/pytest`
-  - Streamlit: `/home/asus/miniforge3/envs/ai/bin/streamlit`
+- **Package**: engine code lives in `recamem/`; `src/model/*` are deprecation
+  shims for one release (`docs/migration.md`).
+- **Python Environment**: any Python >= 3.10 with the declared dependencies:
+  - `pip install -e ".[dev]"` (core + every optional integration)
   - Always prepend `PYTHONPATH=.` when invoking python directly from project root.
 
 ## Verification & Commands
 - **Run all tests**:
   ```bash
-  PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests
+  PYTHONPATH=. python -m pytest tests -q
+  ```
+- **Run the offline gate** (ledger, MCP/CLI parity, packaging, blocked semantics):
+  ```bash
+  PYTHONPATH=. python scripts/offline_gate.py
   ```
 - **Run a single test file**:
   ```bash
@@ -33,7 +37,15 @@
 - `src/model/rtu.py`: RTU block, Model class, custom AdamW, loss functions (`unbiased=False` on variance loss). Supports `ce_only` flag. Owns `MissingCheckpointError(FileNotFoundError)` and `InvalidProfileError(ValueError)`; `Model.load()` raises on empty/absent path. Constructing `Model(...)` is the explicit random-init path.
 - `src/model/byte_rtu_backend.py`: `ByteRtuBackend`, frozen generative peer of `GgufBackend`. Owns prompt encoding (verbatim, query last, no appended newline), public `reset()`, and `min(max_tokens, max_output_bytes)` bound. Only module allowed to prime `Model` for inference.
 - `src/model/onnx_anchor.py`: INT8 quantized `all-MiniLM-L6-v2` via ONNX Runtime (<25 MB). Cached in `~/.cache/huggingface`. No silent mock fallback — mock is explicit opt-in only.
-- `src/model/droid.py`: memory engine (`DroidEngine` → becoming `MemoryEngine`). Couples ONNX anchor to plastic RTU memory blocks. Owns recall scorer, canonical answer paths (`recall`/`fused`/`llm`), profile manifest/persistence (artifacts first, `config.json` last via `os.replace`).
+- `recamem/engine.py`: memory engine (`DroidEngine` / `MemoryEngine`). Couples the anchor to plastic memory blocks, owns the canonical answer paths, profile manifest/persistence (artifacts first, `config.json` last via `os.replace`), the writer lock and schema version.
+- `recamem/plasticity.py`: FAST/SLOW tiers, MAS penalty, rollback gate, schema versions.
+- `recamem/retrieval.py`: two-channel recall, logistic fusion scorer, ANN recall measurement.
+- `recamem/episodic.py`: SQLite store with `active`/`retired` tiers and ingest provenance.
+- `recamem/forgetting.py`: utility, capacity retirement, consolidate-then-forget (no hard delete).
+- `recamem/anchor.py`, `recamem/gguf.py`, `recamem/byte_rtu.py`: fail-fast backends; mock is explicit only.
+- `recamem/ingest.py`, `recamem/segmenter.py`: folder ingestion and abbreviation-safe segmentation.
+- `recamem/bench/`: metrics, continual benchmarks, LoCoMo/LongMemEval-S/DMR runners.
+- `recamem/cli.py`: the `recamem` command; `src/cli.py` delegates with a deprecation notice.
 - `src/model/droid_manager.py`: multi-profile manager for named agents in `droids/<name>/`.
 - `src/model/teacher.py`: stdlib `urllib` client for OpenAI-compatible endpoints.
 - `src/model/recamem_core.py`: `build_recamem_core` — loads the selected core from `configs/recamem_selected_core.json`.

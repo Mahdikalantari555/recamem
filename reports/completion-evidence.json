@@ -633,7 +633,7 @@
       "tests": [
         "tests/test_cli.py::test_download_model_failure_returns_one",
         "tests/test_cli.py::test_download_model_success",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path"
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path"
       ],
       "evidence": [
         "reports/evidence/2026-10-21-offline-suite-reconciled.json"
@@ -654,7 +654,7 @@
       ],
       "tests": [
         "tests/test_cli.py::test_bench_measures_tokens_params_and_rss",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path",
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path",
         "tests/test_gguf_backend.py::test_constructor_keeps_extra_params"
       ],
       "evidence": [
@@ -758,7 +758,7 @@
       "tests": [
         "tests/test_cli.py::test_download_model_failure_returns_one",
         "tests/test_cli.py::test_download_model_success",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path"
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path"
       ],
       "evidence": [
         "reports/evidence/2026-10-21-offline-suite-reconciled.json"
@@ -1257,7 +1257,7 @@
       "tests": [
         "tests/test_cli.py::test_download_model_failure_returns_one",
         "tests/test_cli.py::test_download_model_success",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path"
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path"
       ],
       "evidence": [
         "reports/evidence/2026-10-21-offline-suite-reconciled.json"
@@ -6297,7 +6297,7 @@
       "tests": [
         "tests/test_cli.py::test_download_model_failure_returns_one",
         "tests/test_cli.py::test_download_model_success",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path"
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path"
       ],
       "evidence": [
         "reports/evidence/2026-10-21-offline-suite-reconciled.json"
@@ -6319,7 +6319,7 @@
       "tests": [
         "tests/test_cli.py::test_download_model_failure_returns_one",
         "tests/test_cli.py::test_download_model_success",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path"
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path"
       ],
       "evidence": [
         "reports/evidence/2026-10-21-offline-suite-reconciled.json"
@@ -6341,7 +6341,7 @@
       "tests": [
         "tests/test_cli.py::test_download_model_failure_returns_one",
         "tests/test_cli.py::test_download_model_success",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path"
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path"
       ],
       "evidence": [
         "reports/evidence/2026-10-21-offline-suite-reconciled.json"
@@ -6363,7 +6363,7 @@
       "tests": [
         "tests/test_cli.py::test_download_model_failure_returns_one",
         "tests/test_cli.py::test_download_model_success",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path"
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path"
       ],
       "evidence": [
         "reports/evidence/2026-10-21-offline-suite-reconciled.json"
@@ -6385,7 +6385,7 @@
       "tests": [
         "tests/test_cli.py::test_download_model_failure_returns_one",
         "tests/test_cli.py::test_download_model_success",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path"
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path"
       ],
       "evidence": [
         "reports/evidence/2026-10-21-offline-suite-reconciled.json"
@@ -6407,7 +6407,7 @@
       "tests": [
         "tests/test_cli.py::test_download_model_failure_returns_one",
         "tests/test_cli.py::test_download_model_success",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path"
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path"
       ],
       "evidence": [
         "reports/evidence/2026-10-21-offline-suite-reconciled.json"
@@ -6429,7 +6429,7 @@
       "tests": [
         "tests/test_cli.py::test_download_model_failure_returns_one",
         "tests/test_cli.py::test_download_model_success",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path"
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path"
       ],
       "evidence": [
         "reports/evidence/2026-10-21-offline-suite-reconciled.json"
@@ -6451,7 +6451,7 @@
       "tests": [
         "tests/test_cli.py::test_download_model_failure_returns_one",
         "tests/test_cli.py::test_download_model_success",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path"
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path"
       ],
       "evidence": [
         "reports/evidence/2026-10-21-offline-suite-reconciled.json"
@@ -8660,7 +8660,7 @@
         "src/mcp_server.py"
       ],
       "tests": [
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path",
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path",
         "tests/test_gguf_backend.py::test_download_requires_huggingface_hub",
         "tests/test_gguf_backend.py::test_download_resolves_wildcard_filename"
       ],
@@ -8728,7 +8728,7 @@
       "tests": [
         "tests/test_gguf_backend.py::test_constructor_auto_downloads_when_repo_given",
         "tests/test_gguf_backend.py::test_constructor_defaults",
-        "tests/test_gguf_backend.py::test_constructor_ignores_missing_model_path"
+        "tests/test_gguf_backend.py::test_constructor_rejects_missing_model_path"
       ],
       "evidence": [
         "reports/evidence/2026-10-21-offline-suite-reconciled.json"

@@ -25,14 +25,16 @@ import torch
 from src.mcp_server import MCPServer
 
 EXPECTED_TOOLS = {
-    "recall_memory",
-    "teach_fact",
-    "decide_action",
-    "list_droids",
-    "inspect_state",
-    "generate_with_memory",
-    "research_topic",
+    "recamem_recall_memory",
+    "recamem_teach_fact",
+    "recamem_decide_action",
+    "recamem_list_droids",
+    "recamem_inspect_state",
+    "recamem_generate_with_memory",
+    "recamem_research_topic",
 }
+
+DEPRECATED_ALIASES = {name.removeprefix("recamem_") for name in EXPECTED_TOOLS}
 
 
 class FakeAnchor:
@@ -126,8 +128,10 @@ def test_handle_initialize(server):
 def test_handle_tools_list_name_set_and_schemas(server):
     tools = server.handle_tools_list({})["tools"]
     names = {tool["name"] for tool in tools}
-    assert names == EXPECTED_TOOLS
-    assert len(tools) == len(EXPECTED_TOOLS)
+    assert names == EXPECTED_TOOLS | DEPRECATED_ALIASES
+    assert len(tools) == len(EXPECTED_TOOLS | DEPRECATED_ALIASES)
+    deprecated = {t["name"] for t in tools if t.get("deprecated")}
+    assert deprecated == DEPRECATED_ALIASES
 
     for tool in tools:
         assert tool["description"]
@@ -135,12 +139,14 @@ def test_handle_tools_list_name_set_and_schemas(server):
         assert isinstance(tool["inputSchema"]["properties"], dict)
 
     required = {tool["name"]: tool["inputSchema"].get("required", []) for tool in tools}
+    assert required["recamem_recall_memory"] == ["query"]
+    assert required["recamem_teach_fact"] == ["text"]
+    assert required["recamem_decide_action"] == ["query"]
+    assert required["recamem_generate_with_memory"] == ["query"]
+    assert required["recamem_research_topic"] == ["query"]
+    assert required["recamem_list_droids"] == []
+    # An alias carries the same schema as its canonical tool.
     assert required["recall_memory"] == ["query"]
-    assert required["teach_fact"] == ["text"]
-    assert required["decide_action"] == ["query"]
-    assert required["generate_with_memory"] == ["query"]
-    assert required["research_topic"] == ["query"]
-    assert required["list_droids"] == []
 
 
 # --------------------------------------------------------------------------- #
@@ -353,7 +359,7 @@ def test_stdio_loop_emits_json_rpc_envelopes(monkeypatch, server):
     assert [p["id"] for p in payloads] == [1, 2, 3]
     assert all(p["jsonrpc"] == "2.0" for p in payloads)
     assert payloads[0]["result"]["protocolVersion"] == "2024-11-05"
-    assert {tool["name"] for tool in payloads[1]["result"]["tools"]} == EXPECTED_TOOLS
+    assert {tool["name"] for tool in payloads[1]["result"]["tools"]} == EXPECTED_TOOLS | DEPRECATED_ALIASES
     assert "Recall for 'radar'" in payloads[2]["result"]["content"][0]["text"]
 
 

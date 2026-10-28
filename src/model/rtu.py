@@ -20,13 +20,13 @@ try:
         PlasticAdapter = sys.modules['src.model.plastic_adapter'].PlasticAdapter
     else:
         raise ImportError("Not yet loaded")
-except:
+except Exception:  # noqa: BLE001
     try:
         from src.model.plastic_adapter import PlasticAdapter
-    except:
+    except Exception:  # noqa: BLE001
         try:
             from .plastic_adapter import PlasticAdapter
-        except:
+        except Exception:  # noqa: BLE001
             from abc import ABC
             class PlasticAdapter(ABC):
                 pass
@@ -1483,7 +1483,7 @@ class PlasticAssociativeRTU(PlasticAdapter):
                 filtered = {k: v for k, v in state.items() if k in parent_sd}
                 if filtered:
                     super().load_state_dict(filtered, strict=False)
-            except:
+            except Exception:  # noqa: BLE001
                 pass
 
     def reset(self):

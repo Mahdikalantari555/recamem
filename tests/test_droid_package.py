@@ -205,3 +205,64 @@ def test_list_contents_does_not_extract(tmp_path):
     assert "config.json" in listing["files"]
     assert listing["manifest"]["droid_name"] == "droid-alpha"
     assert sorted(p.name for p in tmp_path.iterdir()) == sorted(["source", "listme.droid"])
+
+
+# --------------------------------------------------------------------------- #
+# Archive format version (portable-brain)
+# --------------------------------------------------------------------------- #
+def _profile(tmp_path):
+    import json as _json
+
+    profile = tmp_path / "profile"
+    profile.mkdir()
+    (profile / "config.json").write_text(_json.dumps({"name": "agent", "dim": 8,
+                                                     "plastic_adapter": "associative_rtu"}))
+    return profile
+
+
+def test_archive_records_its_format_version(tmp_path):
+    from recamem.package import FORMAT_VERSION, DroidPackage
+
+    profile = _profile(tmp_path)
+    result = DroidPackage.export_droid(str(profile), str(tmp_path / "a.droid"))
+    assert result["manifest"]["format_version"] == FORMAT_VERSION
+
+
+def test_older_archive_still_imports(tmp_path):
+    import json as _json
+    import zipfile
+
+    from recamem.package import DroidPackage
+
+    archive = tmp_path / "old.droid"
+    payload = b'{"name": "old", "dim": 8}'
+    manifest = {
+        "version": "1.0",
+        "files": {"config.json": {"size": len(payload)}},
+        "checksums": {"config.json": DroidPackage._sha256_bytes(payload)},
+    }
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("config.json", payload)
+        zf.writestr("manifest.json", _json.dumps(manifest))
+
+    target = tmp_path / "restored"
+    result = DroidPackage.import_droid(str(archive), str(target))
+    assert result["manifest"]["version"] == "1.0"
+    assert (target / "config.json").read_bytes() == payload
+
+
+def test_newer_archive_is_refused_before_extraction(tmp_path):
+    import json as _json
+    import zipfile
+
+    from recamem.package import ArchiveFormatError, DroidPackage
+
+    archive = tmp_path / "new.droid"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("manifest.json", _json.dumps({"format_version": 99, "files": {}, "checksums": {}}))
+        zf.writestr("config.json", "{}")
+    target = tmp_path / "refused"
+    with pytest.raises(ArchiveFormatError) as excinfo:
+        DroidPackage.import_droid(str(archive), str(target))
+    assert "99" in str(excinfo.value) and "refusing to extract" in str(excinfo.value)
+    assert not target.exists(), "no member may be extracted for a refused archive"

@@ -28,3 +28,9 @@
 *.pt
 *.pth
 *.bin
+
+# Packaging artifacts
+*.egg-info/
+recamem.egg-info/
+.pytest_cache/
+__pycache__/

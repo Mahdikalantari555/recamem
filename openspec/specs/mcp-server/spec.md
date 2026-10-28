@@ -22,20 +22,32 @@ The system SHALL implement an MCP server that communicates exclusively over stdi
 
 ### Requirement: Exposed MCP tools
 
-The system SHALL expose exactly the following tools via the MCP protocol, and the
-documented list SHALL match the `tools/list` response:
+The system SHALL expose exactly the following tools via the MCP protocol, each
+named `recamem_<name>`, and the documented list SHALL match the `tools/list`
+response. During the deprecation window the earlier unprefixed names SHALL
+remain callable as aliases and SHALL be listed with `deprecated: true`:
 
-- `recall_memory(query, top_k)`: Sub-5ms factual lookup from plastic memory.
-- `teach_fact(text, domain)`: Incremental on-device learning with automatic contradiction detection.
-- `decide_action(query, options)`: Non-autoregressive System-1 option scoring.
-- `list_droids()`: List available Droid profiles.
-- `inspect_state(droid_name)`: Audit trace buffers, plastic weight norms, and fact counts.
-- `generate_with_memory(query, strategy, droid_name)`: Grounded generation through the profile's configured backend.
-- `research_topic(query, droid_name)`: Acquire knowledge about a topic from an external web source and learn it into the named Droid.
+- `recamem_recall_memory(query, top_k)`: Sub-5ms factual lookup from plastic and episodic memory.
+- `recamem_teach_fact(text, domain)`: Incremental on-device learning with automatic contradiction detection.
+- `recamem_decide_action(query, options)`: Non-autoregressive System-1 option scoring.
+- `recamem_list_droids()`: List available agent profiles.
+- `recamem_inspect_state(droid_name)`: Audit trace buffers, plastic weight norms, and fact counts.
+- `recamem_generate_with_memory(query, strategy, droid_name)`: Grounded generation through the profile's configured backend.
+- `recamem_research_topic(query, droid_name)`: Acquire knowledge about a topic from an external web source and learn it into the named agent.
+
+Deprecated aliases (callable for one release, listed with `deprecated: true`):
+
+- `recall_memory(query, top_k)`
+- `teach_fact(text, domain)`
+- `decide_action(query, options)`
+- `list_droids()`
+- `inspect_state(droid_name)`
+- `generate_with_memory(query, strategy, droid_name)`
+- `research_topic(query, droid_name)`
 
 #### Scenario: Tool invocation
 
-- **WHEN** an agent sends a `tools/call` request for `recall_memory`
+- **WHEN** an agent sends a `tools/call` request for `recamem_recall_memory`
 - **THEN** the server SHALL execute the recall against the specified Droid
 - **THEN** the response SHALL include the matched facts with similarity scores
 - **THEN** the response SHALL be a valid JSON-RPC result object

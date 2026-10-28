@@ -1,0 +1,6 @@
+{"dataset_source": "fixture", "questions": [
+  {"question": "What language does the user prefer for the project?", "answer": "Python",
+   "context": ["The user prefers Python for the data pipeline."]},
+  {"question": "Which city is the user based in?", "answer": "Amsterdam",
+   "context": ["The user is based in Amsterdam, Netherlands."]}
+]}

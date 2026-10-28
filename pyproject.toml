@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "recamem"
+version = "0.2.0"
+description = "Local-first plastic memory engine for foundation models"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "RecaMem contributors" }]
+keywords = ["memory", "plasticity", "llm", "local-first", "retrieval"]
+
+# Runtime dependencies of the default (core) code path. The offline gate checks
+# that every third-party import on that path is declared here.
+dependencies = [
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+    "safetensors>=0.4.0",
+    "psutil>=5.9.0",
+]
+
+[project.optional-dependencies]
+# Optional embeddings: quantised ONNX MiniLM (real anchor).
+onnx = ["onnxruntime>=1.16.0", "transformers>=4.38.0", "huggingface_hub>=0.20.0"]
+# Optional local generation through llama.cpp.
+gguf = ["llama-cpp-python>=0.2.0"]
+# Optional PDF ingestion.
+pdf = ["pypdf>=4.0.0"]
+# Optional approximate nearest-neighbour index (exact search is the fallback).
+hnsw = ["hnswlib>=0.7.0"]
+# Optional REST/web surface for `recamem serve --web` and `recamem ui`.
+web = ["fastapi>=0.110", "uvicorn>=0.29"]
+dev = [
+    "pytest>=8.0.0",
+    "onnxruntime>=1.16.0",
+    "transformers>=4.38.0",
+    "huggingface_hub>=0.20.0",
+    "llama-cpp-python>=0.2.0",
+    "pypdf>=4.0.0",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+]
+
+[project.scripts]
+recamem = "recamem.cli:entry"
+tmt-droid = "recamem.cli:legacy_entry"
+
+[tool.setuptools]
+packages = ["recamem", "recamem.bench"]
+
+[tool.setuptools.package-data]
+recamem = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = [
+    "phase0: correctness regressions pinned before the rename",
+    "real_model: needs real model weights; reported blocked when absent",
+]
