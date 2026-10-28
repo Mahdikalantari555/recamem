@@ -31,7 +31,11 @@ pdf = ["pypdf>=4.0.0"]
 # Optional approximate nearest-neighbour index (exact search is the fallback).
 hnsw = ["hnswlib>=0.7.0"]
 # Optional REST/web surface for `recamem serve --web` and `recamem ui`.
+# The stdlib API in recamem/api.py needs nothing; fastapi/uvicorn are for
+# embedding the API in an ASGI app.
 web = ["fastapi>=0.110", "uvicorn>=0.29"]
+# Legacy Streamlit console (app.py --legacy-console), kept for one release.
+console = ["streamlit>=1.30.0", "pandas>=2.0.0"]
 dev = [
     "pytest>=8.0.0",
     "onnxruntime>=1.16.0",
@@ -41,6 +45,8 @@ dev = [
     "pypdf>=4.0.0",
     "fastapi>=0.110",
     "uvicorn>=0.29",
+    "streamlit>=1.30.0",
+    "pandas>=2.0.0",
 ]
 
 [project.scripts]
@@ -48,7 +54,18 @@ recamem = "recamem.cli:entry"
 tmt-droid = "recamem.cli:legacy_entry"
 
 [tool.setuptools]
-packages = ["recamem", "recamem.bench"]
+# ``recamem`` is the engine. ``src``/``src.model`` ship only so the deprecation
+# shims (and the neural substrate that has not moved yet) stay importable for one
+# release; see docs/migration.md.
+packages = [
+    "recamem",
+    "recamem.bench",
+    "src",
+    "src.model",
+    "src.model.cores",
+    "src.model.tournament",
+    "src.model.tournament",
+]
 
 [tool.setuptools.package-data]
 recamem = ["py.typed"]

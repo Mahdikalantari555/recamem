@@ -16,7 +16,7 @@ import pytest
 from src.model.droid_manager import DroidManager
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-APP_PY = REPO_ROOT / "app.py"
+APP_PY = REPO_ROOT / "recamem" / "console_legacy.py"
 
 
 @pytest.fixture()

@@ -22,7 +22,7 @@ pytest.importorskip("streamlit", reason="console tier requires the optional stre
 
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
-APP = pathlib.Path(__file__).resolve().parents[1] / "app.py"
+APP = pathlib.Path(__file__).resolve().parents[1] / "recamem" / "console_legacy.py"
 TIMEOUT = 180
 
 
@@ -47,7 +47,7 @@ def test_app_renders_and_reports_engine_choices(app):
     assert any("Memory Console" in label for label in labels)
 
     engines = [option for radio in app.radio for option in radio.options]
-    assert "Droid Lifelong Engine (Anchored)" in engines
+    assert "RecaMem Lifelong Engine (Anchored)" in engines
     assert "Droid + Raw Byte RTU (Fused)" in engines
     assert "Raw Byte-Level RTU (Experimental)" in engines
 
