@@ -398,11 +398,12 @@ _DEFINITIONAL_PREDICATE = re.compile(r"\b(?:is|are)\s+(?:the|a|an)\b", re.IGNORE
 
 
 def _lexical_score(query: str, fact: str, query_type: str) -> float:
-    """Lexical signal: content-word overlap plus a definitional prior."""
-    score = _lexical_overlap(query, fact)
-    if query_type == "definitional" and _DEFINITIONAL_PREDICATE.search(fact):
-        score += 0.5
-    return score
+    """Lexical signal: content-word overlap only.
+
+    The former hardcoded definitional boost (+0.5) is removed; definitional
+    preference is left to the learned scorer (see recamem.retrieval).
+    """
+    return _lexical_overlap(query, fact)
 
 
 def _recency_score(timestamp: Optional[float]) -> float:

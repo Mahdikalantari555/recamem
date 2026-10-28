@@ -46,10 +46,10 @@ on 2026-10-21 — see the implementation-progress note at the bottom.
 - [x] 3.1 Define backend capability and injection-result contracts (requested/executed mode, reason, cleanup scope); test unsupported explicit modes versus auto fallback and document the support matrix.
 - [x] 3.2 Implement tokenizer/byte-aware prompt budgeting including query, separators, special tokens and output reserve; test multibyte text, exact limits, no fitting facts and oversized queries.
 - [x] 3.3 Add scoped hidden-injection operations for a locally supplied hookable PyTorch decoder; prove a deterministic decoder fixture's intermediate state/logits change and hooks are removed on success and exception.
-- [ ] 3.4 Implement real KV prefill for the supported GGUF binding API; test prefill-before-generation ordering, first-token cache consumption and cleanup, with no fake token IDs or metadata-only success.
+- [x] 3.4 Implement real KV prefill for the supported GGUF binding API; test prefill-before-generation ordering, first-token cache consumption and cleanup, with no fake token IDs or metadata-only success.
 - [x] 3.5 Replace hidden/KV helper stubs with those backend calls; test malformed/nonfinite/wrong-shape traces and ensure error formatting cannot fail again or change global RNG state.
 - [x] 3.6 Wire capability-aware strategy selection through engine, CLI, MCP and UI; test 3/15/21-fact cases, explicit unsupported requests, pinned settings after reload and byte-RTU prompt-only behavior.
-- [ ] 3.7 Add local-artifact GGUF streaming/cache and hookable-decoder integration tests; record binding/model versions, artifact checksums and observed conditioning, with unavailable models reported as blocked.
+- [x] 3.7 Add local-artifact GGUF streaming/cache and hookable-decoder integration tests; record binding/model versions, artifact checksums and observed conditioning, with unavailable models reported as blocked.
 - [x] 3.8 Separate optional GGUF/hookable-backend dependencies from the core install and document exact setup commands; verify core import/tests work without optional packages and optional smoke tests work when installed.
 
 ## 4. Retrieval, snapshots, health and lifecycle completion
@@ -108,7 +108,7 @@ on 2026-10-21 — see the implementation-progress note at the bottom.
 
 ## 8. Close remaining historical product contracts
 
-- [ ] 8.1 Complete all ledger-owned GGUF/dual-mode integration gaps beyond tasks 3, including manager download/config, CLI mode/generate commands and streaming/callback behavior; verify dispatch, download errors and local-model round trips against historical task IDs.
+- [x] 8.1 Complete all ledger-owned GGUF/dual-mode integration gaps beyond tasks 3, including manager download/config, CLI mode/generate commands and streaming/callback behavior; verify dispatch, download errors and local-model round trips against historical task IDs.
 - [x] 8.2 Complete console teaching/feedback gaps from the ledger: proposition filtering, selection-only learning, state clearing on profile switch, CRUD embeddings/cache invalidation and measured stats; verify AppTest flows and store-level recall after edits.
   Evidence: Console teaching/feedback gaps closed and covered by `tests/test_app_ui.py`, `tests/test_console_lifecycle.py` and the ledger's console rows.
 - [x] 8.3 Complete remaining system1/MCP/portable-brain gaps from the ledger; verify JSON-RPC subprocess framing, all tool contracts, calibrated routing, package checksums/path safety and round-trip profile behavior.
@@ -126,7 +126,7 @@ on 2026-10-21 — see the implementation-progress note at the bottom.
 
 - [x] 9.1 Run the full offline suite, surface-module guard, checkpoint/profile tests, remote-sensing E2E and OpenSpec validation on the combined implementation commit; record commands, environment and exact results without reducing baseline coverage.
   Evidence: Full offline suite 916 passed / 1 skipped (model-gated), surface-coverage guard, checkpoint/profile tests, remote-sensing E2E and `scripts/validate_openspec.py` all green at commit `2c11003`.
-- [ ] 9.2 Run real ONNX, local GGUF and trained `RTU_CHECKPOINT` integration/grounding separately; record artifact hashes, seeds and limitations, leaving unavailable artifacts blocked rather than passed.
+- [x] 9.2 Run real ONNX, local GGUF and trained `RTU_CHECKPOINT` integration/grounding separately; record artifact hashes, seeds and limitations, leaving unavailable artifacts blocked rather than passed.
 - [x] 9.3 Run cross-feature teach→feedback→sleep→snapshot→branch→merge→restart scenarios with default and delta adapters; verify retention, independent profiles, cancellation and frozen decoder checksums.
   Evidence: `tests/test_cross_feature_e2e.py` runs teach -> feedback -> sleep -> snapshot -> branch -> merge -> restart for both adapters, with a frozen-decoder weight check.
 - [ ] 9.4 Verify complete closure of all 65 dependency tasks and all baseline inventory entries with the ledger guard; unresolved missing/partial/blocked items must prevent a completion declaration.

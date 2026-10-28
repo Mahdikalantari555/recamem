@@ -53,7 +53,7 @@
 
 ## 10. Verification
 - [x] 10.1 `recamem run --prompt "..."` exits 0, prints JSON.
-- [ ] 10.2 `recamem ui` launches desktop app (manual).
+- [x] 10.2 `recamem ui` launches desktop app (manual).
 - [x] 10.3 `recamem doctor` exits 0 on ready profile.
 - [x] 10.4 Reset Memory no AttributeError.
 - [x] 10.5 CI: runner smoke test.

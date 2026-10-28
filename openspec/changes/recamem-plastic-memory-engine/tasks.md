@@ -76,7 +76,7 @@ means its real-model input is absent in this sandbox; it is reported, not passed
 
 - [x] 6.1 Return verbatim facts with source and per-channel scores. Verify: tests for "Verbatim fact with source is returned".
 - [x] 6.2 Mark plastic-only evidence and never present it as a stored fact. Verify: test for "Plastic-only evidence is not presented as a fact".
-- [ ] 6.3 Remove the hardcoded recall boosts and replace them with the learned scorer. Verify: a before-and-after comparison on the labelled fixture is written to the ledger; no metric drops beyond the recorded tolerance.
+- [x] 6.3 Remove the hardcoded recall boosts and replace them with the learned scorer. Verify: a before-and-after comparison on the labelled fixture is written to the ledger; no metric drops beyond the recorded tolerance.
 - [x] 6.4 Implement the logistic scorer with a held-out split, and disable it with a reason below the minimum size. Verify: tests for "Scorer is trained on labelled data" and "Small labelled set disables the scorer".
 - [x] 6.5 Return an empty result when no item reaches the minimum score. Verify: test for "Unrelated question" using "boiling point of mercury" against a store that lacks it.
 - [x] 6.6 Record a successful recall as an access and in the audit log. Verify: test for "Recall increases access count".
