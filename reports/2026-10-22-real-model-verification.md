@@ -1,6 +1,6 @@
 # Real-model verification report — `post-merge-completion`
 
-Date: 2026-10-22 (UTC). Branch: `arena/6b82bf5b-test-model-thing-torch`, based on `764f554`.
+Date: 2026-10-22 (UTC). Branch: `arena/6b82bf5b`, based on `764f554`.
 Scope: download a real MiniCPM model from Hugging Face and run the open real-model tasks
 (3.4, 3.7, 7.10, 8.1, 9.2) against it, then archive the change.
 
@@ -104,7 +104,7 @@ this change touches model code; it adds `scripts/fetch_real_model.py`, its tests
 ## Runbook: complete the real-model tier on a machine with Hugging Face access
 
 ```bash
-cd test-model-thing-torch
+cd recamem
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-core.txt huggingface_hub
 .venv/bin/python scripts/fetch_real_model.py          # -> models/minicpm5-1b/MiniCPM5-1B-Q4_K_M.gguf + evidence

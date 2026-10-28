@@ -2,7 +2,7 @@
 
 ## Source of truth
 
-Source (pre-rebrand): https://github.com/Mahdikalantari555/test-model-thing-torch (now RecaMem)
+Source (pre-rebrand): upstream PyTorch port of the MLX original (now RecaMem)
 Files read in full: main.py (253 lines), benchmark.py (94 lines), README.md
 
 IMPORTANT: The fork is still MLX code. Both files `import mlx`.

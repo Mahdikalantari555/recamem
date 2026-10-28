@@ -2,7 +2,7 @@
 
 ## Context
 
-See `proposal.md` for background. The core innovation of `test-model-thing` is internal state + recurrent trace units (RTU) undergoing test-time training. To make it viable for practical domain specialization and in-chat teaching, we anchor the RTU to a quantized ONNX MiniLM feature space and automate all training mechanics.
+See `proposal.md` for background. The core innovation is internal state + recurrent trace units (RTU) undergoing test-time training. To make it viable for practical domain specialization and in-chat teaching, we anchor the RTU to a quantized ONNX MiniLM feature space and automate all training mechanics.
 
 ## Goals / Non-Goals
 

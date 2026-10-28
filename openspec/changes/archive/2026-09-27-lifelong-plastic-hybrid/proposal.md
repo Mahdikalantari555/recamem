@@ -2,7 +2,7 @@
 
 ## Why
 
-The original `test-model-thing` (TMT) architecture introduced a novel concept: byte-level continuous test-time training with recurrent trace units (RTUs) and internal state memory. However, in practice, training raw byte weights from scratch collapses after 3-4 steps, loses basic syntax, operates at a slow sequential crawl (~30-50 tokens/sec), and is overly sensitive to manual hyperparameters.
+The original architecture (TMT) introduced a novel concept: byte-level continuous test-time training with recurrent trace units (RTUs) and internal state memory. However, in practice, training raw byte weights from scratch collapses after 3-4 steps, loses basic syntax, operates at a slow sequential crawl (~30-50 tokens/sec), and is overly sensitive to manual hyperparameters.
 
 This change upgrades TMT into an improved, rock-solid **Droid Engine**:
 1. Anchors the RTU recurrent trace memory to an ultra-lightweight ONNX semantic backbone (`all-MiniLM-L6-v2`, ~22 MB INT8, cached in `~/.cache/huggingface`) so it never collapses or loses language structure.
