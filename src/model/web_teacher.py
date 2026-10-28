@@ -58,7 +58,7 @@ DEFAULT_TIMEOUT_SECONDS = 5.0
 DEFAULT_MAX_BYTES = 512 * 1024
 MAX_REDIRECTS = 2
 USER_AGENT = (
-    "tmt-droid-research/1.0 (+https://github.com/Mahdikalantari555/test-model-thing-torch)"
+    "recamem/1.0"
 )
 
 PROVIDER_NAMES = ("none", "duckduckgo", "json_api")

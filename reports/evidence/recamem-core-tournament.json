@@ -1,8 +1,8 @@
 {
   "artifacts": {
-    "manifest": "/home/user/test-model-thing-torch/configs/recamem_selected_core.json",
-    "selection_report": "/home/user/test-model-thing-torch/reports/recamem-core-selection.md",
-    "tokenizer": "/home/user/test-model-thing-torch/configs/recamem_selected_bpe.json"
+    "manifest": "/home/user/recamem/configs/recamem_selected_core.json",
+    "selection_report": "/home/user/recamem/reports/recamem-core-selection.md",
+    "tokenizer": "/home/user/recamem/configs/recamem_selected_bpe.json"
   },
   "command": "scripts/run_core_tournament.py --budget 350000 --seeds 1337,2026,4242 --mqar-steps 420 --copy-steps 100 --lm-steps 70",
   "commit": "ed7ad9dbd7eb556b992b7ed24795249410248354",
