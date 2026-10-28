@@ -24,7 +24,7 @@
 - [x] 4.1 Playground: input, submit, output, cancel, decision inspector (show unavailable if not provided).
 - [x] 4.2 Minimal Experiments view: list runs, open details.
 - [x] 4.3 Runtime status in sidebar (connected/disconnected, model, device, active op).
-- [ ] 4.4 (Later) Architecture Lab, Training, Benchmarks, Memory Explorer, Settings.
+- [x] 4.4 (Later) Architecture Lab, Training, Benchmarks, Memory Explorer, Settings.
 
 ## 5. Tauri desktop shell
 - [x] 5.1 Scaffold `src-tauri/` with Tauri 2, configure to load `web/dist`.
@@ -54,7 +54,7 @@
 ## 10. Verification
 - [x] 10.1 `recamem run --prompt "..."` exits 0, prints JSON.
 - [ ] 10.2 `recamem ui` launches desktop app (manual).
-- [ ] 10.3 `recamem doctor` exits 0 on ready profile.
+- [x] 10.3 `recamem doctor` exits 0 on ready profile.
 - [x] 10.4 Reset Memory no AttributeError.
 - [x] 10.5 CI: runner smoke test.
 - [x] 10.6 Definition of done (design §20) checklist.

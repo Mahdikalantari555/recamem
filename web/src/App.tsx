@@ -2,19 +2,24 @@ import * as React from "react";
 
 import { AppShell } from "./components/layout/AppShell";
 import type { NavItem } from "./components/ui/sidebar";
+import { ArchitecturePage } from "./features/architecture/ArchitecturePage";
+import { BenchmarksPage } from "./features/benchmarks/BenchmarksPage";
 import { ExperimentsPage } from "./features/experiments/ExperimentsPage";
+import { MemoryPage } from "./features/memory/MemoryPage";
 import { PlaygroundPage } from "./features/playground/PlaygroundPage";
+import { SettingsPage } from "./features/settings/SettingsPage";
+import { TrainingPage } from "./features/training/TrainingPage";
 import { api } from "./lib/api/client";
 import type { Health } from "./lib/schemas";
 
 const NAV: NavItem[] = [
   { id: "playground", label: "Playground", hint: "Prompt, answer, decision inspector", available: true },
   { id: "experiments", label: "Experiments", hint: "Recorded runs and jobs", available: true },
-  { id: "memory", label: "Memory Explorer", hint: "Browse stored facts", available: false },
-  { id: "benchmarks", label: "Benchmarks", hint: "LoCoMo / LongMemEval / DMR", available: false },
-  { id: "training", label: "Training", hint: "Continual learning jobs", available: false },
-  { id: "architecture", label: "Architecture Lab", hint: "Inspect the memory layout", available: false },
-  { id: "settings", label: "Settings", hint: "Anchor mode and storage", available: false },
+  { id: "memory", label: "Memory Explorer", hint: "Browse stored facts", available: true },
+  { id: "benchmarks", label: "Benchmarks", hint: "LoCoMo / LongMemEval / DMR", available: true },
+  { id: "training", label: "Training", hint: "Continual learning jobs", available: true },
+  { id: "architecture", label: "Architecture Lab", hint: "Inspect the memory layout", available: true },
+  { id: "settings", label: "Settings", hint: "Anchor mode and storage", available: true },
 ];
 
 export default function App() {
@@ -43,6 +48,16 @@ export default function App() {
       <div role="tabpanel" id={`panel-${active}`} aria-labelledby={`tab-${active}`}>
         {active === "experiments" ? (
           <ExperimentsPage />
+        ) : active === "memory" ? (
+          <MemoryPage />
+        ) : active === "benchmarks" ? (
+          <BenchmarksPage />
+        ) : active === "training" ? (
+          <TrainingPage />
+        ) : active === "architecture" ? (
+          <ArchitecturePage />
+        ) : active === "settings" ? (
+          <SettingsPage />
         ) : (
           <PlaygroundPage onActivity={() => void refresh()} />
         )}

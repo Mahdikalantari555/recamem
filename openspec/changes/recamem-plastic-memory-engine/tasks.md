@@ -13,9 +13,9 @@ means its real-model input is absent in this sandbox; it is reported, not passed
 - [x] 0.5 Pin that `effective_lr` changes the stored plastic state for the DeltaMemory adapter (conversational-teaching schedule requirement). Verify: a test with two step counts produces state differing by the schedule ratio; fix only if it fails.
 - [x] 0.6 Pin `K_max` enforcement through the `DroidEngine` path (closed item). Verify: a test with `K_max` below the fact count shows eviction through the engine.
 - [x] 0.7 Re-verify the `no_grad` claim for plastic updates in the RTU path (D5). Verify: ledger row set to `not-reproduced` with evidence, or a fix plus a test that FAST writes produce no gradient-tracking tensors.
-- [ ] 0.8 Re-verify `retrieve()` dead code and hardcoded recall boosts (D5). Verify: `grep` and call-graph evidence in the ledger; unreachable code removed with the existing suite green.
+- [x] 0.8 Re-verify `retrieve()` dead code and hardcoded recall boosts (D5). Verify: `grep` and call-graph evidence in the ledger; unreachable code removed with the existing suite green.
 - [x] 0.9 Re-verify the `save_profile` adapter-type round trip (D5). Verify: a test saves a non-default adapter, loads a fresh engine, and asserts the adapter class matches; fix the reader so it uses the field the writer writes.
-- [ ] 0.10 Re-verify the duplicate `RTUMemoryBlock` in `droid.py` and the `error_vec` assignment in `rtu.py` (D5). Verify: duplicate removed or ledger row `not-reproduced`; suite green.
+- [x] 0.10 Re-verify the duplicate `RTUMemoryBlock` in `droid.py` and the `error_vec` assignment in `rtu.py` (D5). Verify: duplicate removed or ledger row `not-reproduced`; suite green.
 - [x] 0.11 Replace the bare `except:` clauses in the code path touched by Phase 0 with named exception types (D4). Verify: `grep -n "except:"` over the touched files returns none, and the suite is green.
 - [x] 0.12 Record the hard-delete path in `consolidate_memory()` (D5) as scheduled for task 5.3. Verify: ledger row links to 5.3.
 - [x] 0.13 Confirm at least 15 behavioural tests exist for Phase 0 (grouped under a `phase0` marker). Verify: `pytest -m phase0 --collect-only` reports 15 or more, and the Phase 0 suite passes.
@@ -57,7 +57,7 @@ means its real-model input is absent in this sandbox; it is reported, not passed
 
 - [x] 4.1 Keep `autonomous_retrieval()` behaviour and its existing scenarios green under `recamem`. Verify: existing sleep-consolidation tests pass.
 - [x] 4.2 Make `sleep()` report proposed, committed and rejected updates and name any rejected domain. Verify: test for "Regressing replay is not committed".
-- [ ] 4.3 Add a per-profile writer lock; a second writer receives a named lock error without waiting indefinitely. Also replace the `check_same_thread=False` connection in `knowledge_store.py` with one guarded connection (D3). Verify: test for "Second writer is refused" with two threads or processes, and the "Concurrent writes from threads" test passes.
+- [x] 4.3 Add a per-profile writer lock; a second writer receives a named lock error without waiting indefinitely. Also replace the `check_same_thread=False` connection in `knowledge_store.py` with one guarded connection (D3). Verify: test for "Second writer is refused" with two threads or processes, and the "Concurrent writes from threads" test passes.
 - [x] 4.4 Make the auto-sleep worker acquire the writer lock and join on cancel without duplicate threads. Verify: existing "Start and stop auto-sleep" and "Repeated UI initialization" tests pass.
 - [x] 4.5 Route `/sleep` in chat and CLI through the same gated `sleep()`. Verify: test for "Invoke sleep from chat".
 - [x] 4.6 Document sleep and the lock in `docs/sleep.md`. Verify: the documented command runs and its output matches the report fields.
@@ -80,7 +80,7 @@ means its real-model input is absent in this sandbox; it is reported, not passed
 - [x] 6.4 Implement the logistic scorer with a held-out split, and disable it with a reason below the minimum size. Verify: tests for "Scorer is trained on labelled data" and "Small labelled set disables the scorer".
 - [x] 6.5 Return an empty result when no item reaches the minimum score. Verify: test for "Unrelated question" using "boiling point of mercury" against a store that lacks it.
 - [x] 6.6 Record a successful recall as an access and in the audit log. Verify: test for "Recall increases access count".
-- [ ] 6.7 Add the ANN index above a configured size with exact fallback, and report recall@5 against exact search. Verify: a 10k-fact test in CI reports recall@5 and the 100k run is recorded as measured or blocked.
+- [x] 6.7 Add the ANN index above a configured size with exact fallback, and report recall@5 against exact search. Verify: a 10k-fact test in CI reports recall@5 and the 100k run is recorded as measured or blocked.
 - [x] 6.8 Execute the selected strategy through the same recall path and attribute feedback to it (adaptive-retrieval requirement). Verify: test for "Selected strategy is the one executed" and "Policy persists under the recamem profile".
 - [x] 6.9 Document recall in `docs/recall.md` with the channel and scorer description. Verify: the documented example runs and returns the source.
 
@@ -104,7 +104,7 @@ means its real-model input is absent in this sandbox; it is reported, not passed
 - [x] 8.5 Commit a small offline fixture per benchmark and label its reports `dataset_source=fixture`. Verify: tests for "Fixture run is labelled" and "Blocked benchmark prints no metric".
 - [x] 8.6 Add seeded deterministic subsets. Verify: test that two runs with the same seed evaluate the same questions in the same order.
 - [x] 8.7 Write reports with commit, command, seed, subset size, dependency versions and hardware. Verify: a schema test checks every field.
-- [ ] 8.8 Add backward-transfer and mean memory-loss metrics to the lifelong benchmark, reporting active and audit recall separately. Verify: tests for "Earlier domain forgetting is measured" and "Retired facts are not counted as lost".
+- [x] 8.8 Add backward-transfer and mean memory-loss metrics to the lifelong benchmark, reporting active and audit recall separately. Verify: tests for "Earlier domain forgetting is measured" and "Retired facts are not counted as lost".
 - [x] 8.9 Run each benchmark that can reach its dataset and commit the evidence JSON under `reports/evidence/`; record the rest as blocked. Verify: each evidence file has `dataset_source` and a status, and no fixture result is cited as a benchmark score.
 - [x] 8.10 Document the benchmarks and their blocked states in `docs/benchmarks.md`. Verify: the documented command for the fixture run exits 0.
 
@@ -113,7 +113,7 @@ means its real-model input is absent in this sandbox; it is reported, not passed
 - [x] 9.1 Implement `recamem` subcommands `recall`, `ingest`, `doctor`, `migrate`, `rtu`, and keep the exit-code contract. Verify: tests for invalid arguments (exit 2), evaluation failure (exit 1), and success (exit 0).
 - [x] 9.2 Rename MCP tools to `recamem_<name>` and keep the old names as deprecated aliases. Verify: the documented-list test passes, and the alias scenario test passes.
 - [x] 9.3 Add `format_version` to the `.droid` manifest; accept supported older versions and refuse newer before extraction. Verify: tests for "Older archive imports" and "Newer archive is refused before extraction".
-- [ ] 9.4 Update the memory console for the rebrand, the fixed Reset action, and anchor mode display. Verify: tests for "Reset clears all learned state" and "Reset failure is reported" plus a headless render check.
+- [x] 9.4 Update the memory console for the rebrand, the fixed Reset action, and anchor mode display. Verify: tests for "Reset clears all learned state" and "Reset failure is reported" plus a headless render check.
 - [x] 9.5 Add `scripts/offline_gate.py` that checks ledger rows against tests, the MCP list, documented test counts and declared imports. Verify: the script exits 0 on the branch and exits 1 when a ledger row names no test.
 - [x] 9.6 Add a CI workflow that runs the offline gate from a clean install. Verify: the workflow YAML parses and every command in it runs locally with the same exit code.
 - [x] 9.7 Write the tests for "Documented list matches the server" and "Import without declared dependency" as part of the gate. Verify: both are in the gate and fail on a deliberate break.
@@ -129,7 +129,7 @@ means its real-model input is absent in this sandbox; it is reported, not passed
 
 - [x] 11.1 From a clean venv, install the project, run the offline gate, and record passed, failed and blocked counts in `reports/recamem-defect-ledger.md`. Verify: the exit code is recorded and no blocked item is counted as passed.
 - [x] 11.2 Run the end-to-end demo: ingest the three demo Markdown files, recall "project lead" (must return the full sentence with "Dr. Mina Rostami"), recall the unrelated question (must return empty), and recall the calibration constant (must cite `lab.md`). Verify: the outputs match and are saved under `reports/evidence/`.
-- [ ] 11.3 Load a profile created by the pre-change code through `recamem migrate droids/` and confirm recall matches the pre-change answers. Verify: recorded before and after answer lists are identical.
+- [x] 11.3 Load a profile created by the pre-change code through `recamem migrate droids/` and confirm recall matches the pre-change answers. Verify: recorded before and after answer lists are identical.
 - [x] 11.4 Attempt the real-model gates (MiniLM anchor, GGUF, 8B reference if applicable) and record each as blocked with its path and error, or as passed with evidence. Verify: each gate has an evidence file.
 - [x] 11.5 Run `openspec validate recamem-plastic-memory-engine --strict` and confirm the change stays active. Verify: exit 0 and the change is not archived.
 

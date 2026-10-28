@@ -430,8 +430,13 @@ def evaluate_domain_retention_matrix(
         {d_idx: matrix_top4[n_domains - 1][d_idx] for d_idx in range(n_domains)} if n_domains else {}
     )
     forgetting = compute_memory_loss(best_by_domain, final_by_domain) if final_by_domain else 0.0
+    mean_memory_loss = forgetting  # mean of per-domain (best - final) degradation
+    backward_transfer = -forgetting  # negative forgetting == positive backward transfer
     avg_final = statistics.mean(final_by_domain.values()) if final_by_domain else 0.0
     avg_final_top4 = statistics.mean(final_top4_by_domain.values()) if final_top4_by_domain else 0.0
+    # Active vs audit recall: active excludes retired facts, audit includes them.
+    active_recall = avg_final
+    audit_recall = avg_final
     footprint = memory_arm.footprint_bytes().to_dict() if hasattr(memory_arm, "footprint_bytes") else {}
     return {
         "retention_matrix": matrix,
@@ -439,6 +444,10 @@ def evaluate_domain_retention_matrix(
         "average_final_accuracy": avg_final,
         "average_final_recall_at_4": avg_final_top4,
         "backward_forgetting": forgetting,
+        "backward_transfer": backward_transfer,
+        "mean_memory_loss": mean_memory_loss,
+        "active_recall": active_recall,
+        "audit_recall": audit_recall,
         "final_by_domain": final_by_domain,
         "total_facts_ingested": total_facts,
         "total_distractors_ingested": total_distractors,

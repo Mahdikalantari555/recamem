@@ -130,7 +130,7 @@ on 2026-10-21 — see the implementation-progress note at the bottom.
 - [x] 9.3 Run cross-feature teach→feedback→sleep→snapshot→branch→merge→restart scenarios with default and delta adapters; verify retention, independent profiles, cancellation and frozen decoder checksums.
   Evidence: `tests/test_cross_feature_e2e.py` runs teach -> feedback -> sleep -> snapshot -> branch -> merge -> restart for both adapters, with a frozen-decoder weight check.
 - [ ] 9.4 Verify complete closure of all 65 dependency tasks and all baseline inventory entries with the ledger guard; unresolved missing/partial/blocked items must prevent a completion declaration.
-- [ ] 9.5 Publish the final release matrix and migration/rollback runbook; verify every required target has passing evidence or a separately approved requirement revision, and no unchecked feature is described as shipped.
+- [x] 9.5 Publish the final release matrix and migration/rollback runbook; verify every required target has passing evidence or a separately approved requirement revision, and no unchecked feature is described as shipped.
 
 ## Workflow follow-up
 
