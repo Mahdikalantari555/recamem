@@ -29,7 +29,7 @@ LEGACY_COMMANDS = {
     "generate",
 }
 
-NEW_COMMANDS = {"ingest", "recall", "doctor", "migrate", "rtu", "run", "ui", "serve"}
+NEW_COMMANDS = {"ingest", "recall", "doctor", "migrate", "rtu", "run", "ui", "serve", "push", "pull", "train-cloud"}
 
 USAGE = """recamem <command> [options]
 
@@ -325,6 +325,49 @@ def cmd_ui(args) -> int:
     return 0
 
 
+def cmd_push(args) -> int:
+    from recamem import hub
+
+    repo = args.repo
+    d = Path(args.dir)
+    hub.push_checkpoint(repo, d, token=args.token)
+    print(f"Pushed {d} -> {repo}")
+    return 0
+
+
+def cmd_pull(args) -> int:
+    from recamem import hub
+
+    repo = args.repo
+    d = Path(args.dir)
+    hub.pull_checkpoint(repo, d, revision=args.revision, token=args.token)
+    print(f"Pulled {repo} -> {d}")
+    return 0
+
+
+def cmd_train_cloud(args) -> int:
+    import subprocess
+
+    # delegate to colab_train script with env/config
+    script = Path(__file__).resolve().parents[1] / "scripts" / "colab_train.py"
+    cmd = [sys.executable, str(script)]
+    if args.lm_tokens:
+        cmd += ["--lm-tokens", str(args.lm_tokens)]
+    if args.data_dir:
+        cmd += ["--data-dir", args.data_dir]
+    if args.out_dir:
+        cmd += ["--out-dir", args.out_dir]
+    if args.push_to_hub:
+        cmd += ["--push-to-hub", args.push_to_hub]
+    if args.resume_from:
+        cmd += ["--resume-from", args.resume_from]
+    env = dict(os.environ)
+    if args.hf_token:
+        env["HF_TOKEN"] = args.hf_token
+    rc = subprocess.call(cmd, env=env)
+    return int(rc)
+
+
 # --------------------------------------------------------------------------- #
 # Plumbing
 # --------------------------------------------------------------------------- #
@@ -397,6 +440,30 @@ def build_parser() -> argparse.ArgumentParser:
     p_ui.add_argument("--tauri", action="store_true", help="try the native Tauri shell first (falls back to browser)")
     p_ui.add_argument("--dry-run", action="store_true", help="print the resolved shell and exit")
     p_ui.set_defaults(func=cmd_ui)
+
+    p_push = subparsers.add_parser("push", help="Push a checkpoint directory to HuggingFace Hub")
+    p_push.add_argument("--repo", required=True, help="HF repo id, e.g. user/recamem-ckpt")
+    p_push.add_argument("--dir", required=True, help="local checkpoint directory")
+    p_push.add_argument("--token", default=None, help="HF token (or set HF_TOKEN)")
+    p_push.add_argument("--private", action="store_true")
+    p_push.set_defaults(func=cmd_push)
+
+    p_pull = subparsers.add_parser("pull", help="Pull a checkpoint from HuggingFace Hub")
+    p_pull.add_argument("--repo", required=True, help="HF repo id")
+    p_pull.add_argument("--dir", required=True, help="local target directory")
+    p_pull.add_argument("--revision", default=None)
+    p_pull.add_argument("--token", default=None)
+    p_pull.set_defaults(func=cmd_pull)
+
+    p_tc = subparsers.add_parser("train-cloud", help="Run cloud training entry point")
+    p_tc.add_argument("--lm-tokens", type=int, default=1_000_000)
+    p_tc.add_argument("--data-dir", default="data/tinystories")
+    p_tc.add_argument("--out-dir", default="runs/cloud")
+    p_tc.add_argument("--push-to-hub", default=None)
+    p_tc.add_argument("--resume-from", default=None)
+    p_tc.add_argument("--hf-token", default=None)
+    p_tc.set_defaults(func=cmd_train_cloud)
+
     return parser
 
 

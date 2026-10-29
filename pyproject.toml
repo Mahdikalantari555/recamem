@@ -36,6 +36,8 @@ hnsw = ["hnswlib>=0.7.0"]
 web = ["fastapi>=0.110", "uvicorn>=0.29"]
 # Legacy Streamlit console (app.py --legacy-console), kept for one release.
 console = ["streamlit>=1.30.0", "pandas>=2.0.0"]
+# Optional cloud training + HuggingFace Hub sync.
+cloud = ["huggingface_hub>=0.20.0"]
 dev = [
     "pytest>=8.0.0",
     "onnxruntime>=1.16.0",

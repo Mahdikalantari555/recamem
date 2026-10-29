@@ -93,3 +93,7 @@ missing path rather than passed.
 ## License
 
 MIT — see `LICENSE.md`.
+
+## Cloud Training
+See `docs/cloud-training.md`. Train on Colab and sync via HuggingFace Hub:
+`python scripts/colab_train.py --lm-tokens 20000000 --push-to-hub yourname/recamem-ckpt`
