@@ -14,7 +14,7 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-CHANGE = Path("openspec/changes/post-merge-completion")
+CHANGE = Path("openspec/changes/archive/2026-10-28-post-merge-completion")
 STATUSES = {"verified", "missing", "partial", "blocked", "superseded"}
 TIERS = {"offline", "real-model", "grounding", "concurrency-migration", "benchmark"}
 

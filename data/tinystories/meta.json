@@ -1,0 +1,9 @@
+{
+  "vocab_size": 1024,
+  "train_tokens": 1277419,
+  "val_tokens": 125956,
+  "train_docs": 260,
+  "val_docs": 34,
+  "sha256_train": "290a939ea6c2e1a7e1c68c4a46adf41d701260162d9536724ad7f4333efc7958",
+  "sha256_val": "2887f244a27e9b19929b4a65bdcc326d5174c22025160132de9bee98738624bb"
+}

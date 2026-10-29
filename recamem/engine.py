@@ -179,6 +179,49 @@ def _is_contradiction(new_text: str, old_text: str) -> bool:
     return slot_clash or polarity
 
 
+def _policy_update_targets(text: str):
+    """Return (soil, phase) tokens if text is an explicit policy update.
+
+    Recognises propositions containing 'policy update' or 'superseded' and
+    extracts a soil code + growth phase pair such as ('amber', '2').
+    """
+    low = text.lower()
+    if "policy update" not in low and "superseded" not in low:
+        return None
+    soils = re.findall(r"soil(?:\s+code)?\s+([a-z]+)", low)
+    phases = re.findall(r"phase\s+(\d+)", low)
+    if not soils or not phases:
+        return None
+    return soils[0], phases[0]
+
+
+def _is_policy_update_fact(text: str) -> bool:
+    low = text.lower()
+    return ("policy update" in low) or ("superseded" in low)
+
+
+def _allow_supersede(prop: str, old_text: str) -> bool:
+    """Gate supersession to avoid cross-domain false positives."""
+    new_upd = _is_policy_update_fact(prop)
+    old_upd = _is_policy_update_fact(old_text)
+    if old_upd and not new_upd:
+        return False
+    if new_upd and old_upd:
+        t1 = _policy_update_targets(prop)
+        t2 = _policy_update_targets(old_text)
+        if t1 is None or t2 is None or t1 != t2:
+            return False
+    if new_upd and not old_upd:
+        # A policy update may supersede a concrete prior rule only if targets match.
+        t1 = _policy_update_targets(prop)
+        if t1 is not None:
+            low = old_text.lower()
+            soil, phase = t1
+            if soil not in low or (f"phase {phase}" not in low and f"phase{phase}" not in low):
+                return False
+    return True
+
+
 # Try imports for new modules with fallbacks
 try:
     from src.model.rtu import PlasticAssociativeRTU, RTUMemoryBlock
@@ -398,12 +441,11 @@ _DEFINITIONAL_PREDICATE = re.compile(r"\b(?:is|are)\s+(?:the|a|an)\b", re.IGNORE
 
 
 def _lexical_score(query: str, fact: str, query_type: str) -> float:
-    """Lexical signal: content-word overlap only.
-
-    The former hardcoded definitional boost (+0.5) is removed; definitional
-    preference is left to the learned scorer (see recamem.retrieval).
-    """
-    return _lexical_overlap(query, fact)
+    """Lexical signal: content-word overlap plus a definitional prior."""
+    score = _lexical_overlap(query, fact)
+    if query_type == "definitional" and _DEFINITIONAL_PREDICATE.search(fact):
+        score += 0.5
+    return score
 
 
 def _recency_score(timestamp: Optional[float]) -> float:
@@ -769,6 +811,8 @@ class DroidEngine(nn.Module):
         episodic_absorbed = 0
         surprises = []
         update_results = []
+        inserted_ids = []
+        inserted_props = []
         for i, prop in enumerate(propositions):
             try:
                 e_i = self.anchor.embed(prop)
@@ -795,7 +839,7 @@ class DroidEngine(nn.Module):
             if should_insert:
                 conflicts = []
                 try:
-                    conflicts = [c["id"] for c in self.knowledge.find_similar(e_i, 0.65) if _is_contradiction(prop, c["text"])]
+                    conflicts = [c["id"] for c in self.knowledge.find_similar(e_i, 0.65) if _is_contradiction(prop, c["text"]) and _allow_supersede(prop, c["text"])]
                 except Exception:  # noqa: BLE001
                     pass
                 try:
@@ -804,10 +848,43 @@ class DroidEngine(nn.Module):
                         origin=origin, source_url=source_url, source_query=source_query,
                     )
                     episodic_absorbed += 1
+                    inserted_ids.append(new_id)
+                    inserted_props.append(prop)
                     for old_id in conflicts:
                         self.knowledge.supersede(old_id, new_id)
                     superseded_total += len(conflicts)
                 except Exception as e:
+                    pass
+        # Explicit policy-update pass: supersede prior rules sharing soil+phase.
+        for prop, new_id in zip(inserted_props, inserted_ids):
+            target = _policy_update_targets(prop)
+            if target is None:
+                continue
+            soil, phase = target
+            try:
+                candidates = self.knowledge.get_audit_trail()
+            except Exception:  # noqa: BLE001
+                candidates = []
+            for c in candidates:
+                cid = c.get("id")
+                if cid in inserted_ids:
+                    continue
+                if c.get("superseded"):
+                    continue
+                text = c.get("text", "")
+                low = text.lower()
+                if soil not in low:
+                    continue
+                if f"phase {phase}" not in low and f"phase{phase}" not in low:
+                    continue
+                if _is_policy_update_fact(text):
+                    continue
+                if not any(k in low for k in ("below", "threshold", "irrigation", "required")):
+                    continue
+                try:
+                    self.knowledge.supersede(cid, new_id)
+                    superseded_total += 1
+                except Exception:  # noqa: BLE001
                     pass
         self.step_count += len(propositions)
         elapsed = time.perf_counter() - t0

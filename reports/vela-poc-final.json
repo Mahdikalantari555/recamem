@@ -1,0 +1,1092 @@
+{
+  "model_path": "/mnt/d/AI/.lmstudio/models/OpenBMB/MiniCPM5-2B-Q4_K_M/MiniCPM5-2B-Q4_K_M.gguf",
+  "commit": "bde46c1",
+  "generated_at": "2026-10-29T07:12:23Z",
+  "conditions": {
+    "A": {
+      "results": [
+        {
+          "id": "V1",
+          "query": "Vela case: soil Amber, phase 1, moisture index 29. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 66.125,
+          "retrieved_facts": [],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V2",
+          "query": "Vela case: soil Amber, phase 1, moisture index 30. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 65.601,
+          "retrieved_facts": [],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V3",
+          "query": "Vela case: soil Blue, phase 2, moisture index 25. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 64.315,
+          "retrieved_facts": [],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V4",
+          "query": "Vela case: soil Amber, phase 2, moisture index 38. Use the latest policy version. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 57.315,
+          "retrieved_facts": [],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V5",
+          "query": "Vela case: soil Amber, phase 2, moisture index 40. Use the latest policy version. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 57.514,
+          "retrieved_facts": [],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V6",
+          "query": "Vela case: soil Blue, phase 1, moisture index 21. Use policy version 2. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 50.103,
+          "retrieved_facts": [],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V7",
+          "query": "Vela case: soil Amber, moisture index 28. The growth phase is not provided. Should irrigation occur?",
+          "expected": "INSUFFICIENT_INFORMATION",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 55.953,
+          "retrieved_facts": [],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V8",
+          "query": "A note says: \"Amber, phase 2, threshold 36.\" A later policy update says: \"Amber, phase 2, threshold 40.\" For a new case with moisture index 38, which threshold applies?",
+          "expected": "IRRIGATE",
+          "decision": null,
+          "correct": false,
+          "latency_s": 48.583,
+          "retrieved_facts": [],
+          "raw_output": " The threshold that applies",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V9",
+          "query": "Vela case: soil Blue, phase 2, moisture index 26. Return the decision and the rule IDs used.",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "DO_NOT_IRRIGATE",
+          "correct": true,
+          "latency_s": 50.2,
+          "retrieved_facts": [],
+          "raw_output": " Decision: DO_NOT",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V10",
+          "query": "A user asks: \"Does the Amber phase 2 threshold of 40 also apply to Blue phase 2?\" Answer using only the Vela rules.",
+          "expected": "INSUFFICIENT_INFORMATION",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 48.322,
+          "retrieved_facts": [],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V11",
+          "query": "Two records arrive for the same new Vela case: Record A: Amber, phase 2, moisture index 38, policy version 1. Record B: Amber, phase 2, moisture index 38, policy version 2. What decision applies to a case received after version 2?",
+          "expected": "IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 51.738,
+          "retrieved_facts": [],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V12",
+          "query": "Vela case: soil Amber, phase 2, moisture index 41. Use policy version 2. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 49.708,
+          "retrieved_facts": [],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        }
+      ],
+      "categories": {
+        "Recall and boundaries": {
+          "correct": 1,
+          "total": 3,
+          "accuracy": 0.3333333333333333
+        },
+        "Compositional application": {
+          "correct": 0,
+          "total": 4,
+          "accuracy": 0.0
+        },
+        "Online update": {
+          "correct": 0,
+          "total": 4,
+          "accuracy": 0.0
+        },
+        "Retention / interference": {
+          "correct": 0,
+          "total": 1,
+          "accuracy": 0.0
+        },
+        "Safe abstention": {
+          "correct": 0,
+          "total": 2,
+          "accuracy": 0.0
+        },
+        "Traceability": {
+          "correct": 1,
+          "total": 2,
+          "accuracy": 0.5
+        },
+        "TOTAL": {
+          "correct": 1,
+          "total": 12,
+          "accuracy": 0.08333333333333333
+        }
+      },
+      "retrieval_hits": 0,
+      "retrieval_accuracy": 0.0
+    },
+    "B": {
+      "results": [
+        {
+          "id": "V1",
+          "query": "Vela case: soil Amber, phase 1, moisture index 29. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": true,
+          "latency_s": 49.33,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30. At 30 or above, irrigation is not required.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22. At 22 or above, irrigation is not required.",
+            "For soil code Amber in phase 2, irrigation is required when the moisture index is below 36. At 36 or above, irrigation is not required.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required."
+          ],
+          "raw_output": " Yes, irrigation should",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V2",
+          "query": "Vela case: soil Amber, phase 1, moisture index 30. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "DO_NOT_IRRIGATE",
+          "correct": true,
+          "latency_s": 51.982,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30. At 30 or above, irrigation is not required.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22. At 22 or above, irrigation is not required.",
+            "For soil code Amber in phase 2, irrigation is required when the moisture index is below 36. At 36 or above, irrigation is not required.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required."
+          ],
+          "raw_output": " DO_NOT_IR",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V3",
+          "query": "Vela case: soil Blue, phase 2, moisture index 25. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": true,
+          "latency_s": 49.815,
+          "retrieved_facts": [
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22. At 22 or above, irrigation is not required.",
+            "For soil code Amber in phase 2, irrigation is required when the moisture index is below 36. At 36 or above, irrigation is not required.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30. At 30 or above, irrigation is not required."
+          ],
+          "raw_output": " Yes, irrigation is",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V4",
+          "query": "Vela case: soil Amber, phase 2, moisture index 38. Use the latest policy version. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": true,
+          "latency_s": 50.627,
+          "retrieved_facts": [
+            "For soil code Amber in phase 2, irrigation is required when the moisture index is below 36. At 36 or above, irrigation is not required.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30. At 30 or above, irrigation is not required.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36. This update applies to cases received after version 2. The Amber phase 2 rule in version 1 is superseded."
+          ],
+          "raw_output": " Irrigation should occur",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V5",
+          "query": "Vela case: soil Amber, phase 2, moisture index 40. Use the latest policy version. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": null,
+          "correct": false,
+          "latency_s": 50.297,
+          "retrieved_facts": [
+            "For soil code Amber in phase 2, irrigation is required when the moisture index is below 36. At 36 or above, irrigation is not required.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36. This update applies to cases received after version 2. The Amber phase 2 rule in version 1 is superseded.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30. At 30 or above, irrigation is not required."
+          ],
+          "raw_output": " No. The latest",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V6",
+          "query": "Vela case: soil Blue, phase 1, moisture index 21. Use policy version 2. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": true,
+          "latency_s": 48.52,
+          "retrieved_facts": [
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22. At 22 or above, irrigation is not required.",
+            "For soil code Blue in phase 1, the threshold remains 22 in policy version 2. No update has been made to this rule.",
+            "For soil code Amber in phase 2, irrigation is required when the moisture index is below 36. At 36 or above, irrigation is not required."
+          ],
+          "raw_output": " Yes. The soil",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V7",
+          "query": "Vela case: soil Amber, moisture index 28. The growth phase is not provided. Should irrigation occur?",
+          "expected": "INSUFFICIENT_INFORMATION",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 46.896,
+          "retrieved_facts": [
+            "For soil code Amber in phase 2, irrigation is required when the moisture index is below 36. At 36 or above, irrigation is not required.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30. At 30 or above, irrigation is not required.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22. At 22 or above, irrigation is not required."
+          ],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V8",
+          "query": "A note says: \"Amber, phase 2, threshold 36.\" A later policy update says: \"Amber, phase 2, threshold 40.\" For a new case with moisture index 38, which threshold applies?",
+          "expected": "IRRIGATE",
+          "decision": null,
+          "correct": false,
+          "latency_s": 47.508,
+          "retrieved_facts": [
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36. This update applies to cases received after version 2. The Amber phase 2 rule in version 1 is superseded.",
+            "For soil code Amber in phase 2, irrigation is required when the moisture index is below 36. At 36 or above, irrigation is not required.",
+            "For soil code Blue in phase 1, the threshold remains 22 in policy version 2. No update has been made to this rule.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required."
+          ],
+          "raw_output": " The threshold for soil",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V9",
+          "query": "Vela case: soil Blue, phase 2, moisture index 26. Return the decision and the rule IDs used.",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": null,
+          "correct": false,
+          "latency_s": 51.22,
+          "retrieved_facts": [
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22. At 22 or above, irrigation is not required.",
+            "For soil code Amber in phase 2, irrigation is required when the moisture index is below 36. At 36 or above, irrigation is not required.",
+            "For soil code Blue in phase 1, the threshold remains 22 in policy version 2. No update has been made to this rule."
+          ],
+          "raw_output": " The decision is DO",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V10",
+          "query": "A user asks: \"Does the Amber phase 2 threshold of 40 also apply to Blue phase 2?\" Answer using only the Vela rules.",
+          "expected": "INSUFFICIENT_INFORMATION",
+          "decision": null,
+          "correct": false,
+          "latency_s": 47.484,
+          "retrieved_facts": [
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36. This update applies to cases received after version 2. The Amber phase 2 rule in version 1 is superseded.",
+            "In the fictional Vela greenhouse, every bed has a soil code and a growth phase. Decisions are governed only by the rules recorded for Vela. Do not apply real-world agricultural knowledge to Vela.",
+            "For soil code Blue in phase 1, the threshold remains 22 in policy version 2. No update has been made to this rule.",
+            "A later correction explicitly marked as a Vela policy update replaces the earlier rule for the same soil code and phase. Keep a record of the superseded rule; do not silently merge the two rules."
+          ],
+          "raw_output": " No. The V",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V11",
+          "query": "Two records arrive for the same new Vela case: Record A: Amber, phase 2, moisture index 38, policy version 1. Record B: Amber, phase 2, moisture index 38, policy version 2. What decision applies to a case received after version 2?",
+          "expected": "IRRIGATE",
+          "decision": null,
+          "correct": false,
+          "latency_s": 47.579,
+          "retrieved_facts": [
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36. This update applies to cases received after version 2. The Amber phase 2 rule in version 1 is superseded.",
+            "For soil code Blue in phase 1, the threshold remains 22 in policy version 2. No update has been made to this rule.",
+            "A later correction explicitly marked as a Vela policy update replaces the earlier rule for the same soil code and phase. Keep a record of the superseded rule; do not silently merge the two rules.",
+            "For soil code Amber in phase 2, irrigation is required when the moisture index is below 36. At 36 or above, irrigation is not required."
+          ],
+          "raw_output": " For a case received",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V12",
+          "query": "Vela case: soil Amber, phase 2, moisture index 41. Use policy version 2. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": false,
+          "latency_s": 49.584,
+          "retrieved_facts": [
+            "For soil code Amber in phase 2, irrigation is required when the moisture index is below 36. At 36 or above, irrigation is not required.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30. At 30 or above, irrigation is not required.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36. This update applies to cases received after version 2. The Amber phase 2 rule in version 1 is superseded."
+          ],
+          "raw_output": " Yes, irrigation should",
+          "retrieval_hit": true
+        }
+      ],
+      "categories": {
+        "Recall and boundaries": {
+          "correct": 2,
+          "total": 3,
+          "accuracy": 0.6666666666666666
+        },
+        "Compositional application": {
+          "correct": 2,
+          "total": 4,
+          "accuracy": 0.5
+        },
+        "Online update": {
+          "correct": 1,
+          "total": 4,
+          "accuracy": 0.25
+        },
+        "Retention / interference": {
+          "correct": 1,
+          "total": 1,
+          "accuracy": 1.0
+        },
+        "Safe abstention": {
+          "correct": 0,
+          "total": 2,
+          "accuracy": 0.0
+        },
+        "Traceability": {
+          "correct": 0,
+          "total": 2,
+          "accuracy": 0.0
+        },
+        "TOTAL": {
+          "correct": 5,
+          "total": 12,
+          "accuracy": 0.4166666666666667
+        }
+      },
+      "retrieval_hits": 10,
+      "retrieval_accuracy": 0.8333333333333334
+    },
+    "C": {
+      "results": [
+        {
+          "id": "V1",
+          "query": "Vela case: soil Amber, phase 1, moisture index 29. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": true,
+          "latency_s": 48.217,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36."
+          ],
+          "raw_output": " Yes, irrigation should",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V2",
+          "query": "Vela case: soil Amber, phase 1, moisture index 30. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "DO_NOT_IRRIGATE",
+          "correct": true,
+          "latency_s": 49.525,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36."
+          ],
+          "raw_output": " DO_NOT_IR",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V3",
+          "query": "Vela case: soil Blue, phase 2, moisture index 25. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "DO_NOT_IRRIGATE",
+          "correct": false,
+          "latency_s": 48.757,
+          "retrieved_facts": [
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36."
+          ],
+          "raw_output": " DO_NOT_IR",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V4",
+          "query": "Vela case: soil Amber, phase 2, moisture index 38. Use the latest policy version. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 49.441,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36.",
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26."
+          ],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V5",
+          "query": "Vela case: soil Amber, phase 2, moisture index 40. Use the latest policy version. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": false,
+          "latency_s": 45.848,
+          "retrieved_facts": [
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26."
+          ],
+          "raw_output": " Yes, irrigation should",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V6",
+          "query": "Vela case: soil Blue, phase 1, moisture index 21. Use policy version 2. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": true,
+          "latency_s": 48.585,
+          "retrieved_facts": [
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36."
+          ],
+          "raw_output": " Yes. The soil",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V7",
+          "query": "Vela case: soil Amber, moisture index 28. The growth phase is not provided. Should irrigation occur?",
+          "expected": "INSUFFICIENT_INFORMATION",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 50.962,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36."
+          ],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V8",
+          "query": "A note says: \"Amber, phase 2, threshold 36.\" A later policy update says: \"Amber, phase 2, threshold 40.\" For a new case with moisture index 38, which threshold applies?",
+          "expected": "IRRIGATE",
+          "decision": null,
+          "correct": false,
+          "latency_s": 48.085,
+          "retrieved_facts": [
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36.",
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "For soil code Blue in phase 1, the threshold remains 22 in policy version 2."
+          ],
+          "raw_output": " 40\n\nQuestion",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V9",
+          "query": "Vela case: soil Blue, phase 2, moisture index 26. Return the decision and the rule IDs used.",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": null,
+          "correct": false,
+          "latency_s": 47.837,
+          "retrieved_facts": [
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36.",
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2."
+          ],
+          "raw_output": " The decision is DO",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V10",
+          "query": "A user asks: \"Does the Amber phase 2 threshold of 40 also apply to Blue phase 2?\" Answer using only the Vela rules.",
+          "expected": "INSUFFICIENT_INFORMATION",
+          "decision": null,
+          "correct": false,
+          "latency_s": 49.317,
+          "retrieved_facts": [
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36.",
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2.",
+            "The Amber phase 2 rule in version 1 is superseded.",
+            "For soil code Blue in phase 1, the threshold remains 22 in policy version 2."
+          ],
+          "raw_output": " No, the threshold",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V11",
+          "query": "Two records arrive for the same new Vela case: Record A: Amber, phase 2, moisture index 38, policy version 1. Record B: Amber, phase 2, moisture index 38, policy version 2. What decision applies to a case received after version 2?",
+          "expected": "IRRIGATE",
+          "decision": null,
+          "correct": false,
+          "latency_s": 48.217,
+          "retrieved_facts": [
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2.",
+            "A later correction explicitly marked as a Vela policy update replaces the earlier rule for the same soil code and phase.",
+            "The Amber phase 2 rule in version 1 is superseded.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36."
+          ],
+          "raw_output": " Record B's policy",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V12",
+          "query": "Vela case: soil Amber, phase 2, moisture index 41. Use policy version 2. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 42.805,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36.",
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26."
+          ],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": true
+        }
+      ],
+      "categories": {
+        "Recall and boundaries": {
+          "correct": 2,
+          "total": 3,
+          "accuracy": 0.6666666666666666
+        },
+        "Compositional application": {
+          "correct": 0,
+          "total": 4,
+          "accuracy": 0.0
+        },
+        "Online update": {
+          "correct": 0,
+          "total": 4,
+          "accuracy": 0.0
+        },
+        "Retention / interference": {
+          "correct": 1,
+          "total": 1,
+          "accuracy": 1.0
+        },
+        "Safe abstention": {
+          "correct": 0,
+          "total": 2,
+          "accuracy": 0.0
+        },
+        "Traceability": {
+          "correct": 0,
+          "total": 2,
+          "accuracy": 0.0
+        },
+        "TOTAL": {
+          "correct": 3,
+          "total": 12,
+          "accuracy": 0.25
+        }
+      },
+      "rtu_enabled": true,
+      "retrieval_hits": 9,
+      "retrieval_accuracy": 0.75
+    },
+    "D": {
+      "results": [
+        {
+          "id": "V1",
+          "query": "Vela case: soil Amber, phase 1, moisture index 29. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": true,
+          "latency_s": 46.426,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36."
+          ],
+          "raw_output": " Yes, irrigation should",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V2",
+          "query": "Vela case: soil Amber, phase 1, moisture index 30. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "DO_NOT_IRRIGATE",
+          "correct": true,
+          "latency_s": 48.248,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36."
+          ],
+          "raw_output": " DO_NOT_IR",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V3",
+          "query": "Vela case: soil Blue, phase 2, moisture index 25. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "DO_NOT_IRRIGATE",
+          "correct": false,
+          "latency_s": 46.336,
+          "retrieved_facts": [
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36."
+          ],
+          "raw_output": " DO_NOT_IR",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V4",
+          "query": "Vela case: soil Amber, phase 2, moisture index 38. Use the latest policy version. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 46.872,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2."
+          ],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V5",
+          "query": "Vela case: soil Amber, phase 2, moisture index 40. Use the latest policy version. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 48.957,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36.",
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26."
+          ],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V6",
+          "query": "Vela case: soil Blue, phase 1, moisture index 21. Use policy version 2. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": true,
+          "latency_s": 47.352,
+          "retrieved_facts": [
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "For soil code Blue in phase 1, the threshold remains 22 in policy version 2."
+          ],
+          "raw_output": " Yes. The soil",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V7",
+          "query": "Vela case: soil Amber, moisture index 28. The growth phase is not provided. Should irrigation occur?",
+          "expected": "INSUFFICIENT_INFORMATION",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 47.445,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36."
+          ],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V8",
+          "query": "A note says: \"Amber, phase 2, threshold 36.\" A later policy update says: \"Amber, phase 2, threshold 40.\" For a new case with moisture index 38, which threshold applies?",
+          "expected": "IRRIGATE",
+          "decision": null,
+          "correct": false,
+          "latency_s": 46.798,
+          "retrieved_facts": [
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36.",
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "For soil code Blue in phase 1, the threshold remains 22 in policy version 2."
+          ],
+          "raw_output": " 40\n\nQuestion",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V9",
+          "query": "Vela case: soil Blue, phase 2, moisture index 26. Return the decision and the rule IDs used.",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": false,
+          "latency_s": 50.224,
+          "retrieved_facts": [
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26.",
+            "For soil code Blue in phase 1, irrigation is required when the moisture index is below 22.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36.",
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30."
+          ],
+          "raw_output": " Irrigation required.",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V10",
+          "query": "A user asks: \"Does the Amber phase 2 threshold of 40 also apply to Blue phase 2?\" Answer using only the Vela rules.",
+          "expected": "INSUFFICIENT_INFORMATION",
+          "decision": null,
+          "correct": false,
+          "latency_s": 48.553,
+          "retrieved_facts": [
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36.",
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2.",
+            "The Amber phase 2 rule in version 1 is superseded.",
+            "For soil code Blue in phase 1, the threshold remains 22 in policy version 2."
+          ],
+          "raw_output": " No, the threshold",
+          "retrieval_hit": false
+        },
+        {
+          "id": "V11",
+          "query": "Two records arrive for the same new Vela case: Record A: Amber, phase 2, moisture index 38, policy version 1. Record B: Amber, phase 2, moisture index 38, policy version 2. What decision applies to a case received after version 2?",
+          "expected": "IRRIGATE",
+          "decision": null,
+          "correct": false,
+          "latency_s": 48.233,
+          "retrieved_facts": [
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2.",
+            "A later correction explicitly marked as a Vela policy update replaces the earlier rule for the same soil code and phase.",
+            "The Amber phase 2 rule in version 1 is superseded.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36."
+          ],
+          "raw_output": " Record B's policy",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V12",
+          "query": "Vela case: soil Amber, phase 2, moisture index 41. Use policy version 2. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 51.445,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36.",
+            "Vela policy update version 2 for soil code Amber in phase 2 the threshold update applies to cases received after version 2.",
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26."
+          ],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": true
+        }
+      ],
+      "categories": {
+        "Recall and boundaries": {
+          "correct": 2,
+          "total": 3,
+          "accuracy": 0.6666666666666666
+        },
+        "Compositional application": {
+          "correct": 0,
+          "total": 4,
+          "accuracy": 0.0
+        },
+        "Online update": {
+          "correct": 0,
+          "total": 4,
+          "accuracy": 0.0
+        },
+        "Retention / interference": {
+          "correct": 1,
+          "total": 1,
+          "accuracy": 1.0
+        },
+        "Safe abstention": {
+          "correct": 0,
+          "total": 2,
+          "accuracy": 0.0
+        },
+        "Traceability": {
+          "correct": 0,
+          "total": 2,
+          "accuracy": 0.0
+        },
+        "TOTAL": {
+          "correct": 3,
+          "total": 12,
+          "accuracy": 0.25
+        }
+      },
+      "rtu_enabled": false,
+      "retrieval_hits": 10,
+      "retrieval_accuracy": 0.8333333333333334
+    },
+    "E": {
+      "results": [
+        {
+          "id": "V1",
+          "query": "Vela case: soil Amber, phase 1, moisture index 29. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": true,
+          "latency_s": 47.808,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30. At 30 or above, irrigation is not required."
+          ],
+          "raw_output": " Yes, irrigation is",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V2",
+          "query": "Vela case: soil Amber, phase 1, moisture index 30. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "DO_NOT_IRRIGATE",
+          "correct": true,
+          "latency_s": 47.248,
+          "retrieved_facts": [
+            "For soil code Amber in phase 1, irrigation is required when the moisture index is below 30. At 30 or above, irrigation is not required.",
+            "A moisture index exactly equal to the threshold means irrigation is not required."
+          ],
+          "raw_output": " DO_NOT_IR",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V3",
+          "query": "Vela case: soil Blue, phase 2, moisture index 25. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "IRRIGATE",
+          "correct": true,
+          "latency_s": 45.663,
+          "retrieved_facts": [
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required."
+          ],
+          "raw_output": " Yes, irrigation is",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V4",
+          "query": "Vela case: soil Amber, phase 2, moisture index 38. Use the latest policy version. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "DO_NOT_IRRIGATE",
+          "correct": false,
+          "latency_s": 52.085,
+          "retrieved_facts": [
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36. This update applies to cases received after version 2. The Amber phase 2 rule in version 1 is superseded."
+          ],
+          "raw_output": " DO_NOT_IR",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V5",
+          "query": "Vela case: soil Amber, phase 2, moisture index 40. Use the latest policy version. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "DO_NOT_IRRIGATE",
+          "correct": true,
+          "latency_s": 48.981,
+          "retrieved_facts": [
+            "A moisture index exactly equal to the threshold means irrigation is not required.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36. This update applies to cases received after version 2. The Amber phase 2 rule in version 1 is superseded."
+          ],
+          "raw_output": " DO_NOT_IR",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V6",
+          "query": "Vela case: soil Blue, phase 1, moisture index 21. Use policy version 2. Should irrigation occur?",
+          "expected": "IRRIGATE",
+          "decision": "DO_NOT_IRRIGATE",
+          "correct": false,
+          "latency_s": 47.144,
+          "retrieved_facts": [
+            "For soil code Blue in phase 1, the threshold remains 22 in policy version 2. No update has been made to this rule."
+          ],
+          "raw_output": " DO_NOT_IR",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V7",
+          "query": "Vela case: soil Amber, moisture index 28. The growth phase is not provided. Should irrigation occur?",
+          "expected": "INSUFFICIENT_INFORMATION",
+          "decision": null,
+          "correct": false,
+          "latency_s": 51.411,
+          "retrieved_facts": [
+            "A record is valid only when it names a soil code, growth phase, and moisture index. If one of these fields is missing, do not guess the missing value. State that the case is underspecified."
+          ],
+          "raw_output": " The case is unders",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V8",
+          "query": "A note says: \"Amber, phase 2, threshold 36.\" A later policy update says: \"Amber, phase 2, threshold 40.\" For a new case with moisture index 38, which threshold applies?",
+          "expected": "IRRIGATE",
+          "decision": null,
+          "correct": false,
+          "latency_s": 49.871,
+          "retrieved_facts": [
+            "A later correction explicitly marked as a Vela policy update replaces the earlier rule for the same soil code and phase. Keep a record of the superseded rule; do not silently merge the two rules.",
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36. This update applies to cases received after version 2. The Amber phase 2 rule in version 1 is superseded."
+          ],
+          "raw_output": " 40\n\nStep",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V9",
+          "query": "Vela case: soil Blue, phase 2, moisture index 26. Return the decision and the rule IDs used.",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "DO_NOT_IRRIGATE",
+          "correct": true,
+          "latency_s": 50.904,
+          "retrieved_facts": [
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required.",
+            "A moisture index exactly equal to the threshold means irrigation is not required."
+          ],
+          "raw_output": " DO_NOT_IR",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V10",
+          "query": "A user asks: \"Does the Amber phase 2 threshold of 40 also apply to Blue phase 2?\" Answer using only the Vela rules.",
+          "expected": "INSUFFICIENT_INFORMATION",
+          "decision": "CONFLICT_REQUIRES_CLARIFICATION",
+          "correct": false,
+          "latency_s": 50.325,
+          "retrieved_facts": [
+            "For soil code Blue in phase 2, irrigation is required when the moisture index is below 26. At 26 or above, irrigation is not required."
+          ],
+          "raw_output": " CONFLICT_RE",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V11",
+          "query": "Two records arrive for the same new Vela case: Record A: Amber, phase 2, moisture index 38, policy version 1. Record B: Amber, phase 2, moisture index 38, policy version 2. What decision applies to a case received after version 2?",
+          "expected": "IRRIGATE",
+          "decision": null,
+          "correct": false,
+          "latency_s": 53.803,
+          "retrieved_facts": [
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36. This update applies to cases received after version 2. The Amber phase 2 rule in version 1 is superseded."
+          ],
+          "raw_output": " For a case received",
+          "retrieval_hit": true
+        },
+        {
+          "id": "V12",
+          "query": "Vela case: soil Amber, phase 2, moisture index 41. Use policy version 2. Should irrigation occur?",
+          "expected": "DO_NOT_IRRIGATE",
+          "decision": "DO_NOT_IRRIGATE",
+          "correct": true,
+          "latency_s": 51.153,
+          "retrieved_facts": [
+            "Vela policy update, version 2: for soil code Amber in phase 2, the threshold is now 40, not 36. This update applies to cases received after version 2. The Amber phase 2 rule in version 1 is superseded."
+          ],
+          "raw_output": " DO_NOT_IR",
+          "retrieval_hit": true
+        }
+      ],
+      "categories": {
+        "Recall and boundaries": {
+          "correct": 3,
+          "total": 3,
+          "accuracy": 1.0
+        },
+        "Compositional application": {
+          "correct": 3,
+          "total": 4,
+          "accuracy": 0.75
+        },
+        "Online update": {
+          "correct": 1,
+          "total": 4,
+          "accuracy": 0.25
+        },
+        "Retention / interference": {
+          "correct": 0,
+          "total": 1,
+          "accuracy": 0.0
+        },
+        "Safe abstention": {
+          "correct": 0,
+          "total": 2,
+          "accuracy": 0.0
+        },
+        "Traceability": {
+          "correct": 1,
+          "total": 2,
+          "accuracy": 0.5
+        },
+        "TOTAL": {
+          "correct": 6,
+          "total": 12,
+          "accuracy": 0.5
+        }
+      },
+      "retrieval_hits": 12,
+      "retrieval_accuracy": 1.0
+    }
+  }
+}

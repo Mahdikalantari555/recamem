@@ -442,11 +442,11 @@ def fetch_page(url: str, *, timeout: float = DEFAULT_TIMEOUT_SECONDS,
                                reason=f"HTTP {exc.code}")
         except (socket.timeout, TimeoutError) as exc:
             return FetchResult(ok=False, url=current,
-                               reason=f"timeout after {timeout}s ({exc})")
+                               reason=f"timeout after {timeout}s for {urlparse(current).hostname} ({exc})")
         except urllib.error.URLError as exc:
             if isinstance(exc.reason, (socket.timeout, TimeoutError)):
                 return FetchResult(ok=False, url=current,
-                                   reason=f"timeout after {timeout}s")
+                                   reason=f"timeout after {timeout}s for {urlparse(current).hostname}")
             return FetchResult(ok=False, url=current,
                                reason=f"connection failed for {urlparse(current).hostname}: {exc.reason}")
         except Exception as exc:  # every failure is structured

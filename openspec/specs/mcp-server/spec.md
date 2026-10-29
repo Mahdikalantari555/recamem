@@ -32,6 +32,15 @@ The system SHALL expose the following tools via the MCP protocol, each named `re
 - `recamem_generate_with_memory(query, strategy, droid_name)`: Grounded generation through the profile's configured backend.
 - `recamem_research_topic(query, droid_name)`: Acquire knowledge about a topic from an external web source and learn it into the named profile.
 
+Deprecated aliases (listed with `deprecated: true` during the deprecation window):
+- `recall_memory(query, top_k)`: deprecated alias of `recamem_recall_memory`.
+- `teach_fact(text, domain)`: deprecated alias of `recamem_teach_fact`.
+- `decide_action(query, options)`: deprecated alias of `recamem_decide_action`.
+- `list_droids()`: deprecated alias of `recamem_list_droids`.
+- `inspect_state(droid_name)`: deprecated alias of `recamem_inspect_state`.
+- `generate_with_memory(query, strategy, droid_name)`: deprecated alias of `recamem_generate_with_memory`.
+- `research_topic(query, droid_name)`: deprecated alias of `recamem_research_topic`.
+
 #### Scenario: Tool invocation
 
 - **WHEN** an agent sends a `tools/call` request for `recamem_recall_memory`

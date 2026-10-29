@@ -5,7 +5,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T1.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -27,7 +27,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T1.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`insert_fact` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -49,7 +49,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T1.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`recall` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -71,7 +71,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T1.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`supersede` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -93,7 +93,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T1.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`get_audit_trail` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -115,7 +115,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T2.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`DroidEngine.__init__` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -137,7 +137,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T2.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`teach` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -159,7 +159,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T2.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`teach` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -181,7 +181,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T2.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`teach` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -203,7 +203,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T2.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`recall` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -225,7 +225,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T2.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`chat` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -247,7 +247,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T3.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`save_profile` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -268,7 +268,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T3.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`load_profile` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -289,7 +289,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T3.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`PRAGMA` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -311,7 +311,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T4.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -333,7 +333,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T4.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -355,7 +355,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T4.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`pytest` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -377,7 +377,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T5.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "10k/50k/100k retrieval latency measured and published in the workload benchmark at exact-fallback configuration (hnswlib is not installable here); the target comparison is recorded with the measured p95.",
       "implementation": [
         "scripts/bench_workloads.py",
@@ -397,7 +397,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T5.2",
       "status": "superseded",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Zero-allocation is replaced by measured latency at three fact counts.",
       "implementation": [],
       "tests": [],
@@ -412,7 +412,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T5.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "src/mcp_server.py",
@@ -433,7 +433,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-hybrid-knowledge-tms/tasks.md#T5.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "src/model/benchmarks.py",
@@ -453,7 +453,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md#1.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`OnnxMiniLM` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -475,7 +475,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md#1.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`DroidEngine` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -497,7 +497,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md#2.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`teach` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -519,7 +519,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md#2.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`droids` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -541,7 +541,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md#2.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -563,7 +563,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md#3.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py"
@@ -581,7 +581,7 @@
     {
       "id": "openspec/changes/archive/2026-09-27-lifelong-plastic-hybrid/tasks.md#3.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -601,7 +601,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#1.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`llama` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -623,7 +623,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#1.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -645,7 +645,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#1.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`__init__` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -667,7 +667,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#1.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`generate` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -689,7 +689,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#1.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tokenize` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -711,7 +711,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#1.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`download_model` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -733,7 +733,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#1.7",
       "status": "superseded",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Automated verification does not require weights; the manual tier records the artifact and binding.",
       "implementation": [],
       "tests": [],
@@ -748,7 +748,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#2.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -770,7 +770,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#2.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`inject_prompt` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -792,7 +792,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#2.3",
       "status": "superseded",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Hidden injection is offered only for a hookable PyTorch decoder; the GGUF binding must report it unsupported.",
       "implementation": [],
       "tests": [],
@@ -807,7 +807,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#2.4",
       "status": "superseded",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "KV priming is a backend capability and unsupported bindings fail explicitly instead of returning metadata-only success.",
       "implementation": [],
       "tests": [],
@@ -822,7 +822,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#2.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`select_strategy` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -844,7 +844,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#2.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -865,7 +865,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#3.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -887,7 +887,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#3.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`retrieval_confidence` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -909,7 +909,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#3.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`generation_confidence` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/__init__.py",
@@ -931,7 +931,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#3.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`fuse_confidence` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -953,7 +953,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#3.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`confidence_tier` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -975,7 +975,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#3.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -996,7 +996,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#4.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.__init__` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1018,7 +1018,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#4.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.generate_with_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1040,7 +1040,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#4.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.estimate_confidence` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1061,7 +1061,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#4.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.decide_path` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1083,7 +1083,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#4.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`chat` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1105,7 +1105,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#4.7",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`fast` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1127,7 +1127,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#4.8",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -1148,7 +1148,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#5.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidManager.create_droid` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1169,7 +1169,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#5.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`gguf_model_path` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1189,7 +1189,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#5.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidManager.download_model` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1211,7 +1211,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#5.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`save_profile` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -1232,7 +1232,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#5.5",
       "status": "superseded",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Manager download/config and profile persistence are covered offline; generation needs the manual tier.",
       "implementation": [],
       "tests": [],
@@ -1247,7 +1247,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#6.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`download` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1269,7 +1269,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#6.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`mode` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1291,7 +1291,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#6.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`generate` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1313,7 +1313,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#6.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`generate_with_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "src/cli.py",
@@ -1335,7 +1335,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#6.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -1356,7 +1356,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#7.1",
       "status": "superseded",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "The stub contract suite is the automated gate; a real load belongs to the manual tier.",
       "implementation": [],
       "tests": [],
@@ -1371,7 +1371,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#7.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -1393,7 +1393,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#7.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -1415,7 +1415,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#7.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -1437,7 +1437,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#7.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`pytest` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -1459,7 +1459,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-gguf-llm-backend/tasks.md#7.6",
       "status": "superseded",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Fast/slow timings need weights and move to the manual tier; dispatch stays offline.",
       "implementation": [],
       "tests": [],
@@ -1475,7 +1475,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#1.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`update_fact` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1497,7 +1497,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#1.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`delete_fact` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1519,7 +1519,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#1.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`get_fact` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1541,7 +1541,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#2.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1563,7 +1563,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#3.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py"
@@ -1581,7 +1581,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#3.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py"
@@ -1599,7 +1599,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#3.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -1618,7 +1618,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#4.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py"
@@ -1636,7 +1636,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#4.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py"
@@ -1654,7 +1654,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#4.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -1673,7 +1673,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#4.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -1692,7 +1692,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#4.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -1711,7 +1711,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#5.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py"
@@ -1729,7 +1729,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#5.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py"
@@ -1747,7 +1747,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#5.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "src/model/droid_package.py",
@@ -1767,7 +1767,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#6.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "The README and docs/lifecycle.md document the console; a structural test keeps the documented commands honest.",
       "implementation": [
         "scripts/bench_workloads.py",
@@ -1787,7 +1787,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-console-llm-feedback/tasks.md#6.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -1807,7 +1807,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#1.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1829,7 +1829,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#1.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`SnapshotManager` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1851,7 +1851,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#1.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`MergeEngine` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1873,7 +1873,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#1.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`ContradictionResolver` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1895,7 +1895,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#1.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`SemanticStore` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1917,7 +1917,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#1.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`RetrievalPolicy` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1939,7 +1939,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#1.7",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`ContinuousStream` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -1961,7 +1961,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#1.8",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -1983,7 +1983,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#2.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`version_id` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2005,7 +2005,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#2.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`semantic_facts` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2027,7 +2027,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#2.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`feedback_log` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2049,7 +2049,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#2.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`__init__` is implemented and referenced by the named tests.",
       "implementation": [
         "main.py",
@@ -2071,7 +2071,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#2.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`recall` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2093,7 +2093,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#2.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -2115,7 +2115,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#3.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.create_snapshot` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2137,7 +2137,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#3.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.rollback_to` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2159,7 +2159,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#3.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.branch_from` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2181,7 +2181,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#3.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.list_snapshots` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2203,7 +2203,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#3.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`save_profile` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -2224,7 +2224,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#3.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -2246,7 +2246,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#4.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.merge_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2268,7 +2268,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#4.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.distill_to_semantic` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py"
@@ -2288,7 +2288,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#4.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.retrieve_semantic` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2310,7 +2310,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#4.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.get_contradictions` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py"
@@ -2330,7 +2330,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#4.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -2350,7 +2350,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#5.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.approve` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2372,7 +2372,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#5.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.reject` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2394,7 +2394,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#5.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.correct` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2416,7 +2416,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#5.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.get_feedback_log` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -2436,7 +2436,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#5.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -2456,7 +2456,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#6.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.start_continuous_stream` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2478,7 +2478,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#6.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.pause_stream` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2499,7 +2499,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#6.3",
       "status": "superseded",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "The per-call budget is now enforced on every plastic path through one gate, not only in recall().",
       "implementation": [],
       "tests": [],
@@ -2514,7 +2514,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#6.4",
       "status": "superseded",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Recall, approve, reject and correct all consume the same budget.",
       "implementation": [],
       "tests": [],
@@ -2529,7 +2529,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#6.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`approve` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2551,7 +2551,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#6.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`test_time_training` is implemented and referenced by the named tests.",
       "implementation": [
         "src/cli.py",
@@ -2573,7 +2573,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#6.7",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -2594,7 +2594,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#7.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidManager.merge_droids` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2616,7 +2616,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#7.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidManager.export_version` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2638,7 +2638,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#7.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidManager.import_version` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2660,7 +2660,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#7.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -2680,7 +2680,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#8.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -2702,7 +2702,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#8.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -2724,7 +2724,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#8.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -2746,7 +2746,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#8.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`pytest` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -2768,7 +2768,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-memory-lifecycle-management/tasks.md#8.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Merge of 2x10k facts, 10k->2k distillation and stream throughput are measured and published; the 100 msg/min soak is bounded, not asserted.",
       "implementation": [
         "scripts/bench_workloads.py",
@@ -2788,7 +2788,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#1.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2810,7 +2810,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#1.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`consolidate` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2832,7 +2832,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#1.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`_ADAPTER_REGISTRY` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2854,7 +2854,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#1.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`importlib.metadata.entry_points` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -2874,7 +2874,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#1.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`register_adapter` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/__init__.py",
@@ -2896,7 +2896,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#1.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -2918,7 +2918,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#2.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`PlasticAssociativeRTU` is implemented and referenced by the named tests.",
       "implementation": [
         "main.py",
@@ -2940,7 +2940,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#2.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`update_associative_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -2962,7 +2962,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#2.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`state_dict` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -2984,7 +2984,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#2.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`load_state_dict` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/decision_head.py",
@@ -3006,7 +3006,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#2.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -3028,7 +3028,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#3.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.__init__` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3050,7 +3050,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#3.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`self.memory.method` is implemented and referenced by the named tests.",
       "implementation": [
         "src/mcp_server.py",
@@ -3072,7 +3072,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#3.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`self.memory` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3094,7 +3094,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#3.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -3116,7 +3116,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#4.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidManager.create_droid` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3138,7 +3138,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#4.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`plastic_adapter` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/__init__.py",
@@ -3160,7 +3160,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#4.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`save_profile` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/__init__.py",
@@ -3182,7 +3182,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#4.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`load_profile` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -3203,7 +3203,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#4.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -3223,7 +3223,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#5.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -3245,7 +3245,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#5.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -3267,7 +3267,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#5.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -3289,7 +3289,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#5.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`pytest` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -3311,7 +3311,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-adapter-interface/tasks.md#5.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Adapter instantiation measured against direct class construction; the ratio is published instead of asserting a regression threshold.",
       "implementation": [
         "scripts/bench_workloads.py",
@@ -3331,7 +3331,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#1.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`PlasticAssociativeRTU` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3353,7 +3353,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#1.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`predict_next` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -3375,7 +3375,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#1.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`compute_surprise` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -3397,7 +3397,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#1.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`update_associative_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/confidence.py",
@@ -3419,7 +3419,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#1.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`retrieve` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -3441,7 +3441,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#1.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`RTUMemoryBlock` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/__init__.py",
@@ -3461,7 +3461,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#1.7",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -3483,7 +3483,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#2.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`access_count` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3505,7 +3505,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#2.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`KnowledgeStore.__init__` is implemented and referenced by the named tests.",
       "implementation": [
         "main.py",
@@ -3527,7 +3527,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#2.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`recall` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3549,7 +3549,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#2.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -3571,7 +3571,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#3.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.__init__` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3593,7 +3593,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#3.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`teach` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3615,7 +3615,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#3.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`teach` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3637,7 +3637,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#3.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`teach` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3659,7 +3659,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#3.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`teach` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3681,7 +3681,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#3.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -3703,7 +3703,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#4.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`recall` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3725,7 +3725,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#4.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`recall` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3747,7 +3747,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#4.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`recall` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3769,7 +3769,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#4.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`recall` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3791,7 +3791,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#4.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -3813,7 +3813,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#5.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.consolidate_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py"
@@ -3833,7 +3833,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#5.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`access_count` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3855,7 +3855,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#5.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`PlasticAssociativeRTU` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/__init__.py",
@@ -3877,7 +3877,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#5.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "main.py",
@@ -3897,7 +3897,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#5.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -3919,7 +3919,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#6.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`PlasticAssociativeRTU.state_dict` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/decision_head.py",
@@ -3941,7 +3941,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#6.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.create_snapshot` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -3963,7 +3963,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#6.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.restore_snapshot` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -3985,7 +3985,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#6.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`save_profile` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -4006,7 +4006,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#6.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`load_profile` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -4027,7 +4027,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#6.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -4049,7 +4049,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#7.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`DroidEngine.get_memory_health` is implemented and referenced by the named tests.",
       "implementation": [
         "src/mcp_server.py",
@@ -4071,7 +4071,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#7.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -4091,7 +4091,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#7.3",
       "status": "superseded",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Forgetting is a decayed accessibility score, not a rolling-window fraction of facts.",
       "implementation": [],
       "tests": [],
@@ -4106,7 +4106,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#7.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -4126,7 +4126,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#7.5",
       "status": "superseded",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "precision@k/MRR require labelled judgements and report None instead of a placeholder.",
       "implementation": [],
       "tests": [],
@@ -4142,7 +4142,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#7.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -4164,7 +4164,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#8.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -4186,7 +4186,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#8.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -4208,7 +4208,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#8.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`pytest` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -4230,7 +4230,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-plastic-memory-lifelong/tasks.md#8.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "RAM, recall latency and the measured surprise-gate insert reduction are published; no threshold is asserted beyond what the fixture supports.",
       "implementation": [
         "scripts/bench_workloads.py",
@@ -4250,7 +4250,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T1.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4272,7 +4272,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T1.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -4292,7 +4292,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T1.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -4312,7 +4312,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T1.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -4332,7 +4332,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T1.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -4352,7 +4352,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T2.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4374,7 +4374,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T2.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tools` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4396,7 +4396,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T2.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tools` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4418,7 +4418,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T2.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`sys.stderr` is implemented and referenced by the named tests.",
       "implementation": [
         "src/cli.py",
@@ -4439,7 +4439,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T2.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -4461,7 +4461,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T3.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4483,7 +4483,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T3.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`chat` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4505,7 +4505,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T3.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`teach` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4527,7 +4527,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T3.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`decide` is implemented and referenced by the named tests.",
       "implementation": [
         "src/cli.py",
@@ -4549,7 +4549,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T3.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`serve` is implemented and referenced by the named tests.",
       "implementation": [
         "src/cli.py",
@@ -4571,7 +4571,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T3.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`package` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4593,7 +4593,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T3.7",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -4615,7 +4615,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T4.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4637,7 +4637,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T4.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -4657,7 +4657,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T4.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "src/model/backend_contracts.py",
@@ -4677,7 +4677,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T4.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -4699,7 +4699,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T5.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Decision-head latency at K=5/10/20 measured and published as a fixture-dependent figure rather than asserted as a target.",
       "implementation": [
         "scripts/bench_workloads.py",
@@ -4719,7 +4719,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T5.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -4739,7 +4739,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T5.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "src/cli.py",
@@ -4759,7 +4759,7 @@
     {
       "id": "openspec/changes/archive/2026-09-29-system1-mcp-surface/tasks.md#T5.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.2",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.2",
       "reason": "`pytest` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -4781,7 +4781,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`effective_lr` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4803,7 +4803,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`applied_lr` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4825,7 +4825,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`retrieve` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4847,7 +4847,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`RTUMemoryBlock` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4869,7 +4869,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`error_vec` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4891,7 +4891,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`K_max` is implemented and referenced by the named tests. K_max eviction is asserted by tests/test_correctness_hardening.py; the historical 'benchmark' tier was over-specified for a correctness rule.",
       "implementation": [
         "app.py",
@@ -4913,7 +4913,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.7",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`memory.eviction_count` is implemented and referenced by the named tests.",
       "implementation": [
         "src/mcp_server.py",
@@ -4935,7 +4935,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.8",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -4957,7 +4957,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.9",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -4979,7 +4979,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.10",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5001,7 +5001,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.11",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py"
@@ -5019,7 +5019,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.12",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5041,7 +5041,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.13",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`KnowledgeStore` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5063,7 +5063,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.14",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -5083,7 +5083,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.15",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`psutil` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5105,7 +5105,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.16",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -5125,7 +5125,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-correctness-hardening/tasks.md#2.17",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour. README claim hygiene is a documentation rule asserted by tests/test_correctness_hardening.py, not a benchmark.",
       "implementation": [
         "app.py",
@@ -5145,7 +5145,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`engine` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5167,7 +5167,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`byte_rtu_checkpoint` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5189,7 +5189,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`droids` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5211,7 +5211,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`config.json.tmp` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5233,7 +5233,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`MissingCheckpointError` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/byte_rtu_backend.py",
@@ -5254,7 +5254,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`droids` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5276,7 +5276,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.7",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`reset` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5298,7 +5298,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.8",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`ByteRtuBackend` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5320,7 +5320,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.9",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`min` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5342,7 +5342,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.10",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -5364,7 +5364,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.11",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`recall` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5386,7 +5386,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.12",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`associative` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5408,7 +5408,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.13",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`DroidManager.create_droid` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5430,7 +5430,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.14",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`DroidManager` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5452,7 +5452,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.15",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`step_count` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5474,7 +5474,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.16",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`return` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5496,7 +5496,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.17",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -5516,7 +5516,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.18",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py"
@@ -5534,7 +5534,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.19",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -5554,7 +5554,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.20",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`fast` is implemented and referenced by the named tests. The engine-path documentation rule is asserted structurally; no performance number is claimed.",
       "implementation": [
         "app.py",
@@ -5576,7 +5576,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.21",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5598,7 +5598,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.22",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`Model.save` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5620,7 +5620,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.23",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`Model.load` is implemented and referenced by the named tests.",
       "implementation": [
         "main.py",
@@ -5642,7 +5642,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.24",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "src/model/backend_contracts.py",
@@ -5662,7 +5662,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.25",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`droid` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5684,7 +5684,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.26",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5706,7 +5706,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.27",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour. Plan-document reconciliation is a documentation change verified by the repo state, not by a benchmark.",
       "implementation": [
         "app.py",
@@ -5726,7 +5726,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.28",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`pytest` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -5748,7 +5748,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.29",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`profile` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5770,7 +5770,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-droid-rtu-fusion-completion/tasks.md#1.30",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -5790,7 +5790,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md#4.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`h_t` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5812,7 +5812,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md#4.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "main.py",
@@ -5832,7 +5832,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md#4.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -5852,7 +5852,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md#4.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`rtol` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5874,7 +5874,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md#4.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`sequential_scan` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -5896,7 +5896,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md#4.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Chunked-versus-sequential wall clock measured and published per length.",
       "implementation": [
         "scripts/bench_workloads.py",
@@ -5916,7 +5916,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md#4.7",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -5938,7 +5938,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md#4.8",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`parallel` is implemented and referenced by the named tests.",
       "implementation": [
         "main.py",
@@ -5960,7 +5960,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-parallel-scan-training/tasks.md#4.9",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -5982,7 +5982,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`cmd_eval` is implemented and referenced by the named tests. CLI eval output shape and exit codes are contract behaviour covered by tests/test_cli_eval.py.",
       "implementation": [
         "app.py",
@@ -6004,7 +6004,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`cli` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6026,7 +6026,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`generate_with_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6048,7 +6048,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`mcp` is implemented and referenced by the named tests.",
       "implementation": [
         "src/cli.py",
@@ -6070,7 +6070,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`supersede` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6092,7 +6092,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`except` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6114,7 +6114,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.7",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`SnapshotManager.create_snapshot` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6136,7 +6136,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.8",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`keep_newest` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -6158,7 +6158,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.9",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -6177,7 +6177,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.10",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`decide_path` is implemented and referenced by the named tests. The decide-path panel is console behaviour covered by the AppTest suite.",
       "implementation": [
         "app.py",
@@ -6199,7 +6199,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.11",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`confidence_tier` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6221,7 +6221,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.12",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`droid` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6243,7 +6243,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.13",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`droid` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6265,7 +6265,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-product-surface-completion/tasks.md#5.14",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`repo_id` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6287,7 +6287,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.1",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6309,7 +6309,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.2",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6331,7 +6331,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.3",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6353,7 +6353,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.4",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6375,7 +6375,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.5",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6397,7 +6397,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.6",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6419,7 +6419,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.7",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6441,7 +6441,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.8",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6463,7 +6463,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.9",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6485,7 +6485,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.10",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6507,7 +6507,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.11",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -6529,7 +6529,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.12",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`model.last_loss` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6551,7 +6551,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.13",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`Model.forward` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6573,7 +6573,7 @@
     {
       "id": "openspec/changes/archive/2026-10-20-surface-test-coverage/tasks.md#3.14",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tests` is implemented and referenced by the named tests.",
       "implementation": [
         "src/data.py",
@@ -6595,7 +6595,7 @@
     {
       "id": "openspec/specs/adaptation/adapter-registry/spec.md#Adapter registration",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`register_adapter` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6617,7 +6617,7 @@
     {
       "id": "openspec/specs/adaptation/adapter-registry/spec.md#Adapter listing",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`list_adapters` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6639,7 +6639,7 @@
     {
       "id": "openspec/specs/adaptation/adapter-registry/spec.md#Adapter instantiation by name",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`get_adapter` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6661,7 +6661,7 @@
     {
       "id": "openspec/specs/adaptation/adapter-registry/spec.md#Per-profile adapter config",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`plastic_adapter` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6683,7 +6683,7 @@
     {
       "id": "openspec/specs/adaptation/adapter-registry/spec.md#Entry point discovery",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`importlib.metadata` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6705,7 +6705,7 @@
     {
       "id": "openspec/specs/adaptation/memory-forgetting/spec.md#Power-law retrieval availability decay",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -6725,7 +6725,7 @@
     {
       "id": "openspec/specs/adaptation/memory-forgetting/spec.md#Sleep consolidation during idle",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`consolidate_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/__init__.py",
@@ -6747,7 +6747,7 @@
     {
       "id": "openspec/specs/adaptation/memory-forgetting/spec.md#Utility-based episodic pruning",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`consolidate_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py"
@@ -6767,7 +6767,7 @@
     {
       "id": "openspec/specs/adaptation/memory-health/spec.md#Saturation metric",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`get_memory_health` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6789,7 +6789,7 @@
     {
       "id": "openspec/specs/adaptation/memory-health/spec.md#Forgetting rate metric",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`get_memory_health` is implemented and referenced by the named tests.",
       "implementation": [
         "src/mcp_server.py",
@@ -6811,7 +6811,7 @@
     {
       "id": "openspec/specs/adaptation/memory-health/spec.md#Interference metric",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`get_memory_health` is implemented and referenced by the named tests.",
       "implementation": [
         "src/mcp_server.py",
@@ -6833,7 +6833,7 @@
     {
       "id": "openspec/specs/adaptation/memory-health/spec.md#Retrieval quality metric",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`get_memory_health` is implemented and referenced by the named tests.",
       "implementation": [
         "src/mcp_server.py",
@@ -6855,7 +6855,7 @@
     {
       "id": "openspec/specs/adaptation/memory-snapshots/spec.md#Full state snapshot serialization",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`PlasticAssociativeRTU` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6877,7 +6877,7 @@
     {
       "id": "openspec/specs/adaptation/memory-snapshots/spec.md#Snapshot versioning with metadata",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`version` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6899,7 +6899,7 @@
     {
       "id": "openspec/specs/adaptation/memory-snapshots/spec.md#Rollback to snapshot",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`PlasticAssociativeRTU` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6921,7 +6921,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-adapter/spec.md#Latent Coupling Interface",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -6941,7 +6941,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-adapter/spec.md#Few-shot Factual Acquisition",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -6961,7 +6961,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-adapter-interface/spec.md#PlasticAdapter abstract base class",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`PlasticAdapter` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -6983,7 +6983,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-adapter-interface/spec.md#Update with input embedding",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`adapter.update` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7005,7 +7005,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-adapter-interface/spec.md#Retrieve with query embedding",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`adapter.retrieve` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -7027,7 +7027,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-adapter-interface/spec.md#Predict next expectation",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`adapter.predict_next` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -7049,7 +7049,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-adapter-interface/spec.md#Surprise computation",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`adapter.compute_surprise` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -7071,7 +7071,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-adapter-interface/spec.md#State serialization",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`state_dict` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7093,7 +7093,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-memory-titans/spec.md#Multi-head associative state",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`PlasticAssociativeRTU` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7115,7 +7115,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-memory-titans/spec.md#Predictive expectation generation",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`predict_next` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7137,7 +7137,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-memory-titans/spec.md#Surprise computation",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`compute_surprise` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -7159,7 +7159,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-memory-titans/spec.md#Momentum-augmented associative update",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`update_associative_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "src/cli.py",
@@ -7181,7 +7181,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-memory-titans/spec.md#Householder-like selective erasure",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7201,7 +7201,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-memory-titans/spec.md#1D trace summary with surprise modulation",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`update_associative_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/delta_memory.py",
@@ -7223,7 +7223,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-memory-titans/spec.md#Latent Coupling Interface",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7243,7 +7243,7 @@
     {
       "id": "openspec/specs/adaptation/plastic-memory-titans/spec.md#Capacity bound enforcement",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7263,7 +7263,7 @@
     {
       "id": "openspec/specs/belief-revision/spec.md#Contradiction detection via SVO slot clash",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`superseded_by` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7284,7 +7284,7 @@
     {
       "id": "openspec/specs/belief-revision/spec.md#Non-monotonic superseding",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`superseded` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7306,7 +7306,7 @@
     {
       "id": "openspec/specs/belief-revision/spec.md#Two-tier contradiction gating",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7327,7 +7327,7 @@
     {
       "id": "openspec/specs/belief-revision/spec.md#Preserved audit trail",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`superseded_by` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7348,7 +7348,7 @@
     {
       "id": "openspec/specs/cli/spec.md#Subcommand routing",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`chat` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7370,7 +7370,7 @@
     {
       "id": "openspec/specs/cli/spec.md#Unix-friendly output",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`eval` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7392,7 +7392,7 @@
     {
       "id": "openspec/specs/droid/conversational-teaching/spec.md#In-Chat Knowledge Ingestion",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`droid.teach` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7414,7 +7414,7 @@
     {
       "id": "openspec/specs/droid/conversational-teaching/spec.md#Automatic Hyperparameter Selection",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`teach` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7436,7 +7436,7 @@
     {
       "id": "openspec/specs/droid/conversational-teaching/spec.md#Rolling Discourse Anaphora Resolution",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7457,7 +7457,7 @@
     {
       "id": "openspec/specs/droid/conversational-teaching/spec.md#Truth Maintenance Metadata on Facts",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`superseded` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7479,7 +7479,7 @@
     {
       "id": "openspec/specs/droid/memory-console/spec.md#Inline LLM Response Feedback",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`recall` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7501,7 +7501,7 @@
     {
       "id": "openspec/specs/droid/memory-console/spec.md#Memory Console Tab - Fact Browser",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`is_mock` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7523,7 +7523,7 @@
     {
       "id": "openspec/specs/droid/memory-console/spec.md#Memory Console Tab - Fact CRUD",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`superseded_by` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7545,7 +7545,7 @@
     {
       "id": "openspec/specs/droid/memory-console/spec.md#Memory Console Tab - LLM Teach Workflow",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`teacher.distill_propositions` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7567,7 +7567,7 @@
     {
       "id": "openspec/specs/droid/onnx-anchor/spec.md#ONNX Inference Pipeline",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`all` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7589,7 +7589,7 @@
     {
       "id": "openspec/specs/droid/profile-management/spec.md#Named Droid Isolation",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`droids` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7611,7 +7611,7 @@
     {
       "id": "openspec/specs/evaluation/lifelong-benchmarks/spec.md#Continual Retention Metric",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7631,7 +7631,7 @@
     {
       "id": "openspec/specs/knowledge-store/spec.md#Hybrid lexical-dense retrieval",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7651,7 +7651,7 @@
     {
       "id": "openspec/specs/knowledge-store/spec.md#Pre-normalized dense vectors on insert",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7671,7 +7671,7 @@
     {
       "id": "openspec/specs/knowledge-store/spec.md#Persistent SQLite storage",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7691,7 +7691,7 @@
     {
       "id": "openspec/specs/knowledge-store/spec.md#Reciprocal Rank Fusion",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7711,7 +7711,7 @@
     {
       "id": "openspec/specs/mcp-server/spec.md#Stdio JSON-RPC 2.0 transport",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`python` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7733,7 +7733,7 @@
     {
       "id": "openspec/specs/mcp-server/spec.md#Exposed MCP tools",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`tools` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7755,7 +7755,7 @@
     {
       "id": "openspec/specs/mcp-server/spec.md#Zero-dependency implementation",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`json` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7777,7 +7777,7 @@
     {
       "id": "openspec/specs/memory/adaptive-retrieval/spec.md#Query classification for strategy selection",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`definitional` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7799,7 +7799,7 @@
     {
       "id": "openspec/specs/memory/adaptive-retrieval/spec.md#Feedback-driven strategy adaptation",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`hybrid_rrf` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -7821,7 +7821,7 @@
     {
       "id": "openspec/specs/memory/adaptive-retrieval/spec.md#Strategy exploration",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7841,7 +7841,7 @@
     {
       "id": "openspec/specs/memory/adaptive-retrieval/spec.md#Policy persistence",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7861,7 +7861,7 @@
     {
       "id": "openspec/specs/memory/continuous-stream/spec.md#Stream ingestion from interaction log",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`start_continuous_stream` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7883,7 +7883,7 @@
     {
       "id": "openspec/specs/memory/continuous-stream/spec.md#Configurable rate limiting",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`max_facts_per_minute` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -7903,7 +7903,7 @@
     {
       "id": "openspec/specs/memory/continuous-stream/spec.md#Novelty filtering in stream",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`teach` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7925,7 +7925,7 @@
     {
       "id": "openspec/specs/memory/continuous-stream/spec.md#Stream pause/resume and status",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`pause_stream` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -7947,7 +7947,7 @@
     {
       "id": "openspec/specs/memory/contradiction-resolution/spec.md#SVO slot clash detection",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`SlotClash` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/memory_lifecycle.py"
@@ -7966,7 +7966,7 @@
     {
       "id": "openspec/specs/memory/contradiction-resolution/spec.md#Polarity inversion detection",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -7986,7 +7986,7 @@
     {
       "id": "openspec/specs/memory/contradiction-resolution/spec.md#Resolution policies",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`supersede_newest` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8008,7 +8008,7 @@
     {
       "id": "openspec/specs/memory/contradiction-resolution/spec.md#Contradiction audit log",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -8028,7 +8028,7 @@
     {
       "id": "openspec/specs/memory/feedback-learning/spec.md#Approve feedback",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`approve` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8050,7 +8050,7 @@
     {
       "id": "openspec/specs/memory/feedback-learning/spec.md#Reject feedback",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`reject` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8072,7 +8072,7 @@
     {
       "id": "openspec/specs/memory/feedback-learning/spec.md#Correct feedback with replacement",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`correct` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8094,7 +8094,7 @@
     {
       "id": "openspec/specs/memory/feedback-learning/spec.md#Feedback audit trail",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`get_feedback_log` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -8114,7 +8114,7 @@
     {
       "id": "openspec/specs/memory/merge-engine/spec.md#Memory merge with conflict detection",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`merge_memories` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -8135,7 +8135,7 @@
     {
       "id": "openspec/specs/memory/merge-engine/spec.md#Configurable conflict resolution policies",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`keep_newest` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8157,7 +8157,7 @@
     {
       "id": "openspec/specs/memory/merge-engine/spec.md#Plastic state fusion",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`merge_memories` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/droid.py",
@@ -8178,7 +8178,7 @@
     {
       "id": "openspec/specs/memory/merge-engine/spec.md#Merge audit trail",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -8198,7 +8198,7 @@
     {
       "id": "openspec/specs/memory/semantic-store/spec.md#Distillation from episodic to semantic",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`distill_to_semantic` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8220,7 +8220,7 @@
     {
       "id": "openspec/specs/memory/semantic-store/spec.md#Semantic store separate from episodic",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`text` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8242,7 +8242,7 @@
     {
       "id": "openspec/specs/memory/semantic-store/spec.md#Semantic retrieval with higher precision",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -8262,7 +8262,7 @@
     {
       "id": "openspec/specs/memory/semantic-store/spec.md#Continuous distillation",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -8282,7 +8282,7 @@
     {
       "id": "openspec/specs/memory/test-time-training/spec.md#Retrieval-driven associative update",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`recall` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8304,7 +8304,7 @@
     {
       "id": "openspec/specs/memory/test-time-training/spec.md#Feedback-driven plastic update",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`approve` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8326,7 +8326,7 @@
     {
       "id": "openspec/specs/memory/test-time-training/spec.md#Test-time training budget",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -8346,7 +8346,7 @@
     {
       "id": "openspec/specs/memory/test-time-training/spec.md#Test-time training opt-out",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`test_time_training` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8368,7 +8368,7 @@
     {
       "id": "openspec/specs/memory/versioning/spec.md#Snapshot creation with version metadata",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`create_snapshot` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8390,7 +8390,7 @@
     {
       "id": "openspec/specs/memory/versioning/spec.md#Snapshot listing and inspection",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`list_snapshots` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8412,7 +8412,7 @@
     {
       "id": "openspec/specs/memory/versioning/spec.md#Point-in-time rollback",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`rollback_to` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8434,7 +8434,7 @@
     {
       "id": "openspec/specs/memory/versioning/spec.md#Branching from snapshot",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`branch_from` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8456,7 +8456,7 @@
     {
       "id": "openspec/specs/model/confidence-estimation/spec.md#Retrieval confidence component",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`retrieval_confidence` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/__init__.py",
@@ -8478,7 +8478,7 @@
     {
       "id": "openspec/specs/model/confidence-estimation/spec.md#Generation confidence component",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`generation_confidence` is implemented and referenced by the named tests.",
       "implementation": [
         "src/model/__init__.py",
@@ -8500,7 +8500,7 @@
     {
       "id": "openspec/specs/model/confidence-estimation/spec.md#Fused confidence score",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -8520,7 +8520,7 @@
     {
       "id": "openspec/specs/model/confidence-estimation/spec.md#Confidence thresholds for action",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`high` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8542,7 +8542,7 @@
     {
       "id": "openspec/specs/model/dual-mode-generation/spec.md#Fast path \u2014 RTU factual recall",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`recall` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8564,7 +8564,7 @@
     {
       "id": "openspec/specs/model/dual-mode-generation/spec.md#Slow path \u2014 RTU+LLM synthesis",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`generate` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8586,7 +8586,7 @@
     {
       "id": "openspec/specs/model/dual-mode-generation/spec.md#Automatic path routing",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`mcp` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8608,7 +8608,7 @@
     {
       "id": "openspec/specs/model/dual-mode-generation/spec.md#Explicit mode override",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`fast` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8630,7 +8630,7 @@
     {
       "id": "openspec/specs/model/dual-mode-generation/spec.md#Fused RTU+Byte-RTU grounding path",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`min` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8652,7 +8652,7 @@
     {
       "id": "openspec/specs/model/gguf-backend/spec.md#GGUF model loading",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`llama` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8674,7 +8674,7 @@
     {
       "id": "openspec/specs/model/gguf-backend/spec.md#Token generation with streaming",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`generate` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8696,7 +8696,7 @@
     {
       "id": "openspec/specs/model/gguf-backend/spec.md#Model parameter configuration",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`generate` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8718,7 +8718,7 @@
     {
       "id": "openspec/specs/model/gguf-backend/spec.md#Per-profile model config",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`gguf_model` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8740,7 +8740,7 @@
     {
       "id": "openspec/specs/model/memory-injection/spec.md#Prompt stuffing injection",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`generate_with_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8762,7 +8762,7 @@
     {
       "id": "openspec/specs/model/memory-injection/spec.md#Hidden state injection",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`generate_with_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8784,7 +8784,7 @@
     {
       "id": "openspec/specs/model/memory-injection/spec.md#KV cache priming",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`generate_with_memory` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8806,7 +8806,7 @@
     {
       "id": "openspec/specs/model/memory-injection/spec.md#Strategy selection",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`prompt` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8828,7 +8828,7 @@
     {
       "id": "openspec/specs/portable-brain/spec.md#ZIP archive format",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`droid` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8850,7 +8850,7 @@
     {
       "id": "openspec/specs/portable-brain/spec.md#Integrity verification",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`droid` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8872,7 +8872,7 @@
     {
       "id": "openspec/specs/portable-brain/spec.md#Security hardening",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`droid` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8894,7 +8894,7 @@
     {
       "id": "openspec/specs/system1-decision/spec.md#Zero-shot prototype routing",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -8914,7 +8914,7 @@
     {
       "id": "openspec/specs/system1-decision/spec.md#Calibrated confidence gating",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -8934,7 +8934,7 @@
     {
       "id": "openspec/specs/system1-decision/spec.md#Closed-form Ridge linear probe for custom tools",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -8954,7 +8954,7 @@
     {
       "id": "openspec/specs/system1-decision/spec.md#Structured decision output",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`action` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -8976,7 +8976,7 @@
     {
       "id": "openspec/specs/training/parallel-scan/spec.md#Chunked Recurrent Forward",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "Curated area mapping; the named test asserts this behaviour.",
       "implementation": [
         "app.py",
@@ -8996,7 +8996,7 @@
     {
       "id": "openspec/specs/verification/surface-coverage/spec.md#Untested module coverage",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`src` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",
@@ -9018,7 +9018,7 @@
     {
       "id": "openspec/specs/verification/surface-coverage/spec.md#Test contract conformance",
       "status": "verified",
-      "owner": "openspec/changes/post-merge-completion/tasks.md#1.3",
+      "owner": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#1.3",
       "reason": "`Model.forward` is implemented and referenced by the named tests.",
       "implementation": [
         "app.py",

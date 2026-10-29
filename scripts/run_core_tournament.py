@@ -1507,9 +1507,12 @@ def run_tournament(args: argparse.Namespace) -> int:
     # ------------------------------------------------------------------ #
     mqar_steps = int(args.mqar_steps)
     copy_steps = int(args.copy_steps)
-    lm_steps = int(args.lm_steps)
     lm_seq_len = 128 if scale_mode == "large" else 80
     lm_batch_size = 16 if (scale_mode == "large" and tier_budget <= 600_000) else 4
+    if getattr(args, "lm_tokens", None) is not None:
+        lm_steps = max(1, int(args.lm_tokens) // max(1, lm_batch_size * lm_seq_len))
+    else:
+        lm_steps = int(args.lm_steps)
 
     # Track 1: Evaluate all 7 cores (C0..C6) with 3-point LR micro-sweep on val_cal
     core_records: List[Dict[str, Any]] = []
@@ -2367,7 +2370,9 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=1337, help="Base workload generation seed.")
     parser.add_argument("--mqar-steps", type=int, default=560, help="Training steps per core on MQAR recall.")
     parser.add_argument("--copy-steps", type=int, default=120, help="Training steps per core on exact delayed copy.")
-    parser.add_argument("--lm-steps", type=int, default=160, help="Training steps per arm on language modeling.")
+    parser.add_argument("--lm-steps", type=int, default=160, help="Training steps per arm on language modeling (legacy; use --lm-tokens).")
+    parser.add_argument("--lm-tokens", type=int, default=None, help="Training token budget per arm (replaces --lm-steps).")
+    parser.add_argument("--checkpoint-every", type=int, default=1000, help="Checkpoint interval in steps for LM training.")
     parser.add_argument("--include-scaleup", action="store_true", help="Also run Track 1b ~3.0M scale-up across C4, C3, and C6.")
     parser.add_argument("--scaleup-budget", type=int, default=3_000_000, help="Parameter budget for Track 1b scale-up comparison.")
     parser.add_argument("--scaleup-lm-steps", type=int, default=220, help="LM training steps for Track 1b scale-up models.")
