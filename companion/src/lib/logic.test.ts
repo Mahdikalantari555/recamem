@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blockedReason, derivePet, formatMetric, petLabel, pickBest } from './logic';
+import { blockedReason, derivePet, formatGateStatus, formatMetric, petLabel, pickBest } from './logic';
 import type { Checkpoint, CompanionState } from './types';
 
 const baseState = (): CompanionState => ({
@@ -61,5 +61,14 @@ describe('honest display', () => {
     expect(blockedReason({ status: 'none', reason: 'no eligible checkpoint' })).toBe('no eligible checkpoint');
     expect(blockedReason({ status: 'blocked' })).toBe('blocked');
     expect(blockedReason({ status: 'ok' })).toBeNull();
+  });
+
+  it('formats gate statuses honestly without fabricating passes', () => {
+    expect(formatGateStatus(true)).toBe('passed');
+    expect(formatGateStatus('passed')).toBe('passed');
+    expect(formatGateStatus(false)).toBe('failed');
+    expect(formatGateStatus('failed')).toBe('failed');
+    expect(formatGateStatus(null)).toBe('not evaluated');
+    expect(formatGateStatus(undefined)).toBe('not evaluated');
   });
 });

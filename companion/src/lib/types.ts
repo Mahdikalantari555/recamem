@@ -69,10 +69,15 @@ export interface Job {
   kind: string;
   status: string;
   progress: number;
+  tokens_seen?: number;
+  elapsed?: number;
+  log_tail?: string[];
+  checkpoint_path?: string | null;
   result: Record<string, unknown> | null;
   error: string | null;
   created_at: number;
   updated_at: number;
+  finished_at?: number | null;
   params?: Record<string, unknown>;
 }
 

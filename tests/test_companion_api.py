@@ -112,3 +112,32 @@ def test_checkpoint_selection_is_honest_about_no_weight_loader(server, tmp_path)
     assert "no trained-weight loader" in selected["reason"]
     status, payload = _get(server, "/api/v1/companion/state")
     assert payload["state"]["selected_checkpoint"] == "run-a"
+
+
+def test_job_status_exposes_elapsed_log_tail_and_checkpoint_path(server):
+    status, job = _post(server, "/api/v1/jobs", {"kind": "eval", "seed": 42})
+    assert status == 202
+    status, fetched = _get(server, f"/api/v1/jobs/{job['id']}")
+    assert status == 200
+    assert "elapsed" in fetched and isinstance(fetched["elapsed"], (int, float))
+    assert fetched["elapsed"] >= 0.0
+    assert "log_tail" in fetched and isinstance(fetched["log_tail"], list)
+    assert "progress" in fetched and fetched["progress"] == 0.0
+    assert "checkpoint_path" in fetched
+
+
+def test_hub_push_and_pull_validation_and_token_rejection(server):
+    # Tokens in payload rejected
+    status, err1 = _post(server, "/api/v1/hub/push", {"repo_id": "test/repo", "HF_TOKEN": "abc"})
+    assert status == 400 and "tokens must stay server-side" in err1["error"]
+
+    status, err2 = _post(server, "/api/v1/hub/pull", {"repo_id": "test/repo", "token": "xyz"})
+    assert status == 400 and "tokens must stay server-side" in err2["error"]
+
+    # Missing confirmation rejected
+    status, err3 = _post(server, "/api/v1/hub/push", {"repo_id": "test/repo"})
+    assert status == 400 and "require explicit confirmation" in err3["error"]
+
+    status, err4 = _post(server, "/api/v1/hub/pull", {"repo_id": "test/repo", "confirm": False})
+    assert status == 400 and "require explicit confirmation" in err4["error"]
+

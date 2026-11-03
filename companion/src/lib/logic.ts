@@ -52,3 +52,9 @@ export function blockedReason(payload: unknown): string | null {
   }
   return null;
 }
+
+export function formatGateStatus(status: unknown): 'passed' | 'failed' | 'not evaluated' {
+  if (status === true || status === 'passed') return 'passed';
+  if (status === false || status === 'failed') return 'failed';
+  return 'not evaluated';
+}

@@ -48,6 +48,14 @@ export const getJob = (id: string) => request<Job>(`/jobs/${encodeURIComponent(i
 export const cancelJob = (id: string) =>
   post<Job>(`/jobs/${encodeURIComponent(id)}/cancel`, {});
 export const listJobs = () => request<{ jobs: Job[] }>('/jobs');
+export const hubPush = (repoId: string, checkpoint?: string, confirm = true) =>
+  post<{ status: string; pushed: boolean; repo_id: string; checkpoint: string; url?: string }>(
+    '/hub/push', { repo_id: repoId, checkpoint, confirm }
+  );
+export const hubPull = (repoId: string, name?: string, confirm = true) =>
+  post<{ status: string; pulled: boolean; repo_id: string; checkpoint: string; path?: string }>(
+    '/hub/pull', { repo_id: repoId, name, confirm }
+  );
 
 /** SSE for real training progress. Callers fall back to polling getJob(). */
 export function jobEvents(id: string, onEvent: (event: Record<string, unknown>) => void): () => void {

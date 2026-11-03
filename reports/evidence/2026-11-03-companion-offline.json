@@ -50,7 +50,7 @@
     {
       "command": "npm --prefix companion test",
       "outcome": "passed",
-      "detail": "1 test file, 7 tests passed"
+      "detail": "1 test file, 8 tests passed"
     },
     {
       "command": "npm --prefix companion run build",
@@ -77,6 +77,9 @@
     "HF_TOKEN and related client-supplied secret fields cause a 400; runner strips them from the subprocess environment",
     "Chat responses are labelled delivery=full_turn; no synthetic token animation",
     "GET /api/v1/companion/state exposes last_fact_id so pet/treat/scold target a real recalled fact",
+    "GET /api/v1/jobs/{id} returns log_tail, wall-clock elapsed, progress from actual tokens seen, and produced checkpoint path; never computes progress from elapsed time",
+    "Training view provides live SVG loss/BPB chart, N-gram baselines, G0-G4 badges and generated samples",
+    "POST /api/v1/hub/push and POST /api/v1/hub/pull reject client tokens with 400 and require explicit confirm=true; authentication uses server-side token only",
     "The status bar fetches /checkpoints/best instead of permanently showing demo / recall-only",
     "POST /api/v1/checkpoints/select reports applied_to_generation=false and says no trained-weight loader exists"
   ],
@@ -85,7 +88,6 @@
     "no browser-level visual or 60fps animation check; headless HTTP and unit tests only",
     "no live checkpoint selection with a real trained model (fixture smoke runs remain G2=not_evaluated)",
     "no token-level streaming (the engine advertises no streaming capability)",
-    "no Hub push/pull UI and no live loss chart or generated-sample panel",
     "Tauri desktop shell and real-model release tiers remain blocked",
     "no trained checkpoint weights are loaded into generation (selection records provenance only)"
   ],

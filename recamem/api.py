@@ -78,14 +78,20 @@ class JobStore:
 
     def create(self, kind: str, **params: Any) -> Dict[str, Any]:
         job_id = uuid.uuid4().hex[:12]
+        now = time.time()
         job = {
             "id": job_id,
             "kind": kind,
             "params": params,
             "status": "queued",
-            "created_at": time.time(),
-            "updated_at": time.time(),
+            "created_at": now,
+            "updated_at": now,
+            "finished_at": None,
+            "elapsed": 0.0,
             "progress": 0.0,
+            "tokens_seen": 0,
+            "log_tail": [],
+            "checkpoint_path": None,
             "result": None,
             "error": None,
         }
@@ -98,7 +104,13 @@ class JobStore:
             job = self._jobs.get(job_id)
             if job is None:
                 raise ApiError(404, f"unknown job {job_id!r}")
-            return dict(job)
+            out = dict(job)
+            now = time.time()
+            finished = out.get("finished_at")
+            out["elapsed"] = round((finished if finished is not None else now) - out["created_at"], 2)
+            out.setdefault("log_tail", [])
+            out.setdefault("checkpoint_path", None)
+            return out
 
     def list(self) -> List[Dict[str, Any]]:
         with self._lock:
@@ -137,6 +149,19 @@ class Runtime:
         self.companion_ctx: Dict[str, Any] = {"events": [], "last_fact_id": None}
         self.selected_checkpoint: Optional[str] = None
         self.training = None
+
+    def get_job(self, job_id: str) -> Dict[str, Any]:
+        job = self.jobs.get(job_id)
+        if self.training is not None:
+            events = self.training.events(job_id)
+            log_lines = [ev["line"] for ev in events if ev.get("type") in ("log", "notice")]
+            if log_lines:
+                job["log_tail"] = log_lines[-50:]
+            if not job.get("checkpoint_path"):
+                manifest_ev = next((ev for ev in reversed(events) if ev.get("type") == "checkpoint"), None)
+                if manifest_ev and manifest_ev.get("checkpoint_path"):
+                    job["checkpoint_path"] = manifest_ev["checkpoint_path"]
+        return job
 
     def companion_state_fn(self):
         """A callable that measures the engine at the moment it is invoked."""
@@ -361,9 +386,9 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
                 if len(parts) == 3 and parts[0] == "jobs" and parts[2] == "events":
                     return self._job_events(parts[1], query)
                 if parts == ["jobs"]:
-                    return self._send(200, {"jobs": runtime.jobs.list()})
+                    return self._send(200, {"jobs": [runtime.get_job(j["id"]) for j in runtime.jobs.list()]})
                 if len(parts) == 2 and parts[0] == "jobs":
-                    return self._send(200, runtime.jobs.get(parts[1]))
+                    return self._send(200, runtime.get_job(parts[1]))
                 if parts == ["experiments"]:
                     return self._send(200, {"experiments": _experiments()})
                 if len(parts) == 2 and parts[0] == "experiments":
@@ -472,6 +497,47 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
                 else:
                     raise ApiError(400, f"unknown feedback action {action!r}")
                 return self._send(200, {"result": result})
+
+            if parts == ["hub", "push"]:
+                if any("token" in str(key).lower() for key in payload):
+                    raise ApiError(400, "tokens must stay server-side; none accepted in a request")
+                repo_id = _string(payload, "repo_id")
+                if not payload.get("confirm"):
+                    raise ApiError(400, "Hub operations require explicit confirmation (confirm=True)")
+                from recamem import hub
+                root = _companion_checkpoint_root(runtime)
+                checkpoint_name = payload.get("checkpoint") or runtime.selected_checkpoint
+                if not checkpoint_name:
+                    raise ApiError(400, "no checkpoint specified or selected for push")
+                target = (root / checkpoint_name).resolve()
+                if root.resolve() not in target.parents:
+                    raise ApiError(400, "checkpoint path escapes the checkpoint directory")
+                if not target.is_dir():
+                    raise ApiError(404, f"checkpoint directory does not exist: {checkpoint_name}")
+                try:
+                    url = hub.push_checkpoint(repo_id, target, private=bool(payload.get("private", False)))
+                except Exception as exc:
+                    raise ApiError(400, str(exc)) from exc
+                return self._send(200, {"status": "ok", "pushed": True, "repo_id": repo_id, "checkpoint": checkpoint_name, "url": str(url)})
+
+            if parts == ["hub", "pull"]:
+                if any("token" in str(key).lower() for key in payload):
+                    raise ApiError(400, "tokens must stay server-side; none accepted in a request")
+                repo_id = _string(payload, "repo_id")
+                if not payload.get("confirm"):
+                    raise ApiError(400, "Hub operations require explicit confirmation (confirm=True)")
+                from recamem import hub
+                root = _companion_checkpoint_root(runtime)
+                target_name = payload.get("name") or repo_id.replace("/", "_")
+                target = (root / target_name).resolve()
+                if root.resolve() not in target.parents:
+                    raise ApiError(400, "target path escapes the checkpoint directory")
+                revision = payload.get("revision")
+                try:
+                    pulled_dir = hub.pull_checkpoint(repo_id, target, revision=revision)
+                except Exception as exc:
+                    raise ApiError(400, str(exc)) from exc
+                return self._send(200, {"status": "ok", "pulled": True, "repo_id": repo_id, "checkpoint": target_name, "path": str(pulled_dir)})
 
             if parts == ["checkpoints", "select"]:
                 from recamem import companion

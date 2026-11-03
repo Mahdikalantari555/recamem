@@ -403,8 +403,8 @@ class TrainingJobRunner:
             if tokens:
                 seen = int(tokens.group(1).replace(",", ""))
                 metrics["tokens_seen"] = seen
-                if target > 0:
-                    self.updater(job_id, progress=min(1.0, seen / target))
+                progress = min(1.0, seen / target) if target > 0 else 0.0
+                self.updater(job_id, progress=progress, tokens_seen=seen)
             if loss:
                 metrics["loss"] = float(loss.group(1))
                 self._emit(job_id, {"type": "metrics", **metrics})
@@ -412,20 +412,43 @@ class TrainingJobRunner:
                 metrics["held_out_bpb"] = float(bpb.group(1))
                 self._emit(job_id, {"type": "metrics", **metrics})
         returncode = proc.wait()
+        finished_at = time.time()
         with self._lock:
             self._processes.pop(job_id, None)
         status = "done" if returncode == 0 else "failed"
         manifest: Dict[str, Any] = {}
+        checkpoint_path = None
+        report: Dict[str, Any] = {}
+        samples: List[str] = []
         if status == "done":
             params = self._params.get(job_id, {})
+            out_dir_path = Path(str(params.get("out_dir") or ""))
+            if out_dir_path.is_dir():
+                checkpoint_path = str(out_dir_path)
+            report_file = out_dir_path / "report.json"
+            if report_file.is_file():
+                try:
+                    report = json.loads(report_file.read_text())
+                except Exception:
+                    pass
+            samples_file = out_dir_path / "samples.txt"
+            if samples_file.is_file():
+                try:
+                    samples = [line.strip() for line in samples_file.read_text().splitlines() if line.strip()][-10:]
+                except Exception:
+                    pass
             try:
-                manifest = write_training_manifest(Path(str(params["out_dir"])), argv, params)
+                manifest = write_training_manifest(out_dir_path, argv, params)
             except Exception as exc:  # noqa: BLE001 - report it, never fake a pass
                 manifest = {"written": False, "reason": f"{type(exc).__name__}: {exc}"}
-            self._emit(job_id, {"type": "checkpoint", "manifest": manifest})
-        self._emit(job_id, {"type": "finished", "returncode": returncode, "metrics": metrics})
-        self.updater(job_id, status=status, result={**metrics, "manifest": manifest,
-                                                    "out_dir": self._params.get(job_id, {}).get("out_dir")},
+            self._emit(job_id, {"type": "checkpoint", "manifest": manifest, "checkpoint_path": checkpoint_path})
+        self._emit(job_id, {"type": "finished", "returncode": returncode, "metrics": metrics,
+                            "report": report, "samples": samples})
+        self.updater(job_id, status=status, finished_at=finished_at,
+                     checkpoint_path=checkpoint_path,
+                     result={**metrics, "manifest": manifest, "report": report, "samples": samples,
+                             "out_dir": self._params.get(job_id, {}).get("out_dir"),
+                             "checkpoint_path": checkpoint_path},
                      returncode=returncode)
 
     def cancel(self, job_id: str) -> bool:
@@ -439,5 +462,5 @@ class TrainingJobRunner:
         except subprocess.TimeoutExpired:
             proc.kill()
         self._emit(job_id, {"type": "cancelled"})
-        self.updater(job_id, status="cancelled")
+        self.updater(job_id, status="cancelled", finished_at=time.time())
         return True

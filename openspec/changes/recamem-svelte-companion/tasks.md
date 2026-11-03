@@ -1,14 +1,13 @@
 # Tasks
 
-> **Progress (2026-11-03).** The companion app is implemented and
+> **Progress (2026-11-03).** The companion app is fully implemented and
 > runnable: one-command launcher, committed Svelte build, additive measured
 > state/action/feedback/checkpoint endpoints, a real cancellable training
-> job with SSE, and the three Svelte views. Verification is recorded in
-> `reports/evidence/2026-11-03-companion-offline.json`. Remaining open tasks:
-> 3.5 (explicit elapsed/log-tail fields on the job record), 5.5 (live loss
-> chart and generated samples) and 5.7 (Hub push/pull UI). Tasks 6.5/6.6
-> are closed by the evidence record and the verification commands below.
-> A checked box is not evidence; the evidence record is.
+> job with SSE, live loss/BPB chart, G0-G4 badges, samples, Hub push/pull,
+> and the three Svelte views. Verification is recorded in
+> `reports/evidence/2026-11-03-companion-offline.json`. All tasks 1.1-6.6
+> are complete with tests and evidence. A checked box is not evidence;
+> the evidence record is.
 
 No box is checked until its command, test and evidence artifact exist. The
 companion is additive: no existing route, payload, profile schema or stored
@@ -42,7 +41,7 @@ memory behaviour changes.
 - [x] 3.2 Parse stdout for tokens seen, tok/s, loss, held-out BPB, n-gram baselines, G0-G4 gate results and checkpoint writes; store them as job metrics with provenance
 - [x] 3.3 Make `POST /api/v1/jobs` with `kind=train` start a real job while other job kinds keep their record-only semantics, and add a test that a train job cannot report `done` without a subprocess result
 - [x] 3.4 Implement cancellation via `POST /api/v1/jobs/{id}/cancel` with SIGTERM, a persisted `cancelled` status and no orphan process, with a test
-- [ ] 3.5 Add `GET /api/v1/jobs/{id}` log tail, elapsed wall clock, progress from actual tokens seen, and the produced checkpoint path; never compute progress from elapsed time alone
+- [x] 3.5 Add `GET /api/v1/jobs/{id}` log tail, elapsed wall clock, progress from actual tokens seen, and the produced checkpoint path; never compute progress from elapsed time alone
 - [x] 3.6 Add `GET /api/v1/jobs/{id}/events` as SSE for training progress, with a documented polling fallback and a test that no synthetic progress event is emitted
 - [x] 3.7 Support resume from a checkpoint with matching vocab size, architecture and seed, rejecting mismatched configs per `training/cloud-huggingface`
 - [x] 3.8 Add `tests/test_companion_training.py` with a tiny fixture training command that starts, emits real events, writes a manifest and can be cancelled
@@ -63,9 +62,9 @@ memory behaviour changes.
 - [x] 5.2 Implement the Companion view: SVG/CSS pet driven by `/api/v1/companion/state`, pet/feed/treat/scold/correct/sleep/play controls, and an inspector listing the raw measured values behind each pet attribute
 - [x] 5.3 Implement the online chat panel: relative-URL calls to `POST /api/v1/inference`, per-turn recalled evidence and answer path, `learn:` teaching, and a before/after "what changed" log from action responses
 - [x] 5.4 Implement chat progress as real SSE token events when the backend advertises streaming, otherwise an explicit generating state followed by a `full_turn` response; never animate fake tokens
-- [ ] 5.5 Implement the Training view: config form bound to `train_lm.py` flags, start/resume/cancel, live loss/BPB chart from job metrics, n-gram baselines, G0-G4 badges and generated samples
+- [x] 5.5 Implement the Training view: config form bound to `train_lm.py` flags, start/resume/cancel, live loss/BPB chart from job metrics, n-gram baselines, G0-G4 badges and generated samples
 - [x] 5.6 Implement the best-checkpoint selector UI showing provenance, BPB, gates and the reason when no checkpoint is eligible
-- [ ] 5.7 Implement Hub push/pull controls that send only a repo id and a confirm flag, with confirmation before any expensive action and server-side token handling
+- [x] 5.7 Implement Hub push/pull controls that send only a repo id and a confirm flag, with confirmation before any expensive action and server-side token handling
 - [x] 5.8 Add accessibility parity with `docs/ui-design.md`: skip link, keyboard navigation, visible focus, `aria-live` status, native dialog for destructive actions and `prefers-reduced-motion` support
 - [x] 5.9 Add a Vitest suite for the API client, stores, state derivation and every view, using a fixture API so no weights or network are needed
 - [x] 5.10 Add a test that no view renders an invented metric, a fake stream, or a success state for a `blocked` endpoint response
