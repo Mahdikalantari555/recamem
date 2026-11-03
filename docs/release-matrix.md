@@ -82,3 +82,7 @@ Measured by `PYTHONPATH=. python scripts/bench_workloads.py` on 2 vCPU
 incomplete and SHALL NOT be archived as fully implemented" while dependency
 closure is unresolved, and the following tasks remain open for artifacts that
 do not exist here: 3.4, 3.7, 7.10, 8.1, 9.2, 9.4, 9.5.
+
+## Open targets (2026-11-03)
+
+Every row marked **miss** above is still an open measured target. They are tracked as rows in `reports/completion-gaps.json` and must be met or re-baselined through an approved requirement revision; no threshold has been lowered and no case removed.

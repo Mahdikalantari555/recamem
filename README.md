@@ -74,7 +74,8 @@ contracts, the loopback-only rules and what is blocked without a Rust toolchain.
 
 ```bash
 python -m pytest tests -q                  # offline contracts
-python scripts/offline_gate.py             # ledger, MCP/CLI parity, packaging
+python scripts/offline_gate.py             # ledger, MCP/CLI parity, packaging, gap inventory
+python scripts/check_completion_gaps.py --schema-only
 python -m pytest --collect-only -q tests   # the authoritative test count
 ```
 

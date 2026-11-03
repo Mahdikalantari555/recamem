@@ -57,3 +57,7 @@ When extrapolating CPU training and inference budgets from `0.35M` and `3.0M` ru
 - **Effective Training Compute (`GFLOP/s`)**: At `N ≈ 3.5 × 10^5` parameters and `~2,400–11,600 tok/s` (`6 · N · tok/s`), effective CPU throughput is **`~5–25 GFLOP/s`** (rising to **`~50–70 GFLOP/s`** on `3.0M`-parameter dense matrix chunks where BLAS matmuls amortize Python dispatch, still far below theoretical AVX-512 peak).
 - **Realistic `17M` × `30M`-Token Training Wall-Clock**: Training a `17M`-parameter model on `30M` tokens requires `6 × 1.7 × 10^7 × 3.0 × 10^7 ≈ 3.06 × 10^15` FLOPs. At realistic sustained `10–50 GFLOP/s` on 2 CPU vCPUs, a single `30M`-token run takes **`17 hours` (`50 GFLOP/s`) to `3.5 days` (`10 GFLOP/s`)** — multi-day CPU compute or a single GPU run is required before promoting `C4` from `provisional_core` to `verified_winner`.
 - **Single-Stream Autoregressive Decode (`batch=1`)**: Eager Python `step()` loops at `~400–850 bytes/s` (`~100–250 tok/s`) are dominated by per-token PyTorch/Python kernel dispatch overhead (`~4–8 ms/step` across 4–8 layers), not FLOP capacity; production CPU deployment requires C++/ONNX/GGUF graph fusion to remove Python step overhead.
+
+## Generated core config
+
+The tournament output `configs/recamem_selected_core.json` is a generated artifact from the evidence ledger. Its `selection_status` stays `provisional_core` until the 17M target shape is trained; `tests/test_core_config_parity.py` verifies that the winning stack, hyperparameters and calibration still match the ledger.

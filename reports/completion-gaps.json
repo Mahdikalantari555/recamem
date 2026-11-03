@@ -1,0 +1,905 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-03",
+  "description": "Authoritative inventory of everything left in finish-implementation-and-close-gaps. A closed row needs a present artifact, a resolvable pytest node id and a passing evidence record.",
+  "source_of_truth": [
+    "reports/completion-evidence.json",
+    "docs/release-matrix.md",
+    "docs/surfaces.md",
+    "openspec/changes/recamem-language-learning/tasks.md",
+    "openspec/changes/recamem-core-architecture-tournament/tasks.md",
+    "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md"
+  ],
+  "scope_note": "The newer recamem-svelte-companion change is a separate deliverable and is tracked by its own tasks file, not here.",
+  "rows": [
+    {
+      "id": "C-01",
+      "source": "GLOSSARY.md trailing heredoc/shell text",
+      "owner": "finish-implementation-and-close-gaps#2.3",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_completion_hygiene.py::test_markdown_has_no_stray_heredoc_markers -q",
+      "artifact": "GLOSSARY.md",
+      "tests": [
+        "tests/test_completion_hygiene.py::test_markdown_has_no_stray_heredoc_markers"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Trailing EOF/echo lines removed.",
+      "covers": []
+    },
+    {
+      "id": "C-02",
+      "source": "notebooks/recamem_colab.ipynb invalid JSON",
+      "owner": "finish-implementation-and-close-gaps#2.2",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_completion_hygiene.py -q -k notebook",
+      "artifact": "notebooks/recamem_colab.ipynb",
+      "tests": [
+        "tests/test_completion_hygiene.py::test_notebook_is_valid_nbformat_json",
+        "tests/test_completion_hygiene.py::test_colab_notebook_covers_install_configure_train_and_push"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Valid nbformat 4; install/config/train/monitor/push cells; shell variable interpolation fixed.",
+      "covers": []
+    },
+    {
+      "id": "C-03",
+      "source": "plans/README.md references nonexistent 08_phase9_gate.md",
+      "owner": "finish-implementation-and-close-gaps#2.4",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_completion_hygiene.py::test_plan_readme_links_resolve -q",
+      "artifact": "plans/README.md",
+      "tests": [
+        "tests/test_completion_hygiene.py::test_plan_readme_links_resolve"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Reference corrected to 05_phase9_gate.md.",
+      "covers": []
+    },
+    {
+      "id": "C-04",
+      "source": "AGENTS.md/docs/plans hardcode developer-machine interpreter paths",
+      "owner": "finish-implementation-and-close-gaps#2.5",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_completion_hygiene.py::test_agent_facing_docs_have_no_machine_specific_interpreter_paths -q",
+      "artifact": "AGENTS.md",
+      "tests": [
+        "tests/test_completion_hygiene.py::test_agent_facing_docs_have_no_machine_specific_interpreter_paths"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Portable commands in AGENTS.md, docs/release-evidence.md and plans/*.md.",
+      "covers": []
+    },
+    {
+      "id": "C-05",
+      "source": ".github/workflows/ci.yml masks the E2E smoke with || true",
+      "owner": "finish-implementation-and-close-gaps#2.6",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_completion_hygiene.py::test_ci_does_not_mask_verification_commands -q",
+      "artifact": ".github/workflows/ci.yml",
+      "tests": [
+        "tests/test_completion_hygiene.py::test_ci_does_not_mask_verification_commands"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "E2E smoke is gating; optional installs are a labelled informational step.",
+      "covers": []
+    },
+    {
+      "id": "C-06",
+      "source": "docs/testing.md claims psutil is not a core dependency",
+      "owner": "finish-implementation-and-close-gaps#2.8",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_completion_hygiene.py::test_testing_doc_does_not_claim_psutil_is_optional -q",
+      "artifact": "docs/testing.md",
+      "tests": [
+        "tests/test_completion_hygiene.py::test_testing_doc_does_not_claim_psutil_is_optional"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Doc now states psutil is a declared core dependency.",
+      "covers": []
+    },
+    {
+      "id": "C-07",
+      "source": "Vela PoC report uses a foreign absolute path and unresolvable short commit",
+      "owner": "finish-implementation-and-close-gaps#2.9",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_completion_hygiene.py::test_vela_report_has_honest_provenance -q",
+      "artifact": "reports/vela-poc-final.json",
+      "tests": [
+        "tests/test_completion_hygiene.py::test_vela_report_has_honest_provenance"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Origin host, unavailable checksum and squashed-commit note recorded; no checksum fabricated.",
+      "covers": []
+    },
+    {
+      "id": "C-08",
+      "source": "pyproject.toml duplicate src.model.tournament package entry",
+      "owner": "finish-implementation-and-close-gaps#2.10",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_completion_hygiene.py::test_pyproject_packages_cover_importable_packages -q",
+      "artifact": "pyproject.toml",
+      "tests": [
+        "tests/test_completion_hygiene.py::test_pyproject_packages_cover_importable_packages"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Duplicate removed; every importable package is declared once.",
+      "covers": []
+    },
+    {
+      "id": "C-09",
+      "source": "configs/recamem_selected_core.json disagrees with tournament winner",
+      "owner": "finish-implementation-and-close-gaps#3.1",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_core_config_parity.py -q",
+      "artifact": "configs/recamem_selected_core.json",
+      "tests": [
+        "tests/test_core_config_parity.py::test_selected_architecture_matches_tournament_winner",
+        "tests/test_core_config_parity.py::test_hyperparameters_and_calibration_match_tournament_winner"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "memory_arm_id=M4 and multitask_batching_mode=summed restored from the evidence ledger.",
+      "covers": []
+    },
+    {
+      "id": "C-10",
+      "source": "reports/recamem-core-selection.md overstates runtime selection status",
+      "owner": "finish-implementation-and-close-gaps#3.2",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_core_config_parity.py::test_runtime_status_is_provisional_while_17m_is_untrained -q",
+      "artifact": "reports/recamem-core-selection.md",
+      "tests": [
+        "tests/test_core_config_parity.py::test_runtime_status_is_provisional_while_17m_is_untrained"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Report distinguishes the verified 350K tournament tier from the untrained 17M runtime status.",
+      "covers": []
+    },
+    {
+      "id": "C-11",
+      "source": "generated core config is not documented",
+      "owner": "finish-implementation-and-close-gaps#3.4",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_core_config_parity.py::test_config_is_described_as_a_generated_artifact -q",
+      "artifact": "docs/core-candidates.md",
+      "tests": [
+        "tests/test_core_config_parity.py::test_config_is_described_as_a_generated_artifact"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "docs/core-candidates.md and docs/architecture-tournament.md document the generated artifact.",
+      "covers": []
+    },
+    {
+      "id": "C-12",
+      "source": "training smoke tests depend on an uncommitted TinyStories memmap",
+      "owner": "finish-implementation-and-close-gaps#2.1",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_colab_train.py tests/test_incremental_resume.py -q",
+      "artifact": "tests/conftest.py",
+      "tests": [
+        "tests/test_colab_train.py::test_colab_train_small",
+        "tests/test_incremental_resume.py::test_resume_continues",
+        "tests/test_incremental_resume.py::test_resume_rejects_mismatched_config"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Self-contained deterministic tiny_corpus fixture; dataset_source=fixture, never reported as a language result.",
+      "covers": []
+    },
+    {
+      "id": "C-13",
+      "source": "Hub tests fail in the core-only tier on a missing optional dependency",
+      "owner": "finish-implementation-and-close-gaps#2.1",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_hub_push_pull.py -q",
+      "artifact": "tests/test_hub_push_pull.py",
+      "tests": [
+        "tests/test_hub_push_pull.py::test_push_calls_upload_folder",
+        "tests/test_hub_push_pull.py::test_pull_verifies_and_moves",
+        "tests/test_hub_push_pull.py::test_pull_aborts_on_checksum_mismatch"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Module-level importorskip with an explicit [cloud] reason; tests pass when the extra is installed.",
+      "covers": []
+    },
+    {
+      "id": "C-14",
+      "source": "completion gap inventory and guard are absent",
+      "owner": "finish-implementation-and-close-gaps#1.2",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py --schema-only",
+      "artifact": "scripts/check_completion_gaps.py",
+      "tests": [
+        "tests/test_completion_gaps.py::test_guard_accepts_complete_inventory",
+        "tests/test_completion_gaps.py::test_real_inventory_is_structurally_valid"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Inventory schema, closure protocol and source-coverage guard implemented.",
+      "covers": []
+    },
+    {
+      "id": "C-15",
+      "source": "offline gate does not check the completion inventory",
+      "owner": "finish-implementation-and-close-gaps#1.6",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. python scripts/offline_gate.py",
+      "artifact": "scripts/offline_gate.py",
+      "tests": [
+        "tests/test_completion_hygiene.py::test_offline_gate_checks_completion_inventory"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "completion_inventory check added; structure is gating, closure is not.",
+      "covers": []
+    },
+    {
+      "id": "C-16",
+      "source": "plans/README.md leaves the Phase A decision ambiguous",
+      "owner": "finish-implementation-and-close-gaps#2.7",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_completion_hygiene.py::test_plans_readme_states_phase_a_decision_is_open -q",
+      "artifact": "plans/README.md",
+      "tests": [
+        "tests/test_completion_hygiene.py::test_plans_readme_states_phase_a_decision_is_open"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Decision #7 is explicitly recorded as still open and tracked in the inventory.",
+      "covers": []
+    },
+    {
+      "id": "C-17",
+      "source": "real-model and grounding tiers have no documented runbook",
+      "owner": "finish-implementation-and-close-gaps#4.1",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_completion_hygiene.py::test_real_model_runbook_exists_and_is_honest -q",
+      "artifact": "docs/real-model-runbook.md",
+      "tests": [
+        "tests/test_completion_hygiene.py::test_real_model_runbook_exists_and_is_honest"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Runbook documents fetch, checksum, fail-fast checks and evidence record fields.",
+      "covers": []
+    },
+    {
+      "id": "C-18",
+      "source": "published performance misses have no tracked disposition",
+      "owner": "finish-implementation-and-close-gaps#1.1",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. pytest tests/test_completion_hygiene.py::test_release_matrix_marks_open_targets -q",
+      "artifact": "docs/release-matrix.md",
+      "tests": [
+        "tests/test_completion_hygiene.py::test_release_matrix_marks_open_targets"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "docs/release-matrix.md names the inventory; every miss has an open row below.",
+      "covers": []
+    },
+    {
+      "id": "C-19",
+      "source": "full offline suite baseline is stale",
+      "owner": "finish-implementation-and-close-gaps#1.3",
+      "tier": "offline",
+      "status": "closed",
+      "verify_command": "PYTHONPATH=. python -m pytest tests -q",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [
+        "tests/test_completion_gaps.py::test_schema_only_cli_exits_zero_on_the_real_inventory"
+      ],
+      "evidence": [
+        "reports/evidence/2026-11-03-offline-closure.json"
+      ],
+      "reason": "Fresh baseline recorded with the exact failing test ids; closed rows still require the closure record.",
+      "covers": []
+    },
+    {
+      "id": "O-001",
+      "source": "docs/release-matrix.md#delta-20-task-memory-loss",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Published target miss; must be met or re-baselined through an approved revision.",
+      "covers": []
+    },
+    {
+      "id": "O-002",
+      "source": "docs/release-matrix.md#lexical-p95-100k-facts",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Published target miss; must be met or re-baselined through an approved revision.",
+      "covers": []
+    },
+    {
+      "id": "O-003",
+      "source": "docs/release-matrix.md#matryoshka-64-d-speedup-p50",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Published target miss; must be met or re-baselined through an approved revision.",
+      "covers": []
+    },
+    {
+      "id": "O-004",
+      "source": "docs/release-matrix.md#merge-2x10k-facts",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Published target miss; must be met or re-baselined through an approved revision.",
+      "covers": []
+    },
+    {
+      "id": "O-005",
+      "source": "docs/release-matrix.md#retrieval-p95-100k-facts",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Published target miss; must be met or re-baselined through an approved revision.",
+      "covers": []
+    },
+    {
+      "id": "O-006",
+      "source": "docs/release-matrix.md#retrieval-p95-50k-facts",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Published target miss; must be met or re-baselined through an approved revision.",
+      "covers": []
+    },
+    {
+      "id": "O-007",
+      "source": "docs/release-matrix.md#surprise-gate-insert-reduction",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Published target miss; must be met or re-baselined through an approved revision.",
+      "covers": []
+    },
+    {
+      "id": "O-008",
+      "source": "docs/surfaces.md#line-112",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "offline",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Needs a real ONNX anchor / a compiled Tauri shell in this environment.",
+      "covers": []
+    },
+    {
+      "id": "O-009",
+      "source": "docs/surfaces.md#line-114",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "offline",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Needs a real ONNX anchor / a compiled Tauri shell in this environment.",
+      "covers": []
+    },
+    {
+      "id": "O-010",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#1.4",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Unresolved ledger row; needs implementation and passing evidence.",
+      "covers": []
+    },
+    {
+      "id": "O-011",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#2.5",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Unresolved ledger row; needs implementation and passing evidence.",
+      "covers": []
+    },
+    {
+      "id": "O-012",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#4.3",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Needs a named 8B reference model and an inference budget.",
+      "covers": []
+    },
+    {
+      "id": "O-013",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#4.4",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Needs a named 8B reference model and an inference budget.",
+      "covers": []
+    },
+    {
+      "id": "O-014",
+      "source": "openspec/changes/archive/2026-10-21-edge-slm-optimization/tasks.md#5.2",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Unresolved ledger row; needs implementation and passing evidence.",
+      "covers": []
+    },
+    {
+      "id": "O-015",
+      "source": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#7.10",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "real-model",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Blocked on model weights and a trained checkpoint.",
+      "covers": []
+    },
+    {
+      "id": "O-016",
+      "source": "openspec/changes/archive/2026-10-28-post-merge-completion/tasks.md#9.4",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "real-model",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Blocked on model weights and a trained checkpoint.",
+      "covers": []
+    },
+    {
+      "id": "O-017",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#1.2",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-018",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#4.1",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-019",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#4.2",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-020",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#4.3",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-021",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#4.4",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-022",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#4.5",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-023",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#4.6",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-024",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#5.3",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-025",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#5.4",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-026",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#5.5",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-027",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#6.2",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-028",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#6.3",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-029",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#6.4",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-030",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#6.5",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "O-031",
+      "source": "openspec/changes/recamem-language-learning/tasks.md#7.4",
+      "owner": "finish-implementation-and-close-gaps#7.1",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
+      "tests": [],
+      "evidence": [],
+      "reason": "Language-learning task not yet evidenced (G0-G4 / token runs).",
+      "covers": []
+    },
+    {
+      "id": "X-01",
+      "source": "acceptance tier: real-model has no passing evidence",
+      "owner": "finish-implementation-and-close-gaps#4.3",
+      "tier": "real-model",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "artifact": "docs/real-model-runbook.md",
+      "tests": [],
+      "evidence": [],
+      "reason": "No ONNX/GGUF weights and no llama-cpp-python build in this checkout.",
+      "covers": []
+    },
+    {
+      "id": "X-02",
+      "source": "acceptance tier: grounding has no passing evidence",
+      "owner": "finish-implementation-and-close-gaps#4.5",
+      "tier": "grounding",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "artifact": "docs/real-model-runbook.md",
+      "tests": [],
+      "evidence": [],
+      "reason": "Needs a trained RTU_CHECKPOINT; generation quality cannot be asserted from random weights.",
+      "covers": []
+    },
+    {
+      "id": "X-03",
+      "source": "Vela: RTU contribution cannot be isolated (prompt-only injection)",
+      "owner": "finish-implementation-and-close-gaps#6.1",
+      "tier": "benchmark",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "artifact": "scripts/run_vela_benchmark.py",
+      "tests": [],
+      "evidence": [],
+      "reason": "No backend in this environment advertises hidden injection; C vs D is not interpretable.",
+      "covers": []
+    },
+    {
+      "id": "X-04",
+      "source": "Vela: base model does not emit the required decision tokens",
+      "owner": "finish-implementation-and-close-gaps#6.3",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "artifact": "docs/vela-poc-results.md",
+      "tests": [],
+      "evidence": [],
+      "reason": "Re-run with a more instruction-following model and report extraction heuristics honestly.",
+      "covers": []
+    },
+    {
+      "id": "X-05",
+      "source": "Vela: no held-out generated rule sets",
+      "owner": "finish-implementation-and-close-gaps#6.3",
+      "tier": "benchmark",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "artifact": "recamem_text_learning_benchmark.md",
+      "tests": [],
+      "evidence": [],
+      "reason": "Held-out rule sets are specified but not generated or run.",
+      "covers": []
+    },
+    {
+      "id": "X-06",
+      "source": "Tauri shell is scaffolded but never compiled",
+      "owner": "finish-implementation-and-close-gaps#6.5",
+      "tier": "offline",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "artifact": "src-tauri/Cargo.toml",
+      "tests": [],
+      "evidence": [],
+      "reason": "Rust toolchain and platform WebView are unavailable; recamem ui reports shell=browser.",
+      "covers": []
+    },
+    {
+      "id": "X-07",
+      "source": "five UI pages are labelled not available yet",
+      "owner": "finish-implementation-and-close-gaps#6.6",
+      "tier": "offline",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "artifact": "web/src/App.tsx",
+      "tests": [],
+      "evidence": [],
+      "reason": "Memory Explorer, Benchmarks, Training, Architecture Lab and Settings lack backend contracts.",
+      "covers": []
+    },
+    {
+      "id": "X-08",
+      "source": "recamem doctor exits 1 without a real anchor",
+      "owner": "finish-implementation-and-close-gaps#4.7",
+      "tier": "real-model",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "artifact": "recamem/cli.py",
+      "tests": [],
+      "evidence": [],
+      "reason": "Correct fail-fast behaviour; only closes when real weights are present.",
+      "covers": []
+    },
+    {
+      "id": "X-09",
+      "source": "src/model deprecation shims are still shipped",
+      "owner": "finish-implementation-and-close-gaps#D9",
+      "tier": "offline",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "artifact": "docs/migration.md",
+      "tests": [],
+      "evidence": [],
+      "reason": "Removal is a separate release decision; do not delete before the one-release window.",
+      "covers": []
+    },
+    {
+      "id": "X-10",
+      "source": "plans/01_source_analysis.md #7 bug-for-bug vs fix decision",
+      "owner": "finish-implementation-and-close-gaps#2.7",
+      "tier": "offline",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "artifact": "plans/01_source_analysis.md",
+      "tests": [],
+      "evidence": [],
+      "reason": "Genuinely unresolved MLX trace-buffer decision; now tracked instead of being called resolved.",
+      "covers": []
+    },
+    {
+      "id": "X-11",
+      "source": "matched-budget 1B+TTC vs 8B reference model not identified",
+      "owner": "finish-implementation-and-close-gaps#4.6",
+      "tier": "benchmark",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "artifact": "reports/2026-10-22-real-model-verification.md",
+      "tests": [],
+      "evidence": [],
+      "reason": "No 8B model is named and the sandbox has 4 GB RAM / 2 vCPUs.",
+      "covers": []
+    },
+    {
+      "id": "X-12",
+      "source": "deprecation of hand-written test counts in docs",
+      "owner": "finish-implementation-and-close-gaps#7.5",
+      "tier": "offline",
+      "status": "open",
+      "verify_command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "artifact": "scripts/offline_gate.py",
+      "tests": [],
+      "evidence": [],
+      "reason": "Gate already enforces it; keep it enforced while release docs are rewritten.",
+      "covers": []
+    }
+  ]
+}

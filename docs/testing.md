@@ -33,8 +33,9 @@ PYTHONPATH=. .venv/bin/python -m pytest tests -q
 ```
 
 `requirements-core.txt` is the contract: every test above passes without
-`onnxruntime`, `hnswlib`, `sentence-transformers`, `llama-cpp-python`,
-`streamlit` or `psutil`. When an optional package is missing, the code reports
+`onnxruntime`, `hnswlib`, `sentence-transformers`, `llama-cpp-python`
+or `streamlit`. `psutil` is a declared core dependency (see
+`requirements-core.txt`) and is available in the offline tier. When an optional package is missing, the code reports
 the capability instead of silently degrading:
 
 * `OnnxMiniLM.is_mock == True` and embeddings are deterministic mock vectors;
@@ -58,6 +59,7 @@ pytest tests -q -k "optional_dependencies"            # probes the fallback cont
 
 ```bash
 python scripts/check_release_evidence.py               # schema + inventory coverage (allowed to be incomplete)
+python scripts/check_completion_gaps.py --schema-only    # completion inventory structure/coverage
 python scripts/check_release_evidence.py --require-complete   # release gate; exits 1 until §9 is closed
 python scripts/validate_openspec.py                    # change/task/spec structure
 ```

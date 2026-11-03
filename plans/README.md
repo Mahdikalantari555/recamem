@@ -10,7 +10,7 @@ Guiding decisions, fixed up front:
    unavoidable (RNG, default init, `var`/dtype conventions).
 
 2. **Phase 9 (continual learning) is gated on Phase 8 passing.** See
-   `08_phase9_gate.md` for the concrete gate. It must not become an
+   `05_phase9_gate.md` for the concrete gate. It must not become an
    excuse to start experimenting before reproduction lands.
 
 3. **Remote-sensing "plastic model" is a separate track.** See
@@ -37,3 +37,7 @@ One decision is still open and blocks Phase A: the trace buffers
 (`states`/`decaytrace`/`embedtrace`) are genuinely in MLX's
 `trainable_parameters()`, so the optimizer clobbers the manually-set
 `stop_gradient` state by ~1.6e-3/step. Bug-for-bug vs. fix — see 01 #7.
+It is **not** resolved: it is tracked as an open row in
+`reports/completion-gaps.json` (source `plans/01_source_analysis.md#7`). Do not
+read the "all seven RESOLVED" note above as covering this decision; that note
+refers only to the seven `[VERIFY]` items about MLX defaults.

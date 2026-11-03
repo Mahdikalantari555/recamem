@@ -28,3 +28,7 @@ for cid, cfg in solve_all_cores_for_tier('small', vocab_size=4096).items():
     print(f'{cid}: actual={actual:,} target={cfg.target_params:,} err={abs(actual-cfg.target_params)/cfg.target_params:.2%}')
 "
 ```
+
+## Generated core config
+
+The selected stack is exported as `configs/recamem_selected_core.json`, a generated artifact: regenerate it from `reports/evidence/recamem-core-tournament.json` rather than editing it by hand. `tests/test_core_config_parity.py` pins the winner, calibration and runtime status.

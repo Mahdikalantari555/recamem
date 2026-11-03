@@ -1088,5 +1088,10 @@
       "retrieval_hits": 12,
       "retrieval_accuracy": 1.0
     }
-  }
+  },
+  "origin_host": "Windows/WSL workstation reported by the original run; not present in this checkout",
+  "artifact_sha256": null,
+  "artifact_sha256_note": "The GGUF artifact is absent from this repository; no checksum was computed and none is fabricated.",
+  "commit_note": "Short hash from the original run. This checkout is a squashed snapshot (f386ef2c3d81820316df06fbf9a1e7898065eb64); that commit object is not resolvable here.",
+  "model_path_note": "Historical path on the origin host, not a verification path on this machine."
 }

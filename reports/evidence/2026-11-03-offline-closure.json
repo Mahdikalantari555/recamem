@@ -1,0 +1,88 @@
+{
+  "tier": "offline",
+  "outcome": "passed",
+  "status": "offline phase of finish-implementation-and-close-gaps; real-model, grounding and benchmark tiers remain blocked",
+  "date": "2026-11-03",
+  "commit": "f386ef2c3d81820316df06fbf9a1e7898065eb64",
+  "command": "PYTHONPATH=. python -m pytest tests -q && PYTHONPATH=. python scripts/offline_gate.py && PYTHONPATH=. python scripts/check_completion_gaps.py --schema-only && PYTHONPATH=. python scripts/validate_openspec.py && PYTHONPATH=. python scripts/check_release_evidence.py && PYTHONPATH=. RECAMEM_ANCHOR=mock python scripts/verify_remote_sensing_e2e.py",
+  "environment": {
+    "python": "3.11.2",
+    "pytest": "9.2.0",
+    "torch": "2.15.0+cu132",
+    "numpy": "2.4.6",
+    "safetensors": "installed",
+    "psutil": "installed",
+    "huggingface_hub": "2.4.0 (optional [cloud] extra, installed locally to exercise its tests)"
+  },
+  "configuration": {
+    "anchor": "mock (explicit, via tests/conftest.py)",
+    "seed": "per-test; tiny_corpus fixture uses 1337",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "hardware": "sandbox Linux, CPU only",
+  "result": {
+    "passed": 1095,
+    "failed": 0,
+    "skipped": 2,
+    "duration_seconds": 130.32,
+    "baseline": "reports/evidence/2026-11-03-offline-baseline.json (6 failed, 1062 passed, 2 skipped)"
+  },
+  "checks": [
+    {
+      "name": "hygiene_and_parity_subset",
+      "command": "PYTHONPATH=. python -m pytest tests/test_completion_hygiene.py tests/test_core_config_parity.py -q",
+      "outcome": "passed",
+      "passed": 18
+    },
+    {
+      "name": "full_offline_suite",
+      "command": "PYTHONPATH=. python -m pytest tests -q",
+      "outcome": "passed",
+      "passed": 1095,
+      "skipped": 2
+    },
+    {
+      "name": "offline_gate",
+      "command": "PYTHONPATH=. python scripts/offline_gate.py",
+      "outcome": "passed",
+      "checks": 7
+    },
+    {
+      "name": "completion_inventory_structure",
+      "command": "PYTHONPATH=. python scripts/check_completion_gaps.py --schema-only",
+      "outcome": "passed",
+      "closed_rows": 19,
+      "open_or_blocked_rows": 43
+    },
+    {
+      "name": "openspec_structure",
+      "command": "PYTHONPATH=. python scripts/validate_openspec.py",
+      "outcome": "passed"
+    },
+    {
+      "name": "release_evidence_schema",
+      "command": "PYTHONPATH=. python scripts/check_release_evidence.py",
+      "outcome": "passed",
+      "entries": 489
+    },
+    {
+      "name": "remote_sensing_e2e_smoke",
+      "command": "PYTHONPATH=. RECAMEM_ANCHOR=mock python scripts/verify_remote_sensing_e2e.py",
+      "outcome": "passed"
+    },
+    {
+      "name": "release_completion_gate",
+      "command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "outcome": "failed",
+      "reason": "expected by design: 3 partial + 2 blocked rows and no passing evidence for grounding / real-model tiers"
+    },
+    {
+      "name": "completion_closure_gate",
+      "command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "outcome": "failed",
+      "reason": "expected by design: 43 gaps still open or blocked; the guard was not weakened"
+    }
+  ],
+  "note": "This record certifies the offline tier only. No model weights, trained checkpoint, benchmark hardware or compiled desktop shell were available, so no real-model, grounding or benchmark claim is made."
+}

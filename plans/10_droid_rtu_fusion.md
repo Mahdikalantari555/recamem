@@ -117,7 +117,7 @@ Delivered as OpenSpec change `droid-rtu-fusion-completion` (archived as
 - `Model.sample()` is stochastic (`rtu.py:216-221`), so generation is
   non-deterministic. Determinism tests must compare **state tensors**, not text.
 - The suite is 15 files / 57 test functions — not the "43 tests" the README
-  claims. Run gate: `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests`.
+  claims. Run gate: `PYTHONPATH=. python -m pytest tests`.
 
 ## Target architecture
 
@@ -321,9 +321,9 @@ Guardrails:
 
 ### Phase E — verification gates
 
-- [x] E1 `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests` — full
+- [x] E1 `PYTHONPATH=. python -m pytest tests` — full
         suite green, zero changes to existing contracts.
-- [x] E2 `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/python scripts/verify_remote_sensing_e2e.py`
+- [x] E2 `PYTHONPATH=. python scripts/verify_remote_sensing_e2e.py`
         — green with the fused backend attached.
 - [x] E3 Benchmark one fused `chat("/slow <query>")`; if it exceeds 10 s, lower
         `max_prompt_bytes` and record the measured ceiling in this file.

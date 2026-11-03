@@ -10,20 +10,36 @@ proof. Each row has an owning task for follow-up.
 ## Check schema and coverage
 
 ```sh
-PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/python scripts/check_release_evidence.py
+PYTHONPATH=. python scripts/check_release_evidence.py
 ```
 
 Exit 0 means the inventory is fully represented and all claims have structurally
 valid references. It does **not** mean the release is complete.
 
 ```sh
-PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/python scripts/check_release_evidence.py --require-complete
+PYTHONPATH=. python scripts/check_release_evidence.py --require-complete
 ```
 
 The release gate rejects all unresolved rows and requires passing evidence in
 all five tiers: offline, real-model, grounding, concurrency-migration, benchmark.
 Exit codes: 0 valid, 1 invalid/incomplete, 2 unreadable/malformed input.
 This gate is expected to fail during implementation. Do not weaken it to merge.
+
+## Completion gap inventory
+
+`reports/completion-gaps.json` lists every item still open, with its source,
+owner, verification command, artifact, test and status. A row may be marked
+`closed` only when its artifact exists, its pytest node id resolves and a
+passing evidence record references it.
+
+```sh
+PYTHONPATH=. python scripts/check_completion_gaps.py --schema-only   # structure/coverage, CI
+PYTHONPATH=. python scripts/check_completion_gaps.py                 # exit 1 until every gap is closed
+```
+
+The default mode is expected to fail during implementation. It is a second,
+independent guard: it does **not** replace `--require-complete` above and it
+must not be weakened to merge.
 
 ## Row schema
 
@@ -58,3 +74,14 @@ commit and measurements before certifying evidence. Full historical reconciliati
 (tasks 1.2/1.3) and the final cross-feature gates remain required. Update the ledger
 and guard together if an approved inventory revision adds requirements; never delete
 unresolved entries merely to obtain a green release gate.
+
+## Current records (2026-11-03)
+
+- `reports/evidence/2026-11-03-offline-baseline.json` — fresh full-suite
+  baseline with the exact failing test ids (outcome `failed`, recorded rather
+  than hidden).
+- `reports/evidence/2026-11-03-offline-closure.json` — the offline fixes in
+  `finish-implementation-and-close-gaps` with their contract tests.
+
+Neither record claims a `real-model`, `grounding` or `benchmark` tier result.
+`--require-complete` still exits 1 until those tiers have passing evidence.

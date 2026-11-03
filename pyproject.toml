@@ -66,7 +66,6 @@ packages = [
     "src.model",
     "src.model.cores",
     "src.model.tournament",
-    "src.model.tournament",
 ]
 
 [tool.setuptools.package-data]

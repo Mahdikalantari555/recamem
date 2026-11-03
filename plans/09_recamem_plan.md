@@ -223,10 +223,10 @@ foundation model, and full external-benchmark publication in the first delivery.
 
 ## Validation plan
 
-1. `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests` — all pre-existing 57 tests green
+1. `PYTHONPATH=. python -m pytest tests` — all pre-existing 57 tests green
    modulo intentional, documented changes (recall-boost removal, anchor opt-in), plus ≥15 new tests
    from Phase 0 covering `retrieve`, `merge`, `consolidate`, snapshots, and package round-trip.
-2. `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/python scripts/verify_remote_sensing_e2e.py` — must
+2. `PYTHONPATH=. python scripts/verify_remote_sensing_e2e.py` — must
    stop raising `AttributeError` and pass end to end.
 3. `recamem doctor` reports real-anchor mode with model path and load time.
 4. `recamem bench --fixture` runs fully offline and writes a report with `provenance=fixture`.

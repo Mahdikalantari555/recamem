@@ -1,0 +1,38 @@
+{
+  "tier": "offline",
+  "outcome": "failed",
+  "status": "baseline before the completion change; recorded, not hidden",
+  "date": "2026-11-03",
+  "commit": "f386ef2c3d81820316df06fbf9a1e7898065eb64",
+  "command": "PYTHONPATH=. OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python -m pytest tests -q",
+  "environment": {
+    "python": "3.11.2",
+    "pytest": "9.2.0",
+    "torch": "2.15.0+cu132",
+    "numpy": "2.4.6",
+    "safetensors": "installed",
+    "psutil": "installed",
+    "huggingface_hub": "not installed at baseline"
+  },
+  "configuration": {
+    "anchor": "mock (explicit, via tests/conftest.py)",
+    "seed": "per-test"
+  },
+  "hardware": "sandbox Linux, CPU only, OMP_NUM_THREADS=1",
+  "result": {
+    "passed": 1062,
+    "failed": 6,
+    "skipped": 2,
+    "duration_seconds": 96.17,
+    "failing_tests": [
+      "tests/test_colab_train.py::test_colab_train_small",
+      "tests/test_hub_push_pull.py::test_push_calls_upload_folder",
+      "tests/test_hub_push_pull.py::test_pull_verifies_and_moves",
+      "tests/test_hub_push_pull.py::test_pull_aborts_on_checksum_mismatch",
+      "tests/test_incremental_resume.py::test_resume_continues",
+      "tests/test_incremental_resume.py::test_resume_rejects_mismatched_config"
+    ],
+    "triage": "two root causes: training smoke tests depend on an uncommitted TinyStories train.bin; three Hub tests import an optional [cloud] dependency in the core-only tier"
+  },
+  "note": "This reconciles the '10 pre-existing failures' note in recamem-language-learning/tasks.md#7.2: the current checkout has six, all from the two root causes above."
+}
