@@ -42,6 +42,8 @@ Date: 29 October 2026. Proof-of-concept run of the Vela text-only learning bench
 ## Provenance
 - Commit: see report `commit` field
 - Command: `PYTHONPATH=. python scripts/run_vela_benchmark.py`
-- Model: `/mnt/d/AI/.lmstudio/models/OpenBMB/MiniCPM5-2B-Q4_K_M/MiniCPM5-2B-Q4_K_M.gguf`
+- Model (origin host): `/mnt/d/AI/.lmstudio/models/OpenBMB/MiniCPM5-2B-Q4_K_M/MiniCPM5-2B-Q4_K_M.gguf`
+- Artifact sha256: **unavailable** — the GGUF file is not in this repository, so no checksum is claimed.
+- Commit: `bde46c1` (short hash from the original run; this checkout is a squashed snapshot at `f386ef2`, so the object cannot be resolved here).
 - Anchor: ONNX MiniLM (real)
 - RTU: plastic updates enabled in C, skipped in D

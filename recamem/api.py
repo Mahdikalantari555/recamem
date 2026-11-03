@@ -133,6 +133,29 @@ class Runtime:
         self.error: Optional[str] = None
         self.active_op: Optional[str] = None
         self.started_at = time.time()
+        # Companion surface state: all values are re-read from the engine.
+        self.companion_ctx: Dict[str, Any] = {"events": [], "last_fact_id": None}
+        self.selected_checkpoint: Optional[str] = None
+        self.training = None
+
+    def companion_state_fn(self):
+        """A callable that measures the engine at the moment it is invoked."""
+        from recamem import companion
+
+        engine = self.require_engine()
+        return lambda: companion.measured_state(
+            engine, anchor=self.anchor_mode(), backend=self.generation_backend(),
+            profile=self.profile, selected_checkpoint=self.selected_checkpoint,
+        )
+
+    def generation_backend(self) -> str:
+        engine = self.engine
+        if engine is None:
+            return "unavailable"
+        backend = getattr(engine, "gguf_backend", None)
+        if backend is None:
+            return "memory-only"
+        return type(backend).__name__
 
     # -- profile lifecycle ------------------------------------------------- #
     def load(self, name: Optional[str] = None) -> Dict[str, Any]:
@@ -313,6 +336,30 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
                             "loaded": runtime.engine is not None,
                         },
                     )
+                if parts == ["companion", "state"]:
+                    from recamem import companion
+
+                    state = runtime.companion_state_fn()()
+                    return self._send(200, {
+                        "state": state, "pet": companion.derive_pet(state),
+                        "events": runtime.companion_ctx.get("events", [])[-20:],
+                        "last_fact_id": runtime.companion_ctx.get("last_fact_id"),
+                    })
+                if parts == ["feedback"]:
+                    engine = runtime.require_engine()
+                    return self._send(200, {"events": engine.get_feedback_log() or []})
+                if parts == ["checkpoints"]:
+                    from recamem import companion
+
+                    return self._send(200, {"checkpoints": companion.list_checkpoints(
+                        _companion_checkpoint_root(runtime))})
+                if parts == ["checkpoints", "best"]:
+                    from recamem import companion
+
+                    rows = companion.list_checkpoints(_companion_checkpoint_root(runtime))
+                    return self._send(200, companion.best_checkpoint(rows))
+                if len(parts) == 3 and parts[0] == "jobs" and parts[2] == "events":
+                    return self._job_events(parts[1], query)
                 if parts == ["jobs"]:
                     return self._send(200, {"jobs": runtime.jobs.list()})
                 if len(parts) == 2 and parts[0] == "jobs":
@@ -348,6 +395,13 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
                 try:
                     result = run_once(prompt, engine, mode=mode,
                                       profile=runtime.profile)
+                    if mode != "teach":
+                        try:
+                            hits = engine.recall(prompt, top_k=1)
+                            if hits and hits[0].get("id") is not None:
+                                runtime.companion_ctx["last_fact_id"] = hits[0]["id"]
+                        except Exception:  # noqa: BLE001 - recall must not break chat
+                            pass
                 finally:
                     runtime.active_op = None
                 return self._send(200, result)
@@ -387,15 +441,120 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
                     },
                 )
 
+            if parts == ["companion", "act"]:
+                from recamem import companion
+
+                action = _string(payload, "action")
+                engine = runtime.require_engine()
+                if any(key in payload for key in ("token", "hf_token", "HF_TOKEN")):
+                    raise ApiError(400, "tokens must stay server-side; none accepted in a request")
+                try:
+                    outcome = companion.dispatch_action(
+                        engine, action, payload, runtime.companion_ctx,
+                        runtime.companion_state_fn(),
+                    )
+                except companion.CompanionActionError as exc:
+                    raise ApiError(400, str(exc)) from exc
+                return self._send(200, outcome)
+
+            if parts == ["feedback"]:
+                action = _string(payload, "action")
+                fact_id = payload.get("fact_id")
+                if fact_id is None or not isinstance(fact_id, int):
+                    raise ApiError(400, "feedback needs an integer fact_id")
+                engine = runtime.require_engine()
+                if action == "approve":
+                    result = engine.approve(fact_id)
+                elif action == "reject":
+                    result = engine.reject(fact_id)
+                elif action == "correct":
+                    result = engine.correct(fact_id, _string(payload, "text"))
+                else:
+                    raise ApiError(400, f"unknown feedback action {action!r}")
+                return self._send(200, {"result": result})
+
+            if parts == ["checkpoints", "select"]:
+                from recamem import companion
+
+                name = _string(payload, "name")
+                root = _companion_checkpoint_root(runtime)
+                target = (root / name).resolve()
+                if root.resolve() not in target.parents:
+                    raise ApiError(400, "checkpoint path escapes the checkpoint directory")
+                row = companion.inspect_checkpoint(target)
+                if not row["eligible"]:
+                    raise ApiError(400, f"checkpoint is not eligible: {row['reason']}")
+                runtime.selected_checkpoint = name
+                return self._send(200, {
+                    "selected": name, "checkpoint": row,
+                    "applied_to_generation": False,
+                    "reason": ("checkpoint provenance was recorded; this offline engine has "
+                               "no trained-weight loader, so generation is unchanged"),
+                })
+
             if parts == ["jobs"]:
                 kind = _string(payload, "kind", required=False, default="eval")
                 job = runtime.jobs.create(kind, **_safe_params(payload))
+                if kind == "train":
+                    from recamem import companion
+
+                    if any("token" in str(key).lower() for key in payload):
+                        raise ApiError(400, "tokens must stay server-side; none accepted in a request")
+                    if runtime.training is None:
+                        runtime.training = companion.TrainingJobRunner(
+                            Path(__file__).resolve().parents[1],
+                            lambda job_id, **fields: runtime.jobs.update(job_id, **fields),
+                            home=Path(runtime.base_dir),
+                        )
+                    params = {key: value for key, value in payload.items()
+                              if key != "kind" and isinstance(value, (str, int, float, bool))}
+                    try:
+                        runtime.training.start(job["id"], params)
+                    except companion.CompanionActionError as exc:
+                        raise ApiError(400, str(exc)) from exc
+                    job = runtime.jobs.get(job["id"])
                 return self._send(202, job)
 
             if len(parts) == 3 and parts[0] == "jobs" and parts[2] == "cancel":
+                job = runtime.jobs.get(parts[1])
+                if job.get("kind") == "train" and runtime.training is not None:
+                    runtime.training.cancel(parts[1])
+                    return self._send(200, runtime.jobs.get(parts[1]))
                 return self._send(200, runtime.jobs.cancel(parts[1]))
 
             raise ApiError(404, f"unknown path {path!r}")
+
+        def _job_events(self, job_id: str, query: Dict[str, List[str]]):
+            """Server-sent events for real job progress; polling is the fallback."""
+            runtime.jobs.get(job_id)
+            try:
+                since = int((query.get("since") or ["0"])[0] or 0)
+            except (TypeError, ValueError):
+                since = 0
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Connection", "keep-alive")
+            self.end_headers()
+            runner = runtime.training
+            deadline = time.time() + 25.0
+            try:
+                while time.time() < deadline:
+                    events = runner.events(job_id, since) if runner else []
+                    for event in events:
+                        since = int(event["seq"]) + 1
+                        payload = f"id: {event['seq']}\ndata: {json.dumps(event)}\n\n"
+                        self.wfile.write(payload.encode())
+                        self.wfile.flush()
+                    if any(event.get("type") in {"finished", "cancelled", "failed"}
+                           for event in events):
+                        break
+                    if not events:
+                        self.wfile.write(b": keep-alive\n\n")
+                        self.wfile.flush()
+                    time.sleep(0.5)
+            except (BrokenPipeError, ConnectionResetError, OSError):
+                pass
 
         # -- static frontend ------------------------------------------ #
         def _static(self, path: str):
@@ -432,6 +591,16 @@ a{color:#B5F36D}</style></head>
 <p>Then reload this page, or run <code>recamem ui</code> to open the desktop shell.</p>
 <p>API: <a href="/api/v1/health">/api/v1/health</a></p></body></html>
 """
+
+
+def _companion_checkpoint_root(runtime: "Runtime") -> Path:
+    override = os.environ.get("RECAMEM_CHECKPOINT_DIR")
+    return Path(override) if override else Path(runtime.base_dir) / "checkpoints"
+
+
+def companion_static_dir() -> Path:
+    """Committed build of the Svelte companion app (no Node needed at runtime)."""
+    return Path(__file__).resolve().parents[1] / "companion" / "dist"
 
 
 def create_server(host: str = "127.0.0.1", port: int = 8000,

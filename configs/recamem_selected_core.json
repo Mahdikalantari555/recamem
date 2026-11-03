@@ -30,8 +30,8 @@
     "core_slug": "gated_delta_matrix",
     "decision_readout_id": "D3",
     "gradient_mode": "chunked_bptt",
-    "memory_arm_id": "M3",
-    "multitask_batching_mode": "interleaved",
+    "memory_arm_id": "M4",
+    "multitask_batching_mode": "summed",
     "objective_id": "O1",
     "router_id": "R4",
     "tokenizer_id": "Tok_bpe_4096"
@@ -74,6 +74,7 @@
       4242
     ],
     "selection_report_path": "reports/recamem-core-selection.md",
+    "selection_status_note": "The 350K custom-tier tournament winner is verified in the evidence ledger, but the runtime manifest stays provisional_core until the 17M target shape is actually trained (see validate_selected_core_manifest).",
     "stages_completed": [
       0,
       1,
@@ -82,6 +83,7 @@
       4
     ],
     "target_17m_trained": false,
+    "tier_selection_status": "verified_winner",
     "unmeasured_metrics_count": 0
   }
 }

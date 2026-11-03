@@ -15,5 +15,3 @@ Terms are domain-level only; no implementation details.
 - **Engine**: orchestrator coupling anchor, plastic memory, episodic store, and backends (formerly `DroidEngine`).
 - **Backend**: a frozen foundation model provider (Ollama / OpenAI-compatible / local GGUF / embedded RTU).
 - **Teacher**: distills unstructured text into propositions via an OpenAI-compatible endpoint.
-EOF
-echo "created"

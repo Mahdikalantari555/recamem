@@ -113,3 +113,43 @@ CI environment, so the shell is scaffolded and reviewed but not compiled here.
       or WebView (`recamem ui --dry-run` prints `shell=browser`).
 - [ ] `recamem doctor` exit 0 — blocked here: no ONNX weights, so the anchor is
       the explicit mock and doctor correctly exits 1.
+
+## Svelte companion app (additive surface)
+
+`recamem companion` is the one-command entry point for the Svelte 5 companion
+in `companion/`. It starts the same stdlib REST API and serves the committed
+`companion/dist` build on the same origin, so the browser uses relative URLs and
+needs no Node, Rust or model weights at runtime. The React app in `web/`, the
+`serve --web` contract and `src-tauri/` are unchanged.
+
+```bash
+recamem companion                      # http://127.0.0.1:8000/
+recamem companion --dry-run            # resolved URL, host policy, dist path, anchor
+npm --prefix companion install         # development only
+npm --prefix companion run dev        # Vite on 127.0.0.1:5173, /api proxied to Python
+```
+
+The default bind is loopback-only. A non-loopback bind requires both `--host`
+and `RECAMEM_API_ALLOW_REMOTE=1`; the launcher refuses it otherwise. The UI
+always displays the anchor mode, backend, profile and whether an eligible
+trained checkpoint is loaded. With none available it shows `demo / recall-only`
+and never presents random-init weights as a trained model.
+
+Additive endpoints (existing routes and payloads are unchanged):
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/v1/companion/state` | measured engine signals, derived pet state and recent events |
+| `POST /api/v1/companion/act` | pet/treat/feed/scold/correct/sleep/play mapped to real engine calls |
+| `GET /api/v1/feedback`, `POST /api/v1/feedback` | approve/reject/correct with a real fact id |
+| `GET /api/v1/checkpoints`, `/checkpoints/best` | provenance-backed eligibility and lowest measured BPB |
+| `POST /api/v1/checkpoints/select` | checksum-verified selection; refuses ineligible checkpoints |
+| `POST /api/v1/jobs` (`kind=train`) | real `train_lm.py` subprocess, cancellable |
+| `GET /api/v1/jobs/{id}/events` | SSE of real job log/metrics; polling is the fallback |
+
+Chat turns are full-turn responses tagged `delivery=full_turn` until a backend
+advertises a streaming callback; no synthetic tokens are animated. Training
+progress is computed from parsed `tokens=` output, not elapsed time, and with no
+real corpus the server uses a deterministic fixture corpus labelled
+`dataset_source=fixture` — a pipeline smoke run, never a language-learning
+result. `scripts/run_companion.py` verifies the whole surface headlessly.

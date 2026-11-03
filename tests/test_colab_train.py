@@ -5,11 +5,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_colab_train_small(tmp_path):
+def test_colab_train_small(tmp_path, tiny_corpus):
     out = tmp_path / "run"
     cmd = [sys.executable, str(ROOT / "scripts" / "colab_train.py"),
-           "--lm-tokens", "50000",
-           "--data-dir", str(ROOT / "data" / "tinystories"),
+           "--lm-tokens", "2000",
+           "--data-dir", str(tiny_corpus),
            "--out-dir", str(out),
            "--checkpoint-every", "10",
            "--batch-size", "2",

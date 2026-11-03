@@ -18,19 +18,19 @@
   ```
 - **Run a single test file**:
   ```bash
-  PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests/test_recamem_core.py
+  PYTHONPATH=. python -m pytest tests/test_recamem_core.py
   ```
 - **Run End-to-End Verification**:
   ```bash
-  PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/python scripts/verify_remote_sensing_e2e.py
+  PYTHONPATH=. python scripts/verify_remote_sensing_e2e.py
   ```
 - **Launch WebUI**:
   ```bash
-  /home/asus/miniforge3/envs/ai/bin/streamlit run app.py
+  python -m streamlit run app.py
   ```
 - **Run core tournament**:
   ```bash
-  PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/python scripts/run_core_tournament.py
+  PYTHONPATH=. python scripts/run_core_tournament.py
   ```
 
 ## Architecture & Code Boundaries
@@ -67,7 +67,7 @@
 - PyTorch in-place parameter edits: wrap in `with torch.no_grad():` or write `.data`.
 - Safetensors shared memory: do not save duplicate refs to `blocks.i.states` and `state.i`. Extract via `named_parameters()`, not `state_dict()`.
 - Hugging Face cache: ONNX weights/tokenizers in `~/.cache/huggingface`. Do not re-download.
-- OpenSpec: managed via `/home/asus/.local/share/pnpm/bin/openspec`. Specs in `openspec/specs/`, archived in `openspec/changes/archive/`.
+- OpenSpec: use the `openspec` CLI when installed; otherwise validate structure with `PYTHONPATH=. python scripts/validate_openspec.py`. Specs live in `openspec/specs/`, archived changes in `openspec/changes/archive/`.
 - No silent mock anchor fallback. Mock is explicit opt-in (`--anchor mock`, `RECAMEM_ANCHOR=mock`).
 - No hard-delete of facts without consolidate-then-forget.
 

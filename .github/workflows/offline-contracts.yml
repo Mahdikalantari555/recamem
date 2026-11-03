@@ -44,6 +44,10 @@ jobs:
           printf 'a\nb\n' | python scripts/run_recamem.py --name ci | wc -l
       - name: Offline gate
         run: PYTHONPATH=. python scripts/offline_gate.py
+      - name: Completion inventory structure
+        # Gating on structure/coverage only; closure is enforced by
+        # check_completion_gaps.py without --schema-only during a release review.
+        run: PYTHONPATH=. python scripts/check_completion_gaps.py --schema-only
       - name: Offline suite
         run: PYTHONPATH=. python -m pytest tests -q 2>&1 | tee /tmp/offline-suite.log
         env:

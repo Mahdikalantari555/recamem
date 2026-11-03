@@ -5,11 +5,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_resume_continues(tmp_path):
+def test_resume_continues(tmp_path, tiny_corpus):
     out1 = tmp_path / "run1"
     cmd1 = [sys.executable, str(ROOT / "scripts" / "train_lm.py"),
-            "--lm-tokens", "40000",
-            "--data-dir", str(ROOT / "data" / "tinystories"),
+            "--lm-tokens", "2000",
+            "--data-dir", str(tiny_corpus),
             "--out-dir", str(out1),
             "--checkpoint-every", "2",
             "--batch-size", "2",
@@ -22,8 +22,8 @@ def test_resume_continues(tmp_path):
 
     out2 = tmp_path / "run2"
     cmd2 = [sys.executable, str(ROOT / "scripts" / "train_lm.py"),
-            "--lm-tokens", "80000",
-            "--data-dir", str(ROOT / "data" / "tinystories"),
+            "--lm-tokens", "4000",
+            "--data-dir", str(tiny_corpus),
             "--out-dir", str(out2),
             "--checkpoint-every", "2",
             "--batch-size", "2",
@@ -34,11 +34,11 @@ def test_resume_continues(tmp_path):
     assert r2.returncode == 0
 
 
-def test_resume_rejects_mismatched_config(tmp_path):
+def test_resume_rejects_mismatched_config(tmp_path, tiny_corpus):
     out1 = tmp_path / "run1"
     cmd1 = [sys.executable, str(ROOT / "scripts" / "train_lm.py"),
-            "--lm-tokens", "20000",
-            "--data-dir", str(ROOT / "data" / "tinystories"),
+            "--lm-tokens", "1000",
+            "--data-dir", str(tiny_corpus),
             "--out-dir", str(out1),
             "--checkpoint-every", "1",
             "--batch-size", "2",
@@ -51,8 +51,8 @@ def test_resume_rejects_mismatched_config(tmp_path):
 
     out2 = tmp_path / "run2"
     cmd2 = [sys.executable, str(ROOT / "scripts" / "train_lm.py"),
-            "--lm-tokens", "40000",
-            "--data-dir", str(ROOT / "data" / "tinystories"),
+            "--lm-tokens", "2000",
+            "--data-dir", str(tiny_corpus),
             "--out-dir", str(out2),
             "--checkpoint-every", "1",
             "--batch-size", "2",

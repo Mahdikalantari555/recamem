@@ -168,7 +168,30 @@ def check_blocked_semantics() -> List[str]:
     return problems
 
 
+def check_completion_inventory() -> List[str]:
+    """The gap inventory must be structurally valid and cover its sources.
+
+    Closure is deliberately *not* required here: the offline tier must pass
+    while real-model, grounding and benchmark work is still open. Use
+    ``scripts/check_completion_gaps.py`` without ``--schema-only`` for that.
+    """
+    import importlib.util
+
+    path = ROOT / "scripts" / "check_completion_gaps.py"
+    spec = importlib.util.spec_from_file_location("check_completion_gaps", path)
+    if spec is None or spec.loader is None:
+        return ["cannot load scripts/check_completion_gaps.py"]
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    try:
+        doc = json.loads((ROOT / "reports" / "completion-gaps.json").read_text())
+    except (OSError, ValueError) as exc:
+        return [f"unreadable completion gap inventory: {exc}"]
+    return module.validate(doc, ROOT, require_closed=False)
+
+
 CHECKS = {
+    "completion_inventory": check_completion_inventory,
     "evidence": check_evidence,
     "mcp_tools": check_mcp_tools,
     "cli_surface": check_cli_surface,

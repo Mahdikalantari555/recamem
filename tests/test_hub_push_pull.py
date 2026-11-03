@@ -4,6 +4,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
+pytest.importorskip("huggingface_hub", reason="optional [cloud] extra not installed")
+
 from recamem import hub
 
 

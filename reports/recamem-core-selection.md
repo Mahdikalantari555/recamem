@@ -1,10 +1,18 @@
 # RecaMem Core Architecture Selection Report
 
-- **Selection Status**: `verified_winner`
+- **Selection Status**: `provisional_core` (17M target shape untrained)
+- **Tournament Tier Status**: `verified_winner` for the 349,920-parameter custom tier only
 - **Winning Stack**: `C4` + `Tok_bpe_4096` + `O1` (`chunked_bptt`) + `D3` + `R4` + `M4`
 - **Backbone Sharing Mode**: `unified` (`summed` multi-task schedule)
 - **Dataset Provenance**: `fixture`
 - **Tournament Tier**: `custom` (`349,920` trainable params; target production tier `17,000,928` params within `±2%` of `17.0M`)
+
+> **Status clarification (2026-11-03).** The raw tournament ledger records
+> `selection_status: verified_winner` for the winning 350K stack, but the shipped
+> runtime manifest `configs/recamem_selected_core.json` uses `provisional_core`
+> because `target_17m_hyperparameters.trained` is false. Both labels are kept
+> visible rather than silently reconciled; the config is generated from the
+> ledger and pinned by `tests/test_core_config_parity.py`.
 
 ## 1. Track 1 — Sequence-Mixing Core Comparison (`C0`–`C6`)
 
