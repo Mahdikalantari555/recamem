@@ -63,6 +63,7 @@ recamem run --prompt "What is the calibration constant?" --name demo   # headles
 recamem serve --rest            # versioned loopback API on 127.0.0.1:8000
 npm --prefix web install && npm --prefix web run build
 recamem serve --web             # API + built frontend
+recamem companion              # one-command Svelte companion (API + built UI)
 recamem ui                      # Tauri desktop shell, browser fallback
 ```
 
@@ -98,3 +99,16 @@ MIT — see `LICENSE.md`.
 ## Cloud Training
 See `docs/cloud-training.md`. Train on Colab and sync via HuggingFace Hub:
 `python scripts/colab_train.py --lm-tokens 20000000 --push-to-hub yourname/recamem-ckpt`
+
+## Companion app
+
+`recamem companion` serves the committed `companion/dist` build next to the
+versioned API, with no Node or weights required at runtime. It offers an
+online chat with a virtual pet whose state comes from measured memory signals,
+a training view that runs `scripts/train_lm.py` as a real cancellable job, and
+a provenance-backed "best checkpoint" picker. See `docs/surfaces.md`.
+
+```bash
+recamem companion --dry-run
+npm --prefix companion install && npm --prefix companion run build
+```

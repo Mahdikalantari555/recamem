@@ -512,3 +512,39 @@ information density, and transparent model behavior. Start with a
 polished Playground and honest runtime status. Add research dashboards
 only as real model, training, and evaluation capabilities become
 available.
+
+## Companion view (Svelte)
+
+The companion is a presentation layer over measured engine state, not a
+separate memory system. Three views ship: Companion (pet + chat), Training
+(job + best-checkpoint picker) and Inspector (raw measured signals).
+
+Attribute-to-source mapping:
+
+| Pet attribute | Measured source | When unavailable |
+| --- | --- | --- |
+| knowledge | `knowledge.active_count()` | reported as `no signal` |
+| bond | `get_feedback_log()` approvals | reported as `no signal` |
+| energy | timestamp of the last consolidation event in `engine.logs` | `null` |
+| mood | `retrieval_health().precision_at_k` plus approvals | falls back to bond |
+
+Action-to-engine mapping:
+
+| Action | Engine call | Rejected when |
+| --- | --- | --- |
+| pet / treat | `approve(fact_id)` | no recalled fact id |
+| feed | `teach(text, source='companion')` | empty text |
+| scold | `reject(fact_id)` | no recalled fact id |
+| correct | `correct(fact_id, text)` | missing target or text |
+| sleep | `sleep()` | never |
+| play | `chat(text)` | empty text |
+
+Every action returns before/after measured values and an event id, shown in the
+"What changed" log. A `blocked` response is rendered as blocked with its reason,
+never as a success state or a chart. The status bar carries the explicit anchor
+mode and a `demo / recall-only` badge when no eligible checkpoint exists.
+
+Accessibility parity with the rest of this document: skip link, keyboard
+navigation, `aria-current` on the active tab, visible focus rings, `aria-live`
+for status and chat, and a `prefers-reduced-motion` block. Destructive actions
+(Reset Memory) are not exposed by this surface.

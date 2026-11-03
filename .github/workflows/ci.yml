@@ -23,7 +23,13 @@ jobs:
       # `|| true`, and is never used as release evidence.
       - name: Install optional integrations (informational)
         continue-on-error: true
-        run: pip install -r requirements-optional.txt
+        run: |
+          # Match the documented offline gate (docs/testing.md): streamlit and
+          # pandas are console-only, and hnswlib is a native ANN index that
+          # legitimately reorders near-ties. Installing them changes the test
+          # contract, so they are exercised by their own informational steps.
+          grep -v -E '^(streamlit|pandas|hnswlib)' requirements-optional.txt > /tmp/optional.txt
+          pip install -r /tmp/optional.txt
       - name: Run tests
         env:
           PYTHONPATH: .

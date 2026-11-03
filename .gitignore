@@ -45,3 +45,6 @@ src-tauri/gen/
 # Frontend dependencies (web/dist is committed: it is the shipped bundle)
 web/node_modules/
 web/.vite/
+companion/node_modules/
+companion/.vite/
+companion/*.tsbuildinfo

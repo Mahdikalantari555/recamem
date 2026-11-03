@@ -29,7 +29,7 @@ LEGACY_COMMANDS = {
     "generate",
 }
 
-NEW_COMMANDS = {"ingest", "recall", "doctor", "migrate", "rtu", "run", "ui", "serve", "push", "pull", "train-cloud"}
+NEW_COMMANDS = {"ingest", "recall", "doctor", "migrate", "rtu", "run", "ui", "serve", "push", "pull", "train-cloud", "companion"}
 
 USAGE = """recamem <command> [options]
 
@@ -57,6 +57,7 @@ evaluation and operations
   run                  headless runner (one JSON object per prompt)
   ui                   WebUI in browser (default); --tauri to try native shell
   migrate <dir>        copy legacy droids/ profiles into the recamem home
+  companion            one-command Svelte companion (API + built UI)
 """
 
 
@@ -236,6 +237,54 @@ def cmd_run(args) -> int:
             "--top-k", str(args.top_k),
         ]
     )
+
+
+def cmd_companion(args) -> int:
+    """Start the loopback API and serve the committed Svelte companion build."""
+    from recamem import api
+
+    dist = api.companion_static_dir()
+    host = args.host
+    remote_required = host not in api.LOOPBACK_HOSTS
+    if remote_required and os.environ.get("RECAMEM_API_ALLOW_REMOTE") != "1":
+        print("error: refusing a non-loopback bind without RECAMEM_API_ALLOW_REMOTE=1",
+              file=sys.stderr)
+        return 1
+    url = f"http://{host}:{args.port}/"
+    if args.dry_run:
+        from recamem.anchor import resolve_anchor_mode
+        try:
+            anchor = resolve_anchor_mode()
+        except ValueError:
+            anchor = "unavailable"
+        print(f"url={url}")
+        print(f"host_policy={'remote (explicitly allowed)' if remote_required else 'loopback-only'}")
+        print(f"dist={dist} exists={'yes' if dist.is_dir() else 'no'}")
+        print(f"anchor={anchor}")
+        print(f"profile={args.name}")
+        return 0
+    if not dist.is_dir():
+        print(f"error: companion build missing at {dist}; run "
+              "`npm --prefix companion install && npm --prefix companion run build`",
+              file=sys.stderr)
+        return 1
+    print(f"recamem companion: {url} (anchor is explicit; no weights required)", flush=True)
+    try:
+        server = api.create_server(host=host, port=args.port, base_dir=args.base_dir,
+                                   profile=args.name, static_dir=str(dist))
+    except api.ApiError as exc:
+        print(f"error: {exc.message}", file=sys.stderr)
+        return 1
+    if not args.no_browser:
+        print("open the URL above in a browser (no browser is launched in headless mode)",
+              flush=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nrecamem companion stopped", flush=True)
+    finally:
+        server.server_close()
+    return 0
 
 
 def cmd_serve(args) -> int:
@@ -440,6 +489,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_ui.add_argument("--tauri", action="store_true", help="try the native Tauri shell first (falls back to browser)")
     p_ui.add_argument("--dry-run", action="store_true", help="print the resolved shell and exit")
     p_ui.set_defaults(func=cmd_ui)
+
+    p_comp = subparsers.add_parser("companion", help="One-command Svelte companion app")
+    p_comp.add_argument("--host", default="127.0.0.1")
+    p_comp.add_argument("--port", type=int, default=8000)
+    p_comp.add_argument("--name", default="droid-alpha")
+    p_comp.add_argument("--base-dir", default=None)
+    p_comp.add_argument("--no-browser", action="store_true")
+    p_comp.add_argument("--dry-run", action="store_true",
+                         help="print the resolved configuration and exit")
+    p_comp.set_defaults(func=cmd_companion)
 
     p_push = subparsers.add_parser("push", help="Push a checkpoint directory to HuggingFace Hub")
     p_push.add_argument("--repo", required=True, help="HF repo id, e.g. user/recamem-ckpt")
