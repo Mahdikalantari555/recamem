@@ -23,7 +23,7 @@
 
 ## 4. Debug Ladder (Phase 0)
 
-- [ ] 4.1 Implement overfit single batch test (300 steps, loss ~0) and verify it passes on 1M model
+- [x] 4.1 Implement overfit single batch test (300 steps, loss ~0) and verify it passes on 1M model
 - [ ] 4.2 Run n-gram baselines (from task 2) and record G1/G2/G3 thresholds; verify values are reasonable
 - [ ] 4.3 Train C6 reference transformer on 5M tokens and verify it beats trigram baseline
 - [ ] 4.4 Train C4 on 1M/5M/20M/50M tokens and plot BPB vs tokens; verify monotonic decrease

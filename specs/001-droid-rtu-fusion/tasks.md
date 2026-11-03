@@ -81,11 +81,11 @@
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T012 [P] [US2] Write `test_associative_bonus_reranks_and_cold_start_is_neutral` in `tests/test_droid_rtu_fusion.py` — two candidates with equal dense similarity re-order when the plastic state favors one; an empty `S` (fresh agent) leaves the ranking identical (FR-010, FR-011, SC-009, SC-010).
+- [x] T012 [P] [US2] Write `test_associative_bonus_reranks_and_cold_start_is_neutral` in `tests/test_droid_rtu_fusion.py` — two candidates with equal dense similarity re-order when the plastic state favors one; an empty `S` (fresh agent) leaves the ranking identical (FR-010, FR-011, SC-009, SC-010).
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Implement the A3 associative bonus in `recall()` at `src/model/droid.py:504-611`: after `q_emb` normalization (`:521`), compute `q_assoc = self.memory.retrieve(q_emb)` normalized, inside a guarded `try/except` that leaves `q_assoc = None` on any failure (bonus is optional, never fatal); per candidate that already passes the `sim >= 0.48` dense gate (`:564`), add `0.15 * max(0.0, dot(q_assoc, fact_emb))` to the final score next to the existing `contextual` term (`:569-580`); the dense gate stays authoritative (FR-010, decision 6 of plan 10; weight `0.15` is the starting point tuned against the E2E fixture).
+- [x] T013 [US2] Implement the A3 associative bonus in `recall()` at `src/model/droid.py:504-611`: after `q_emb` normalization (`:521`), compute `q_assoc = self.memory.retrieve(q_emb)` normalized, inside a guarded `try/except` that leaves `q_assoc = None` on any failure (bonus is optional, never fatal); per candidate that already passes the `sim >= 0.48` dense gate (`:564`), add `0.15 * max(0.0, dot(q_assoc, fact_emb))` to the final score next to the existing `contextual` term (`:569-580`); the dense gate stays authoritative (FR-010, decision 6 of plan 10; weight `0.15` is the starting point tuned against the E2E fixture).
 
 **Checkpoint**: US2 works independently of US1 — it is testable on a plain (non-fused) engine.
 
@@ -99,14 +99,14 @@
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T014 [P] [US3] Write `test_fused_profile_roundtrip` in `tests/test_droid_rtu_fusion.py` — create via `DroidManager.create_droid(..., byte_rtu=True)`, teach, save, load into a fresh engine; assert every `m.*` parameter and the `state.0` / `decaytrace.0` / `embedtrace.0` buffers are equal; assert identical generation behavior via state tensors, never sampled text (research D10); delete `rtu.safetensors` from the profile dir and assert the next load raises a clear error rather than silently random-initializing (FR-006, FR-007, SC-005).
-- [ ] T015 [P] [US3] Write `test_dual_backend_construction_raises` in `tests/test_droid_rtu_fusion.py` — `DroidEngine(gguf_backend=<any>, byte_rtu_backend=ByteRtuBackend())` raises `ValueError` (FR-008).
+- [x] T014 [P] [US3] Write `test_fused_profile_roundtrip` in `tests/test_droid_rtu_fusion.py` — create via `DroidManager.create_droid(..., byte_rtu=True)`, teach, save, load into a fresh engine; assert every `m.*` parameter and the `state.0` / `decaytrace.0` / `embedtrace.0` buffers are equal; assert identical generation behavior via state tensors, never sampled text (research D10); delete `rtu.safetensors` from the profile dir and assert the next load raises a clear error rather than silently random-initializing (FR-006, FR-007, SC-005).
+- [x] T015 [P] [US3] Write `test_dual_backend_construction_raises` in `tests/test_droid_rtu_fusion.py` — `DroidEngine(gguf_backend=<any>, byte_rtu_backend=ByteRtuBackend())` raises `ValueError` (FR-008).
 
 ### Implementation for User Story 3
 
-- [ ] T016 [US3] Add `byte_rtu: bool = False` to `DroidManager.create_droid()` in `src/model/droid_manager.py:45`: when true, construct `ByteRtuBackend` with default `dim=384, layers=8` and pass it to the `DroidEngine(...)` construction at `src/model/droid_manager.py:73` (FR-009); the strategy pin from T003 applies automatically.
-- [ ] T017 [US3] Extend `save_profile()` at `src/model/droid.py:1217-1307`: when `isinstance(self.gguf_backend, ByteRtuBackend)`, call `self.gguf_backend.model.save(str(p / "rtu.safetensors"))` and add manifest fields `rtu_checkpoint` (`"rtu.safetensors"`), `injection_strategy` (`"prompt"`), `rtu_dim`, `rtu_layers` to the config written at `:1256-1257`; keep the save order knowledge → RTU checkpoint → `config.json` last; the GGUF path and non-fused profiles are untouched.
-- [ ] T018 [US3] Extend `load_profile()` at `src/model/droid.py:1309-1417`: read `rtu_checkpoint` / `rtu_dim` / `rtu_layers` / `injection_strategy`; restore `self.gguf_config["injection_strategy"]` from the config (the `gguf_*`-prefix filter at `:1324` drops this key); after the existing memory load, re-attach `ByteRtuBackend(checkpoint=str(p / rtu_checkpoint), dim=rtu_dim, layers=rtu_layers)` when `rtu_checkpoint` is declared; raise a clear error (message names the missing path) when the declared file is absent — no silent random-init (FR-007); profiles without these keys load exactly as before.
+- [x] T016 [US3] Add `byte_rtu: bool = False` to `DroidManager.create_droid()` in `src/model/droid_manager.py:45`: when true, construct `ByteRtuBackend` with default `dim=384, layers=8` and pass it to the `DroidEngine(...)` construction at `src/model/droid_manager.py:73` (FR-009); the strategy pin from T003 applies automatically.
+- [x] T017 [US3] Extend `save_profile()` at `src/model/droid.py:1217-1307`: when `isinstance(self.gguf_backend, ByteRtuBackend)`, call `self.gguf_backend.model.save(str(p / "rtu.safetensors"))` and add manifest fields `rtu_checkpoint` (`"rtu.safetensors"`), `injection_strategy` (`"prompt"`), `rtu_dim`, `rtu_layers` to the config written at `:1256-1257`; keep the save order knowledge → RTU checkpoint → `config.json` last; the GGUF path and non-fused profiles are untouched.
+- [x] T018 [US3] Extend `load_profile()` at `src/model/droid.py:1309-1417`: read `rtu_checkpoint` / `rtu_dim` / `rtu_layers` / `injection_strategy`; restore `self.gguf_config["injection_strategy"]` from the config (the `gguf_*`-prefix filter at `:1324` drops this key); after the existing memory load, re-attach `ByteRtuBackend(checkpoint=str(p / rtu_checkpoint), dim=rtu_dim, layers=rtu_layers)` when `rtu_checkpoint` is declared; raise a clear error (message names the missing path) when the declared file is absent — no silent random-init (FR-007); profiles without these keys load exactly as before.
 
 **Checkpoint**: US3 round-trips fused profiles and fails loudly on a missing checkpoint.
 
@@ -120,9 +120,9 @@
 
 ### Implementation for User Story 4
 
-- [ ] T019 [US4] Add the third option `"Droid + Raw Byte RTU (Fused)"` to the engine-selection radio at `app.py:71-75`; fused mode reuses the existing droid chat handler unchanged (only the backend differs), so fast-path answers stay byte-identical (FR-005).
-- [ ] T020 [US4] Add the badge in the sidebar / memory console of `app.py`: when a fused backend is attached, show RTU `dim`/`layers`, the checkpoint path (or "random init — no checkpoint"), and the per-answer path (`extractive` / `fallback` / `generative` from `engine._last_answer_path`, set by T010); the standalone raw-mode widgets (`app.py:206-215`) and byte loop (`app.py:364-382`) stay byte-identical (FR-012, FR-013).
-- [ ] T021 [US4] Run the manual console validation in `specs/001-droid-rtu-fusion/quickstart.md` scenario 5 and record the result there (`streamlit run app.py`; three engine options; extractive answers identical to plain mode; badge reports path and component status).
+- [x] T019 [US4] Add the third option `"Droid + Raw Byte RTU (Fused)"` to the engine-selection radio at `app.py:71-75`; fused mode reuses the existing droid chat handler unchanged (only the backend differs), so fast-path answers stay byte-identical (FR-005).
+- [x] T020 [US4] Add the badge in the sidebar / memory console of `app.py`: when a fused backend is attached, show RTU `dim`/`layers`, the checkpoint path (or "random init — no checkpoint"), and the per-answer path (`extractive` / `fallback` / `generative` from `engine._last_answer_path`, set by T010); the standalone raw-mode widgets (`app.py:206-215`) and byte loop (`app.py:364-382`) stay byte-identical (FR-012, FR-013).
+- [x] T021 [US4] Run the manual console validation in `specs/001-droid-rtu-fusion/quickstart.md` scenario 5 and record the result there (`streamlit run app.py`; three engine options; extractive answers identical to plain mode; badge reports path and component status).
 
 **Checkpoint**: All user stories are independently functional.
 
@@ -130,12 +130,12 @@
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T022 [P] Update `README.md`: add the fused branch to the architecture diagram and the expected quality ceiling (random-init component until a trained checkpoint exists).
-- [ ] T023 Update `AGENTS.md`: record the rule "RTU weights are frozen at inference; all learning lives in plastic memory", plus the new file ownership (`src/model/byte_rtu_backend.py` owns the generative component; `droids/<name>/rtu.safetensors` is its checkpoint).
-- [ ] T024 Update `plans/10_droid_rtu_fusion.md`: mark the phases implemented and record the measured E3 latency ceiling.
-- [ ] T025 E1 verification gate: `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests` — full suite green with zero changes to existing contracts (SC-006).
-- [ ] T026 E2 verification gate: extend `scripts/verify_remote_sensing_e2e.py` additively (existing assertions untouched) so it also exercises a fused droid — attach the byte-RTU backend, confirm the extractive assertions still pass (FR-005) and the generative path returns a valid string or the fallback without raising — then run `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/python scripts/verify_remote_sensing_e2e.py` green (SC-007).
-- [ ] T027 E3 verification gate: benchmark one fused `/slow` answer per `specs/001-droid-rtu-fusion/quickstart.md` scenario 4; if it exceeds 10 s, lower `max_prompt_bytes` in `src/model/byte_rtu_backend.py` and re-measure; record the measured ceiling in `plans/10_droid_rtu_fusion.md` (SC-008).
+- [x] T022 [P] Update `README.md`: add the fused branch to the architecture diagram and the expected quality ceiling (random-init component until a trained checkpoint exists).
+- [x] T023 Update `AGENTS.md`: record the rule "RTU weights are frozen at inference; all learning lives in plastic memory", plus the new file ownership (`src/model/byte_rtu_backend.py` owns the generative component; `droids/<name>/rtu.safetensors` is its checkpoint).
+- [x] T024 Update `plans/10_droid_rtu_fusion.md`: mark the phases implemented and record the measured E3 latency ceiling.
+- [x] T025 E1 verification gate: `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/pytest tests` — full suite green with zero changes to existing contracts (SC-006).
+- [x] T026 E2 verification gate: extend `scripts/verify_remote_sensing_e2e.py` additively (existing assertions untouched) so it also exercises a fused droid — attach the byte-RTU backend, confirm the extractive assertions still pass (FR-005) and the generative path returns a valid string or the fallback without raising — then run `PYTHONPATH=. /home/asus/miniforge3/envs/ai/bin/python scripts/verify_remote_sensing_e2e.py` green (SC-007).
+- [x] T027 E3 verification gate: benchmark one fused `/slow` answer per `specs/001-droid-rtu-fusion/quickstart.md` scenario 4; if it exceeds 10 s, lower `max_prompt_bytes` in `src/model/byte_rtu_backend.py` and re-measure; record the measured ceiling in `plans/10_droid_rtu_fusion.md` (SC-008).
 
 ---
 
