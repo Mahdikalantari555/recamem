@@ -4,7 +4,7 @@
   import ChatPanel from './components/ChatPanel.svelte';
   import TrainingView from './components/TrainingView.svelte';
   import Inspector from './components/Inspector.svelte';
-  import { getHealth, getState } from './lib/api';
+  import { bestCheckpoint, getHealth, getState } from './lib/api';
   import type { Checkpoint, CompanionState, Health, Pet as PetState } from './lib/types';
 
   let tab = $state<'companion' | 'training' | 'inspector'>('companion');
@@ -17,10 +17,16 @@
 
   async function refresh(): Promise<void> {
     try {
-      const [h, snapshot] = await Promise.all([getHealth(), getState()]);
+      const [h, snapshot, bestResult] = await Promise.all([
+        getHealth(), getState(), bestCheckpoint()
+      ]);
       health = h;
       engineState = snapshot.state;
       pet = snapshot.pet;
+      best = bestResult.status === 'ok' ? bestResult.checkpoint ?? null : null;
+      if (snapshot.last_fact_id !== null && snapshot.last_fact_id !== undefined) {
+        factId = snapshot.last_fact_id;
+      }
       error = '';
     } catch (cause) {
       error = cause instanceof Error ? cause.message : String(cause);
@@ -32,6 +38,9 @@
     const snapshot = await getState();
     engineState = snapshot.state;
     pet = snapshot.pet;
+    if (snapshot.last_fact_id !== null && snapshot.last_fact_id !== undefined) {
+      factId = snapshot.last_fact_id;
+    }
     const events = snapshot.events as Array<{ target: number | null }>;
     if (events.length > 0 && events[events.length - 1].target !== null) {
       factId = events[events.length - 1].target;

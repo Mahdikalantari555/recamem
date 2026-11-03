@@ -340,8 +340,11 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
                     from recamem import companion
 
                     state = runtime.companion_state_fn()()
-                    return self._send(200, {"state": state, "pet": companion.derive_pet(state),
-                                           "events": runtime.companion_ctx.get("events", [])[-20:]})
+                    return self._send(200, {
+                        "state": state, "pet": companion.derive_pet(state),
+                        "events": runtime.companion_ctx.get("events", [])[-20:],
+                        "last_fact_id": runtime.companion_ctx.get("last_fact_id"),
+                    })
                 if parts == ["feedback"]:
                     engine = runtime.require_engine()
                     return self._send(200, {"events": engine.get_feedback_log() or []})
@@ -482,7 +485,12 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
                 if not row["eligible"]:
                     raise ApiError(400, f"checkpoint is not eligible: {row['reason']}")
                 runtime.selected_checkpoint = name
-                return self._send(200, {"selected": name, "checkpoint": row})
+                return self._send(200, {
+                    "selected": name, "checkpoint": row,
+                    "applied_to_generation": False,
+                    "reason": ("checkpoint provenance was recorded; this offline engine has "
+                               "no trained-weight loader, so generation is unchanged"),
+                })
 
             if parts == ["jobs"]:
                 kind = _string(payload, "kind", required=False, default="eval")

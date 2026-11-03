@@ -82,3 +82,33 @@ def test_index_is_served_from_the_committed_build(server):
     with urllib.request.urlopen(server + "/", timeout=30) as response:
         body = response.read().decode()
     assert "RecaMem Companion" in body
+
+
+def test_state_exposes_the_recalled_fact_target(server):
+    status, payload = _get(server, "/api/v1/companion/state")
+    assert status == 200 and "last_fact_id" in payload
+    assert payload["last_fact_id"] is None
+
+
+def test_checkpoint_selection_is_honest_about_no_weight_loader(server, tmp_path):
+    import hashlib
+
+    directory = tmp_path / "checkpoints" / "run-a"
+    directory.mkdir(parents=True)
+    weights = b"trained-weights"
+    (directory / "weights.bin").write_bytes(weights)
+    manifest = {
+        "files": [{"path": "weights.bin", "sha256": hashlib.sha256(weights).hexdigest()}],
+        "config": {"d_model": 64}, "seed": 1337, "dataset": "fixture",
+        "commit": "0" * 40, "command": "python scripts/train_lm.py",
+        "gates": {"G2": "passed"}, "held_out_bpb": 1.0,
+    }
+    (directory / "manifest.json").write_text(json.dumps(manifest))
+    status, best = _get(server, "/api/v1/checkpoints/best")
+    assert status == 200 and best["status"] == "ok"
+    status, selected = _post(server, "/api/v1/checkpoints/select", {"name": "run-a"})
+    assert status == 200 and selected["selected"] == "run-a"
+    assert selected["applied_to_generation"] is False
+    assert "no trained-weight loader" in selected["reason"]
+    status, payload = _get(server, "/api/v1/companion/state")
+    assert payload["state"]["selected_checkpoint"] == "run-a"

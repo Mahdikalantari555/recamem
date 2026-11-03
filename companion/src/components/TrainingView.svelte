@@ -19,6 +19,7 @@
   let best = $state<Checkpoint | null>(null);
   let blocked = $state<string | null>(null);
   let error = $state('');
+  let selectionNotice = $state('');
   let stopEvents: (() => void) | null = null;
   let pollTimer: number | undefined;
 
@@ -81,7 +82,10 @@
   async function select(name: string): Promise<void> {
     error = '';
     try {
-      await selectCheckpoint(name);
+      const outcome = await selectCheckpoint(name);
+      selectionNotice = outcome.applied_to_generation
+        ? `Checkpoint ${outcome.selected} is active for generation.`
+        : `Recorded ${outcome.selected} for provenance only. ${outcome.reason}`;
       await refresh();
       await onChanged();
     } catch (cause) {
@@ -119,6 +123,7 @@
     <button class="btn" onclick={() => void cancel()} disabled={!job || ['done', 'failed', 'cancelled'].includes(job.status)}>Cancel</button>
     <button class="btn" onclick={() => void refresh()}>Refresh checkpoints</button>
   </div>
+  {#if selectionNotice}<p class="muted" role="status">{selectionNotice}</p>{/if}
   {#if error}<p class="error" role="alert">{error}</p>{/if}
 </div>
 

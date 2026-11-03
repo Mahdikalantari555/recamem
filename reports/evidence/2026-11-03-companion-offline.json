@@ -12,17 +12,61 @@
     "gpu": "none"
   },
   "commands": [
-    {"command": "PYTHONPATH=. OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 .venv/bin/python -m pytest tests -q", "outcome": "passed", "detail": "1119 passed, 2 skipped, 26 warnings in 137.32s"},
-    {"command": "PYTHONPATH=. .venv/bin/python scripts/offline_gate.py", "outcome": "passed", "detail": "gate=pass checks=7 failed=0"},
-    {"command": "PYTHONPATH=. .venv/bin/python scripts/check_completion_gaps.py --schema-only", "outcome": "passed", "detail": "62 gaps: 19 closed, 43 open/blocked; completion is NOT claimed"},
-    {"command": "PYTHONPATH=. .venv/bin/python scripts/check_release_evidence.py", "outcome": "passed", "detail": "489 entries: schema/coverage valid; NOT a release-completion claim"},
-    {"command": "PYTHONPATH=. .venv/bin/python scripts/validate_openspec.py", "outcome": "passed", "detail": "OpenSpec structure valid (structure only; checked boxes are not evidence)"},
-    {"command": "PYTHONPATH=. RECAMEM_ANCHOR=mock .venv/bin/python scripts/run_companion.py", "outcome": "passed", "detail": "7/7 headless HTTP checks: index, health, state, best_none, feed, pet_after_feed, pet_without_target_rejected"},
-    {"command": "npm --prefix companion run typecheck", "outcome": "passed", "detail": "svelte-check found 0 errors and 0 warnings"},
-    {"command": "npm --prefix companion test", "outcome": "passed", "detail": "1 test file, 7 tests passed"},
-    {"command": "npm --prefix companion run build", "outcome": "passed", "detail": "dist/index.html + 1 JS + 1 CSS bundle; committed so runtime Node is not required"},
-    {"command": "PYTHONPATH=. .venv/bin/python -m recamem.cli companion --dry-run", "outcome": "passed", "detail": "url, host_policy=loopback-only, dist exists=yes, anchor=mock"},
-    {"command": "RECAMEM_ANCHOR=mock scripts/verify_remote_sensing_e2e.py", "outcome": "not_rerun_for_this_change", "detail": "verified in the preceding offline-closure evidence; unchanged by this surface"}
+    {
+      "command": "PYTHONPATH=. OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 .venv/bin/python -m pytest tests -q",
+      "outcome": "passed",
+      "detail": "1121 passed, 2 skipped, 26 warnings in 143.30s"
+    },
+    {
+      "command": "PYTHONPATH=. .venv/bin/python scripts/offline_gate.py",
+      "outcome": "passed",
+      "detail": "gate=pass checks=7 failed=0"
+    },
+    {
+      "command": "PYTHONPATH=. .venv/bin/python scripts/check_completion_gaps.py --schema-only",
+      "outcome": "passed",
+      "detail": "62 gaps: 19 closed, 43 open/blocked; completion is NOT claimed"
+    },
+    {
+      "command": "PYTHONPATH=. .venv/bin/python scripts/check_release_evidence.py",
+      "outcome": "passed",
+      "detail": "489 entries: schema/coverage valid; NOT a release-completion claim"
+    },
+    {
+      "command": "PYTHONPATH=. .venv/bin/python scripts/validate_openspec.py",
+      "outcome": "passed",
+      "detail": "OpenSpec structure valid (structure only; checked boxes are not evidence)"
+    },
+    {
+      "command": "PYTHONPATH=. RECAMEM_ANCHOR=mock .venv/bin/python scripts/run_companion.py",
+      "outcome": "passed",
+      "detail": "7/7 headless HTTP checks: index, health, state, best_none, feed, pet_after_feed, pet_without_target_rejected"
+    },
+    {
+      "command": "npm --prefix companion run typecheck",
+      "outcome": "passed",
+      "detail": "svelte-check found 0 errors and 0 warnings"
+    },
+    {
+      "command": "npm --prefix companion test",
+      "outcome": "passed",
+      "detail": "1 test file, 7 tests passed"
+    },
+    {
+      "command": "npm --prefix companion run build",
+      "outcome": "passed",
+      "detail": "dist/index.html + 1 JS + 1 CSS bundle; committed so runtime Node is not required"
+    },
+    {
+      "command": "PYTHONPATH=. .venv/bin/python -m recamem.cli companion --dry-run",
+      "outcome": "passed",
+      "detail": "url, host_policy=loopback-only, dist exists=yes, anchor=mock"
+    },
+    {
+      "command": "RECAMEM_ANCHOR=mock scripts/verify_remote_sensing_e2e.py",
+      "outcome": "not_rerun_for_this_change",
+      "detail": "verified in the preceding offline-closure evidence; unchanged by this surface"
+    }
   ],
   "verified_behaviour": [
     "GET / serves the committed Svelte build on the same origin as the API",
@@ -31,7 +75,10 @@
     "GET /api/v1/checkpoints/best returns status=none when no eligible checkpoint exists",
     "POST /api/v1/jobs kind=train runs scripts/train_lm.py as a real subprocess; parsed stdout, metrics, manifest with checksums, cancellation and SSE events are covered by tests",
     "HF_TOKEN and related client-supplied secret fields cause a 400; runner strips them from the subprocess environment",
-    "Chat responses are labelled delivery=full_turn; no synthetic token animation"
+    "Chat responses are labelled delivery=full_turn; no synthetic token animation",
+    "GET /api/v1/companion/state exposes last_fact_id so pet/treat/scold target a real recalled fact",
+    "The status bar fetches /checkpoints/best instead of permanently showing demo / recall-only",
+    "POST /api/v1/checkpoints/select reports applied_to_generation=false and says no trained-weight loader exists"
   ],
   "not_verified": [
     "no real pretrained weights, ONNX anchor or GGUF backend were exercised",
@@ -39,7 +86,8 @@
     "no live checkpoint selection with a real trained model (fixture smoke runs remain G2=not_evaluated)",
     "no token-level streaming (the engine advertises no streaming capability)",
     "no Hub push/pull UI and no live loss chart or generated-sample panel",
-    "Tauri desktop shell and real-model release tiers remain blocked"
+    "Tauri desktop shell and real-model release tiers remain blocked",
+    "no trained checkpoint weights are loaded into generation (selection records provenance only)"
   ],
   "expected_gate_results": {
     "scripts/check_completion_gaps.py": "exits 1 by design: 43 gap(s) are not closed",

@@ -26,7 +26,9 @@ const post = <T>(path: string, payload: unknown) =>
 
 export const getHealth = () => request<Health>('/health');
 export const getState = () =>
-  request<{ state: CompanionState; pet: Pet; events: CompanionEvent[] }>('/companion/state');
+  request<{ state: CompanionState; pet: Pet; events: CompanionEvent[]; last_fact_id: number | null }>(
+    '/companion/state'
+  );
 export const act = (action: string, payload: Record<string, unknown> = {}) =>
   post<{ event: CompanionEvent; result: unknown; state: CompanionState }>('/companion/act', { action, ...payload });
 export const inference = (prompt: string) =>
@@ -38,7 +40,9 @@ export const listCheckpoints = () => request<{ checkpoints: Checkpoint[] }>('/ch
 export const bestCheckpoint = () =>
   request<{ status: string; reason?: string; checkpoint?: Checkpoint }>('/checkpoints/best');
 export const selectCheckpoint = (name: string) =>
-  post<{ selected: string; checkpoint: Checkpoint }>('/checkpoints/select', { name });
+  post<{ selected: string; checkpoint: Checkpoint; applied_to_generation: boolean; reason: string }>(
+    '/checkpoints/select', { name }
+  );
 export const createJob = (params: Record<string, unknown>) => post<Job>('/jobs', { kind: 'train', ...params });
 export const getJob = (id: string) => request<Job>(`/jobs/${encodeURIComponent(id)}`);
 export const cancelJob = (id: string) =>
