@@ -141,3 +141,23 @@ def test_hub_push_and_pull_validation_and_token_rejection(server):
     status, err4 = _post(server, "/api/v1/hub/pull", {"repo_id": "test/repo", "confirm": False})
     assert status == 400 and "require explicit confirmation" in err4["error"]
 
+
+def test_companion_search_action_and_chat_remembering(server):
+    # Chat naturally through play action
+    status, payload = _post(server, "/api/v1/companion/act", {
+        "action": "play",
+        "text": "The orbital altitude of Terra satellite is 705 kilometers.",
+    })
+    assert status == 200
+    assert "absorbed this into my memory" in payload["result"]["response"]
+
+    # Search action works through companion
+    status, res = _post(server, "/api/v1/companion/act", {
+        "action": "search",
+        "text": "remote sensing",
+    })
+    assert status == 200
+    assert "result" in res
+    assert "searched" in res["result"] or "available" in res["result"]
+
+

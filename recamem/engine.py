@@ -1064,6 +1064,23 @@ class DroidEngine(nn.Module):
         overlap = len(w1 & w2) / max(len(w1), len(w2))
         return overlap > 0.70
 
+    @staticmethod
+    def _is_question_clause(clause: str) -> bool:
+        c = clause.strip().lower()
+        if not c or c.endswith("?"):
+            return True
+        words = re.findall(r"[a-z0-9]+", c)
+        if not words:
+            return True
+        if words[0] in {
+            "what", "who", "when", "where", "why", "how", "which",
+            "is", "are", "am", "was", "were", "do", "does", "did",
+            "can", "could", "would", "should", "tell", "explain",
+            "describe", "summarize",
+        }:
+            return True
+        return False
+
     def chat(self, user_message: str) -> str:
         self.log(f"Chat received: '{user_message}'")
         mode = "auto"
@@ -1074,6 +1091,15 @@ class DroidEngine(nn.Module):
             # text is never inserted as a knowledge fact.
             report = self.sleep()
             return self._format_sleep_report(report)
+        if lower.startswith(("/search ", "/research ")):
+            search_topic = user_message.split(" ", 1)[1].strip()
+            res = self.research(search_topic)
+            if res.get("facts_learned"):
+                ans = res.get("answer") or ""
+                return f"Learned {res['facts_learned']} new facts from web research:\n{ans}"
+            elif res.get("reason"):
+                return f"Search did not yield new facts: {res['reason']}"
+            return f"Research on '{search_topic}' completed."
         if lower.startswith("/fast "):
             mode = "fast"
             query = user_message[5:].strip()
@@ -1091,16 +1117,46 @@ class DroidEngine(nn.Module):
             teach_content = re.sub(r'^(learn|remember|note|teach):\s*', '', user_message, flags=re.IGNORECASE)
             res = self.teach(teach_content, source="chat")
             return f"I have absorbed this into my memory ({res['propositions']} new facts, memory norm: {res['memory_norm']:.2f}). You can now ask me about it!"
-        if mode == "auto" and hasattr(self, 'decide_path'):
-            try:
-                decision = self.decide_path(query)
-                path = decision.get("path") or decision.get("action")
-                if path in ("fast_recall", "fast", "recall", "chat"):
+
+        # Online conversational absorption: remember declarative statements from chat
+        learned_in_chat = 0
+        if not is_explicit_teach and not lower.startswith(("/", "what", "who", "when", "where", "why", "how", "tell", "explain")):
+            declarative_props = [
+                p for p in self._split_propositions(user_message)
+                if not self._is_question_clause(p)
+            ]
+            if declarative_props:
+                for prop in declarative_props:
+                    try:
+                        res = self.teach(prop, source="chat")
+                        learned_in_chat += int(res.get("propositions", 0) or 0)
+                    except Exception as exc:  # noqa: BLE001
+                        self.log(f"Online chat absorption skipped for '{prop}': {exc}")
+                all_props = self._split_propositions(user_message)
+                has_question = any(self._is_question_clause(p) for p in all_props) or user_message.strip().endswith("?")
+                if not has_question and learned_in_chat > 0:
+                    norm = float(torch.linalg.vector_norm(self.memory.h_trace).item()) if hasattr(self.memory, "h_trace") else 0.0
+                    return f"I have absorbed this into my memory ({learned_in_chat} new facts, memory norm: {norm:.2f}). You can now ask me about it!"
+
+        if mode == "auto":
+            # Complexity-based routing:
+            # Simple definitional/lookup query with high confidence -> fast recall
+            # Complex reasoning or generative synthesis -> slow path
+            q_lower = query.lower()
+            is_simple = any(q_lower.startswith(w) for w in ["what is", "who is", "when is", "where is", "define"])
+            is_complex = len(query.split()) > 7 or any(w in q_lower for w in ["why", "how", "explain", "synthesize", "reason", "compare"])
+            if self.gguf_backend is not None and (is_complex or not is_simple):
+                mode = "slow"
+            elif hasattr(self, 'decide_path'):
+                try:
+                    decision = self.decide_path(query)
+                    path = decision.get("path") or decision.get("action")
+                    if path in ("fast_recall", "fast", "recall", "chat"):
+                        mode = "fast"
+                    elif path in ("slow_synthesis", "slow", "synthesis"):
+                        mode = "slow"
+                except Exception:  # noqa: BLE001
                     mode = "fast"
-                elif path in ("slow_synthesis", "slow", "synthesis"):
-                    mode = "slow"
-            except Exception:  # noqa: BLE001
-                pass
         if mode == "fast":
             hits = self.recall(query, top_k=4, threshold=0.45)
             if not hits and self.last_query:
@@ -2316,6 +2372,10 @@ class DroidEngine(nn.Module):
         """
         if facts is None:
             facts = self.recall(query, top_k=10, threshold=0.3)
+        if not facts and self.research_enabled:
+            researched = self.research(query)
+            if researched.get("facts_learned"):
+                facts = self.recall(query, top_k=10, threshold=0.3)
         if not facts and isinstance(self.gguf_backend, ByteRtuBackend):
             # Never free-generate on empty retrieval (FR-004): return the same
             # no-information message the extractive path uses.

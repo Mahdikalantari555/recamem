@@ -22,7 +22,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-ACTIONS = ("pet", "treat", "feed", "scold", "correct", "sleep", "play")
+ACTIONS = ("pet", "treat", "feed", "scold", "correct", "sleep", "play", "search", "research")
 REQUIRED_PROVENANCE = ("config", "seed", "dataset", "commit", "command", "gates")
 TRAIN_ARGS = {
     "lm_tokens": "--lm-tokens", "data_dir": "--data-dir", "out_dir": "--out-dir",
@@ -153,6 +153,11 @@ def dispatch_action(engine, action: str, payload: Dict[str, Any], ctx: Dict[str,
     elif action == "sleep":
         engine_call = "sleep()"
         result = engine.sleep()
+    elif action in {"search", "research"}:
+        if not text:
+            raise CompanionActionError(f"{action} needs a query or topic")
+        engine_call = f"research({text!r})"
+        result = engine.research(text)
     else:  # play
         if not text:
             raise CompanionActionError("play needs a prompt")

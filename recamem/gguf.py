@@ -90,11 +90,31 @@ class GgufBackend:
         if self.verbose:
             print(f"Loaded GGUF model from {model_path}")
 
+    def prime_session_context(self, system_message: str, facts: List[str]) -> str:
+        """Format and return primed session context embedding facts into prompt."""
+        valid_facts = [f.strip() for f in facts if f and f.strip()]
+        if not valid_facts:
+            return f"<|im_start|>system\n{system_message}<|im_end|>\n"
+        fact_block = "\n".join(f"- {fact}" for fact in valid_facts)
+        return f"<|im_start|>system\n{system_message}\n\n[Active Memory Facts]\n{fact_block}<|im_end|>\n"
+
+    def format_chat_prompt(
+        self,
+        user_prompt: str,
+        system_message: str = "You are a helpful, smart companion with persistent memory.",
+        facts: Optional[List[str]] = None,
+    ) -> str:
+        """Format complete chat prompt with system instructions, active memory facts, and user query."""
+        ctx = self.prime_session_context(system_message, facts or [])
+        return f"{ctx}<|im_start|>user\n{user_prompt}<|im_end|>\n<|im_start|>assistant\n"
+
     def generate(self, prompt: str, max_tokens: int = 512, 
                  temperature: float = 0.7, top_p: float = 0.9,
                  top_k: int = 40, repeat_penalty: float = 1.1,
-                 stream: bool = False, callback: Optional[Callable] = None) -> str:
-        """Generate tokens with optional streaming callback."""
+                 stream: bool = False, callback: Optional[Callable] = None,
+                 facts: Optional[List[str]] = None,
+                 system_message: Optional[str] = None) -> str:
+        """Generate tokens with optional streaming callback and dynamic memory priming."""
         if self.model is None:
             raise GgufLoadError(
                 "No GGUF model is loaded; construct GgufBackend(model_path=...) "
@@ -102,9 +122,14 @@ class GgufBackend:
             )
         
         try:
+            target_prompt = prompt
+            if facts is not None or system_message is not None:
+                sys_msg = system_message or "You are a helpful, smart companion with persistent memory."
+                target_prompt = self.format_chat_prompt(prompt, system_message=sys_msg, facts=facts)
+
             # Prepare generation kwargs
             kwargs = {
-                "prompt": prompt,
+                "prompt": target_prompt,
                 "max_tokens": max_tokens,
                 "temperature": temperature,
                 "top_p": top_p,

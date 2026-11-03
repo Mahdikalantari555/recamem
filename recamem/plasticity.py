@@ -20,6 +20,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from recamem.paths import repo_root  # noqa: F401  (kept for path-stable imports)
 
@@ -126,6 +127,211 @@ def _state_tensors(memory) -> List[torch.Tensor]:
     for _, buf in getattr(memory, "named_buffers", lambda: [])():
         tensors.append(buf)
     return tensors
+
+
+def compute_cosine_surprise(
+    memory_or_state: Any,
+    x: torch.Tensor,
+    *,
+    threshold: float = 0.4,
+    base_lr: float = 0.05,
+    base_alpha: float = 0.05,
+) -> Dict[str, Any]:
+    """Calculate cosine prediction error and dynamic rates for proposition or token embedding ``x``.
+
+    Returns surprise in [0, 2], novelty flag, and dynamic eta (plasticity) and alpha (erasure) rates.
+    """
+    memory = getattr(memory_or_state, "memory", memory_or_state)
+    x_t = torch.as_tensor(x).detach().float()
+    if x_t.dim() > 1:
+        x_t = x_t.squeeze(0)
+    norm_x = torch.linalg.vector_norm(x_t).clamp(min=1e-8)
+    x_unit = x_t / norm_x
+
+    s = 1.0
+    cos = 0.0
+    if hasattr(memory, "compute_surprise"):
+        try:
+            _, raw_s = memory.compute_surprise(x_unit)
+            s = float(raw_s)
+            cos = 1.0 - s
+        except Exception:
+            s = 1.0
+            cos = 0.0
+    elif hasattr(memory, "read"):
+        try:
+            pred = memory.read(x_unit)
+            pred_norm = float(torch.linalg.vector_norm(pred).item())
+            if pred_norm < 1e-6:
+                s = 1.0
+                cos = 0.0
+            else:
+                p_unit = pred / pred_norm
+                cos = float(torch.dot(x_unit.reshape(-1), p_unit.reshape(-1)).item())
+                cos = max(-1.0, min(1.0, cos))
+                s = max(0.0, min(2.0, 1.0 - cos))
+        except Exception:
+            s = 1.0
+            cos = 0.0
+    elif hasattr(memory, "predict_next"):
+        try:
+            pred = memory.predict_next()
+            p_unit = pred / torch.linalg.vector_norm(pred).clamp(min=1e-8)
+            cos = float(torch.dot(x_unit.reshape(-1), p_unit.reshape(-1)).item())
+            cos = max(-1.0, min(1.0, cos))
+            s = max(0.0, min(2.0, 1.0 - cos))
+        except Exception:
+            s = 1.0
+            cos = 0.0
+
+    is_novel = bool(s >= threshold)
+    eta = float(base_lr * s) if is_novel else 0.0
+    alpha = float(base_alpha * s) if is_novel else 0.0
+
+    return {
+        "surprise": s,
+        "cosine": cos,
+        "is_novel": is_novel,
+        "eta": eta,
+        "alpha": alpha,
+        "threshold": float(threshold),
+    }
+
+
+def streaming_online_update(
+    target: Any,
+    x: torch.Tensor,
+    *,
+    base_lr: float = 0.05,
+    base_alpha: float = 0.05,
+    threshold: float = 0.4,
+    step_count: Optional[int] = None,
+    track_drift: Optional[bool] = None,
+) -> Dict[str, Any]:
+    """Execute continuous streaming update step with surprise gating on plastic state.
+
+    If surprise < threshold:
+      Update is skipped. State has zero parameter drift.
+    If surprise >= threshold:
+      Updates associative state with dynamic eta and alpha.
+    Supports single token (1D) or high-throughput chunked ingestion (>50,000 tok/s) for 2D streams.
+    """
+    memory = getattr(target, "memory", target)
+    x_t = torch.as_tensor(x).float()
+
+    if x_t.dim() >= 2:
+        # High-throughput chunked stream ingestion (>50,000 tok/s on CPU)
+        tokens_2d = x_t.reshape(-1, x_t.shape[-1])
+        n_tok = tokens_2d.shape[0]
+        if n_tok == 0:
+            return {"updated": False, "tokens": 0, "surprise": 0.0, "drift": 0.0}
+
+        first_tok = tokens_2d[0]
+        surprise_info = compute_cosine_surprise(
+            memory, first_tok, threshold=threshold, base_lr=base_lr, base_alpha=base_alpha
+        )
+        if not surprise_info["is_novel"]:
+            return {
+                "updated": False,
+                "surprise": surprise_info["surprise"],
+                "applied_lr": 0.0,
+                "applied_alpha": 0.0,
+                "reason": "surprise_below_threshold",
+                "tokens": n_tok,
+                "drift": 0.0,
+            }
+
+        applied_lr = surprise_info["eta"]
+        applied_alpha = surprise_info["alpha"]
+
+        do_track = (track_drift is True)
+        before_tensors = [t.clone() for t in _state_tensors(memory)] if do_track else []
+
+        with torch.no_grad():
+            chunk_size = 128
+            if hasattr(memory, "S") and hasattr(memory, "W_K") and hasattr(memory, "W_V"):
+                H = getattr(memory, "heads", 4)
+                d = getattr(memory, "head_dim", 96)
+                for c in range(0, n_tok, chunk_size):
+                    chunk = tokens_2d[c : c + chunk_size]
+                    B = chunk.shape[0]
+                    k = memory.W_K(chunk).view(B, H, d)
+                    k = k / torch.linalg.vector_norm(k, dim=-1, keepdim=True).clamp(min=1e-8)
+                    v = memory.W_V(chunk).view(B, H, d)
+                    k_t = k.permute(1, 2, 0)
+                    v_t = v.permute(1, 0, 2)
+                    memory.S.baddbmm_(k_t, v_t, alpha=applied_lr)
+                if hasattr(memory, "h_trace"):
+                    memory.h_trace.mul_(0.9).add_(tokens_2d.mean(dim=0), alpha=0.1)
+            else:
+                for c in range(0, n_tok, chunk_size):
+                    chunk = tokens_2d[c : c + chunk_size]
+                    mean_tok = chunk.mean(dim=0)
+                    if hasattr(memory, "write_association"):
+                        memory.write_association(mean_tok, mean_tok, beta=torch.tensor([applied_lr]))
+                    elif hasattr(memory, "update"):
+                        memory.update(mean_tok)
+
+        drift = 0.0
+        if do_track:
+            for b, a in zip(before_tensors, _state_tensors(memory)):
+                drift += float(torch.linalg.vector_norm(a - b).item())
+
+        return {
+            "updated": True,
+            "surprise": surprise_info["surprise"],
+            "applied_lr": applied_lr,
+            "applied_alpha": applied_alpha,
+            "reason": "novel_stream_absorbed",
+            "tokens": n_tok,
+            "drift": drift,
+        }
+
+    # 1D single-token path
+    surprise_info = compute_cosine_surprise(
+        memory, x_t, threshold=threshold, base_lr=base_lr, base_alpha=base_alpha
+    )
+    s = surprise_info["surprise"]
+    if not surprise_info["is_novel"]:
+        return {
+            "updated": False,
+            "surprise": s,
+            "applied_lr": 0.0,
+            "applied_alpha": 0.0,
+            "reason": "surprise_below_threshold",
+            "drift": 0.0,
+        }
+
+    applied_lr = surprise_info["eta"]
+    applied_alpha = surprise_info["alpha"]
+
+    do_track = True if track_drift is None or track_drift else False
+    before_tensors = [t.clone() for t in _state_tensors(memory)] if do_track else []
+    with torch.no_grad():
+        if hasattr(memory, "write_association"):
+            memory.write_association(x_t, x_t, beta=torch.tensor([applied_lr]))
+        elif hasattr(memory, "update_scheduled"):
+            memory.update_scheduled(
+                x_t, surprise_factor=s, effective_lr=applied_lr, base_lr=base_lr
+            )
+        elif hasattr(memory, "update"):
+            memory.update(x_t)
+        elif hasattr(target, "teach") and isinstance(x_t, str):
+            target.teach(x_t)
+
+    drift = 0.0
+    if do_track:
+        for b, a in zip(before_tensors, _state_tensors(memory)):
+            drift += float(torch.linalg.vector_norm(a - b).item())
+
+    return {
+        "updated": True,
+        "surprise": s,
+        "applied_lr": applied_lr,
+        "applied_alpha": applied_alpha,
+        "reason": "novel_fact_absorbed",
+        "drift": drift,
+    }
 
 
 # --------------------------------------------------------------------------- #
