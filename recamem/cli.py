@@ -493,7 +493,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_comp = subparsers.add_parser("companion", help="One-command Svelte companion app")
     p_comp.add_argument("--host", default="127.0.0.1")
     p_comp.add_argument("--port", type=int, default=8000)
-    p_comp.add_argument("--name", default="droid-alpha")
+    p_comp.add_argument("--name", default="companion-pet")
     p_comp.add_argument("--base-dir", default=None)
     p_comp.add_argument("--no-browser", action="store_true")
     p_comp.add_argument("--dry-run", action="store_true",

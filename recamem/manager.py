@@ -32,6 +32,24 @@ except Exception:  # noqa: BLE001
 class DroidManager:
     """Manages independent named Droid profiles under droids/<name>/."""
 
+    #: A factory-fresh companion profile ships with NO domain knowledge. Its
+    #: only pre-seeded tool is enabled web research, so all facts come from
+    #: user conversation or explicit web searches.
+    COMPANION_PET_RESEARCH = {
+        "enabled": True,
+        "provider": "duckduckgo",
+        "max_queries_per_session": 8,
+        "max_queries_per_minute": 3,
+        "max_pages_per_search": 2,
+        "result_limit": 3,
+    }
+
+    @classmethod
+    def _configure_companion_pet(cls, clean_name: str, engine: "DroidEngine") -> None:
+        """Enable bounded web research on a fresh companion-pet profile."""
+        if clean_name == "companion-pet":
+            engine.configure_research(dict(cls.COMPANION_PET_RESEARCH))
+
     def __init__(self, base_dir: Optional[str] = None):
         if base_dir is None:
             from recamem.identity import default_base_dir
@@ -106,6 +124,7 @@ class DroidManager:
             engine.rtu_dim = rtu_dim
             engine.rtu_layers = rtu_layers
             engine.rtu_spread = rtu_spread
+        self._configure_companion_pet(clean_name, engine)
         engine.save_profile(str(droid_dir))
         self.cached_instances[clean_name] = engine
         return engine
@@ -129,6 +148,7 @@ class DroidManager:
             )
         else:
             droid_dir.mkdir(parents=True, exist_ok=True)
+            self._configure_companion_pet(clean_name, engine)
             engine.save_profile(str(droid_dir))
 
         self.cached_instances[clean_name] = engine

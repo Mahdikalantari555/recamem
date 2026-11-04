@@ -475,7 +475,7 @@ PROFILE_SCHEMA_VERSION = 2
 
 
 class DroidEngine(nn.Module):
-    def __init__(self, name: str = "droid-alpha", dim: int = 384,
+    def __init__(self, name: str = "companion-pet", dim: int = 384,
                  db_path: Optional[str] = None,
                  plastic_adapter: Optional[Union[str, Any]] = None,
                  adapter_kwargs: Optional[Dict[str, Any]] = None,

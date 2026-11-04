@@ -139,7 +139,7 @@ class Runtime:
         from recamem import identity
 
         self.base_dir = base_dir or str(identity.default_base_dir())
-        self.profile = profile or "droid-alpha"
+        self.profile = profile or "companion-pet"
         self.jobs = JobStore()
         self.engine = None
         self.error: Optional[str] = None

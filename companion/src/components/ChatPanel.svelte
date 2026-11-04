@@ -10,6 +10,7 @@
   let prompt = $state('');
   let messages = $state<Turn[]>([]);
   let events = $state<CompanionEvent[]>([]);
+  let searchResult = $state<Record<string, unknown> | null>(null);
   let busy = $state(false);
   let error = $state('');
 
@@ -43,11 +44,12 @@
     error = '';
     try {
       const payload: Record<string, unknown> = {};
-      if (['feed', 'correct'].includes(action)) payload.text = prompt.trim();
-      if (factId !== null) payload.fact_id = factId;
+      if (['feed', 'correct', 'search', 'research'].includes(action)) payload.text = prompt.trim();
+      if (factId !== null && !['search', 'research'].includes(action)) payload.fact_id = factId;
       const outcome = await act(action, payload);
       events = [outcome.event, ...events].slice(0, 20);
-      if (action === 'feed' || action === 'correct' || action === 'sleep') prompt = '';
+    if (action === 'search' || action === 'research') searchResult = (outcome.result || {}) as Record<string, unknown>;
+      if (action === 'feed' || action === 'correct' || action === 'sleep' || action === 'search' || action === 'research') prompt = '';
       await onChanged();
     } catch (cause) {
       error = cause instanceof Error ? cause.message : String(cause);
@@ -79,6 +81,7 @@
     <button class="btn" onclick={() => void doAction('scold')} disabled={busy || factId === null}>Scold</button>
     <button class="btn" onclick={() => void doAction('correct')} disabled={busy || factId === null || !prompt.trim()}>Correct</button>
     <button class="btn" onclick={() => void doAction('sleep')} disabled={busy}>Sleep / consolidate</button>
+    <button class="btn" onclick={() => void doAction('search')} disabled={busy || !prompt.trim()}>Search Web</button>
   </div>
   {#if factId === null}
     <p class="muted">No recalled fact yet — pet/treat/scold need a recalled fact id.</p>
@@ -122,4 +125,20 @@
       </div>
     </div>
   {/each}
+</div>
+
+<div class="panel">
+  <h2>Web search evidence</h2>
+  {#if !searchResult}<p class="empty">No web search yet.</p>{/if}
+  {#if searchResult}
+    <p class="muted">Query: {String(searchResult.topic ?? searchResult.query ?? '')}</p>
+    <p class="muted">Facts learned: {String(searchResult.facts_learned ?? 0)}</p>
+    {#if Array.isArray(searchResult.sources)}
+      <ul>
+        {#each searchResult.sources as source, idx (idx)}
+          <li><a href={String(source)} target="_blank" rel="noreferrer">{String(source)}</a></li>
+        {/each}
+      </ul>
+    {/if}
+  {/if}
 </div>
