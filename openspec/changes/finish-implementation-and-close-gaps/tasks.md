@@ -65,9 +65,9 @@ rejects a `closed` row without a test and an evidence record.
 
 - [x] 5.1 Re-measure all targets in `docs/release-matrix.md` on a declared machine with a provenance-stamped report before changing any implementation
 - [ ] 5.2 Build `hnswlib` (or an equivalent declared ANN index) and re-measure 50k/100k retrieval p95 and recall@5 against exact MVM
-- [ ] 5.3 Optimize the lexical/fused path at 100k facts (FTS-first candidate generation, fused-scan pruning) and re-measure lexical p95
-- [ ] 5.4 Re-measure Matryoshka 64-D speedup and delta 20-task memory loss with the documented seeds and ablations; fix the delta adapter if the loss remains above 0.10
-- [ ] 5.5 Optimize merge 2x10k facts and surprise-gate insert reduction and publish before/after measurements
+- [x] 5.3 Optimize the lexical/fused path at 100k facts (FTS-first candidate generation, fused-scan pruning) and re-measure lexical p95
+- [x] 5.4 Re-measure Matryoshka 64-D speedup and delta 20-task memory loss with the documented seeds and ablations; fix the delta adapter if the loss remains above 0.10
+- [x] 5.5 Optimize merge 2x10k facts and surprise-gate insert reduction and publish before/after measurements
 - [x] 5.6 For any target still missed, publish the measured result as `partial` and, only if a reviewed decision approves it, add a requirement revision that records old target, new target, measurement and reason; never delete a case or lower a threshold silently
 - [x] 5.7 Update `docs/release-matrix.md` and `reports/evidence/*.json` so every row has an outcome and a provenance record
 

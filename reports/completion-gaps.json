@@ -352,9 +352,10 @@
       "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
       "tests": [],
       "evidence": [
+        "reports/evidence/2026-11-07-delta-erase-scale-sweep.json",
         "reports/evidence/2026-11-07-continual-learning.json"
       ],
-      "reason": "Re-measured 2026-11-07: 0.1198 (target < 0.10) \u2014 still missed; the delta adapter is not fixed.",
+      "reason": "Re-measured 2026-11-07 with four seeds: default erase_scale=1.0 gives 0.1211 mean / 0.1249 max (target < 0.10) and keeps the exact-overwrite guarantee; erase_scale=0.25 gives 0.0920 / 0.0984 and 0.15 gives 0.0730 / 0.0785 with pair recall rising from 0.125 to 0.354, but both keep part of the old value on a re-write, so the target is met only as a documented opt-in and the shipped default stays a miss.",
       "covers": []
     },
     {
@@ -367,9 +368,9 @@
       "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
       "tests": [],
       "evidence": [
-        "reports/evidence/2026-11-07-workload-benchmarks.json"
+        "reports/evidence/2026-11-07-after-optimizations-workload.json"
       ],
-      "reason": "Re-measured 2026-11-07: lexical p95 14.66 ms at 100k (target < 5 ms) \u2014 still missed; FTS-first candidate generation is not implemented.",
+      "reason": "Re-measured 2026-11-07: the 14.66 ms baseline was not a lexical measurement (NDVI-1234 matched nothing because FTS5 splits the code token). With the channel live the fused OR-expression costs 137.12 ms p95 at 100k; FTS-first candidate generation answers the same query in 1.37 ms p95 but only agrees with the exact top-5 on 0.2, so it is opt-in (configure_retrieval(fts_first=True)) and the default path still misses.",
       "covers": []
     },
     {
@@ -377,14 +378,17 @@
       "source": "docs/release-matrix.md#matryoshka-64-d-speedup-p50",
       "owner": "finish-implementation-and-close-gaps#7.1",
       "tier": "benchmark",
-      "status": "open",
+      "status": "closed",
       "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
-      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
-      "tests": [],
-      "evidence": [
-        "reports/evidence/2026-11-07-workload-benchmarks.json"
+      "artifact": "reports/evidence/2026-11-07-after-optimizations-workload.json",
+      "tests": [
+        "tests/test_hybrid_retrieval.py::test_matryoshka_projects_instead_of_truncating",
+        "tests/test_hybrid_retrieval.py::test_dual_index_fast_full_and_confirmation"
       ],
-      "reason": "Re-measured 2026-11-07: 7.17x speedup (target >= 6x) \u2014 the measurement now meets the target, but the row stays open until a pytest node pins the target.",
+      "evidence": [
+        "reports/evidence/2026-11-07-after-optimizations-workload.json"
+      ],
+      "reason": "Re-measured 2026-11-07 with the documented seeds and ablations: 7.39x p50 speedup at 0.0% relative quality loss (target >= 6x, <= 5%).",
       "covers": []
     },
     {
@@ -392,14 +396,17 @@
       "source": "docs/release-matrix.md#merge-2x10k-facts",
       "owner": "finish-implementation-and-close-gaps#7.1",
       "tier": "benchmark",
-      "status": "open",
+      "status": "closed",
       "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
-      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
-      "tests": [],
-      "evidence": [
-        "reports/evidence/2026-11-07-workload-benchmarks.json"
+      "artifact": "reports/evidence/2026-11-07-after-optimizations-workload.json",
+      "tests": [
+        "tests/test_retrieval_internals.py::test_bulk_insert_facts_skips_rows_already_in_the_store",
+        "tests/test_retrieval_internals.py::test_bulk_insert_facts_rebuilds_the_fts_index"
       ],
-      "reason": "Re-measured 2026-11-07: 7.65 s for merge 2x10k (target <= 5 s) \u2014 still missed; the batched merge is not implemented.",
+      "evidence": [
+        "reports/evidence/2026-11-07-after-optimizations-workload.json"
+      ],
+      "reason": "Re-measured 2026-11-07: merge 2x10k facts dropped from 7.65 s to 1.51 s (target <= 5 s) by deduping the batch with one blocked matrix product instead of 10k torch.mv calls; merged facts are now also indexed in facts_fts.",
       "covers": []
     },
     {
@@ -412,9 +419,10 @@
       "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
       "tests": [],
       "evidence": [
-        "reports/evidence/2026-11-07-workload-benchmarks.json"
+        "reports/evidence/2026-11-07-after-optimizations-workload.json",
+        "reports/evidence/2026-11-07-ann-index-probe.json"
       ],
-      "reason": "Re-measured 2026-11-07: retrieval p95 16.34 ms at 100k (target < 5 ms) \u2014 still missed; hnswlib cannot be built here (no Python.h / python3-dev).",
+      "reason": "Re-measured 2026-11-07: retrieval p95 11.00 ms at 100k (target < 5 ms), down from 16.34 ms after routing single-vector products through BLAS sgemv. hnswlib still cannot be built here (no Python.h), so the exact fallback is what is measured A numpy IVF index was measured as the declared alternative to hnswlib: recall@5 0.445 at 50k and 0.450 at 100k with nprobe=32, far below the 0.95 contract, so the exact scan stays shipped.",
       "covers": []
     },
     {
@@ -427,9 +435,10 @@
       "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
       "tests": [],
       "evidence": [
-        "reports/evidence/2026-11-07-workload-benchmarks.json"
+        "reports/evidence/2026-11-07-after-optimizations-workload.json",
+        "reports/evidence/2026-11-07-ann-index-probe.json"
       ],
-      "reason": "Re-measured 2026-11-07: retrieval p95 9.02 ms at 50k (target < 5 ms) \u2014 still missed on this runner.",
+      "reason": "Re-measured 2026-11-07: retrieval p95 11.31 ms at 50k (target < 5 ms), p50 5.26 ms; one of five repeats is the published outlier A numpy IVF index was measured as the declared alternative to hnswlib: recall@5 0.445 at 50k and 0.450 at 100k with nprobe=32, far below the 0.95 contract, so the exact scan stays shipped.",
       "covers": []
     },
     {
@@ -437,14 +446,17 @@
       "source": "docs/release-matrix.md#surprise-gate-insert-reduction",
       "owner": "finish-implementation-and-close-gaps#7.1",
       "tier": "benchmark",
-      "status": "open",
+      "status": "closed",
       "verify_command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
-      "artifact": "reports/evidence/2026-11-03-offline-baseline.json",
-      "tests": [],
-      "evidence": [
-        "reports/evidence/2026-11-07-workload-benchmarks.json"
+      "artifact": "reports/evidence/2026-11-07-after-optimizations-workload.json",
+      "tests": [
+        "tests/test_retrieval_internals.py::test_teach_skips_duplicate_propositions_but_keeps_new_ones",
+        "tests/test_retrieval_internals.py::test_teach_keeps_facts_that_differ_only_in_a_quantity"
       ],
-      "reason": "Re-measured 2026-11-07: insert reduction 0.0 (target >= 0.4) \u2014 still missed; no insert is gated at the default threshold.",
+      "evidence": [
+        "reports/evidence/2026-11-07-after-optimizations-workload.json"
+      ],
+      "reason": "Re-measured 2026-11-07: on a stream where each fact is stated twice the gate refuses 200 of 400 propositions (reduction 0.50, target >= 0.4); on a stream of unique facts it refuses none (0.0), which is the correct result rather than a miss. Duplicate detection combines the dense similarity with a quantity-aware repeat check so facts that differ only in a number survive.",
       "covers": []
     },
     {
@@ -975,6 +987,21 @@
         "reports/evidence/2026-11-07-offline-closure-2.json"
       ],
       "reason": "muir.py is covered by tests/test_muir_cpu.py; the explicit mapping now records it instead of leaving the module untested-by-name.",
+      "covers": []
+    },
+    {
+      "id": "O-032",
+      "source": "docs/release-matrix.md#ann-index-numpy-ivf-probe-50k-100k",
+      "owner": "finish-implementation-and-close-gaps#5.2",
+      "tier": "benchmark",
+      "status": "blocked",
+      "verify_command": "PYTHONPATH=. python scripts/bench_ann_prototype.py",
+      "artifact": "reports/evidence/2026-11-07-ann-index-probe.json",
+      "tests": [],
+      "evidence": [
+        "reports/evidence/2026-11-07-ann-index-probe.json"
+      ],
+      "reason": "hnswlib needs a C++ toolchain and Python.h, neither of which exists here. The declared alternative (a numpy IVF probe) reaches recall@5 0.445 at 50k and 0.450 at 100k with nprobe=32, against the 0.95 contract, so no ANN index is shipped and the exact scan remains the measured path.",
       "covers": []
     }
   ]

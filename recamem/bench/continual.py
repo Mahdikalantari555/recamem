@@ -42,6 +42,9 @@ class BenchmarkConfig:
     # rule erases.  1.0 is the canonical rule; the retention/fidelity sweep in
     # docs/release-matrix.md reports both configurations.
     delta_erase_scale: float = 1.0
+    # Head split of the dense delta memory.  4 is the adapter default; the
+    # ablation record documents why a larger split is not selected.
+    delta_heads: int = 4
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -57,6 +60,7 @@ class BenchmarkConfig:
             "ewc_lambda": self.ewc_lambda,
             "ewc_lr": self.ewc_lr,
             "delta_erase_scale": self.delta_erase_scale,
+            "delta_heads": self.delta_heads,
         }
 
 
@@ -132,7 +136,8 @@ class DeltaSystem(_MemorySystem):
             self.adapter.set_beta_constant(config.delta_gate)
         else:
             self.adapter = DeltaPlasticAdapter(
-                dim=config.dim, erase_scale=config.delta_erase_scale
+                dim=config.dim, heads=config.delta_heads,
+                erase_scale=config.delta_erase_scale,
             )
             self.adapter.set_beta_constant(config.delta_gate)
         self.name = "sparse_delta" if sparse else "delta_rtu"
