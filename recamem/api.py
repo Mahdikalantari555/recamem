@@ -350,6 +350,9 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
         def _api(self, method: str, path: str, query: Dict[str, List[str]]):
             parts = [part for part in path.split("/") if part]
             if method in {"GET", "HEAD"}:
+                if parts == ["learning"]:
+                    from recamem.learning import LearningLedger
+                    return self._send(200, LearningLedger(runtime.base_dir, runtime.profile).status())
                 if parts == ["health"]:
                     return self._send(200, runtime.health())
                 if parts == ["models"]:
@@ -404,6 +407,15 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
 
             payload = _json_body(self)
 
+            if parts == ["learning", "configure"]:
+                from recamem.learning import LearningLedger, LearningPolicyError
+                try:
+                    status = LearningLedger(runtime.base_dir, runtime.profile).configure(
+                        enabled=payload.get("enabled"), threads=payload.get("threads"))
+                except LearningPolicyError as exc:
+                    raise ApiError(400, str(exc)) from exc
+                return self._send(200, status)
+
             if parts == ["models", "load"]:
                 name = _string(payload, "name", required=False, default=runtime.profile)
                 return self._send(200, runtime.load(name))
@@ -430,6 +442,60 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
                 finally:
                     runtime.active_op = None
                 return self._send(200, result)
+
+            if parts == ["native", "generate"]:
+                # Only checkpoints created by this server's completed jobs can be
+                # loaded; never accept a caller-supplied filesystem path.
+                job_id = _string(payload, "job_id")
+                prompt = _string(payload, "prompt")
+                if not prompt or len(prompt.encode("utf-8")) > 1024:
+                    raise ApiError(400, "prompt must contain 1–1024 UTF-8 bytes")
+                max_tokens = payload.get("max_tokens", 32)
+                if not isinstance(max_tokens, int) or isinstance(max_tokens, bool) or not 1 <= max_tokens <= 64:
+                    raise ApiError(400, "max_tokens must be an integer from 1 to 64")
+                job = runtime.jobs.get(job_id)
+                if job.get("kind") != "train" or job.get("status") != "done" or not job.get("checkpoint_path"):
+                    raise ApiError(400, "a completed training job with a checkpoint is required")
+                root = _companion_checkpoint_root(runtime).resolve()
+                checkpoint = (Path(job["checkpoint_path"]) / "checkpoint.pt").resolve()
+                if root not in checkpoint.parents:
+                    raise ApiError(400, "checkpoint is outside the training checkpoint directory")
+                from recamem.native_lm import NativeLMBackend
+                try:
+                    backend = NativeLMBackend(checkpoint)
+                    answer = backend.generate(prompt, max_tokens=max_tokens)
+                except (ValueError, OSError, KeyError, RuntimeError) as exc:
+                    raise ApiError(400, f"native checkpoint unavailable: {exc}") from exc
+                return self._send(200, {"response": answer, "job_id": job_id,
+                                        "memory_used": False, "dataset": "see job report"})
+
+            if parts == ["native", "memory-generate"]:
+                # Experimental explicit mode; accept only this server's completed
+                # checkpoint jobs, not arbitrary caller-supplied filesystem paths.
+                job_id = _string(payload, "job_id")
+                prompt = _string(payload, "prompt")
+                if not prompt or len(prompt.encode("utf-8")) > 1024:
+                    raise ApiError(400, "prompt must contain 1–1024 UTF-8 bytes")
+                max_tokens = payload.get("max_tokens", 32)
+                if not isinstance(max_tokens, int) or isinstance(max_tokens, bool) or not 1 <= max_tokens <= 64:
+                    raise ApiError(400, "max_tokens must be an integer from 1 to 64")
+                job = runtime.jobs.get(job_id)
+                if job.get("kind") != "train" or job.get("status") != "done" or not job.get("checkpoint_path"):
+                    raise ApiError(400, "a completed training job with a checkpoint is required")
+                root = _companion_checkpoint_root(runtime).resolve()
+                checkpoint = (Path(job["checkpoint_path"]) / "checkpoint.pt").resolve()
+                if root not in checkpoint.parents:
+                    raise ApiError(400, "checkpoint is outside the training checkpoint directory")
+                engine = runtime.require_engine()
+                from recamem.backend_contracts import QueryBudgetError
+                from recamem.native_lm import NativeLMBackend
+                from recamem.native_memory import NativeMemorySession
+                try:
+                    backend = NativeLMBackend(checkpoint, max_output_bytes=64)
+                    answer = NativeMemorySession(engine, backend).answer(prompt, max_tokens=max_tokens)
+                except (ValueError, OSError, KeyError, RuntimeError, QueryBudgetError) as exc:
+                    raise ApiError(400, f"native memory generation unavailable: {exc}") from exc
+                return self._send(200, {**answer, "job_id": job_id})
 
             if parts == ["teach"]:
                 text = _string(payload, "text")
@@ -499,7 +565,7 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
                 return self._send(200, {"result": result})
 
             if parts == ["hub", "push"]:
-                if any("token" in str(key).lower() for key in payload):
+                if any(str(key).lower() in {"token", "hf_token", "access_token", "api_token", "authorization"} for key in payload):
                     raise ApiError(400, "tokens must stay server-side; none accepted in a request")
                 repo_id = _string(payload, "repo_id")
                 if not payload.get("confirm"):
@@ -521,7 +587,7 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
                 return self._send(200, {"status": "ok", "pushed": True, "repo_id": repo_id, "checkpoint": checkpoint_name, "url": str(url)})
 
             if parts == ["hub", "pull"]:
-                if any("token" in str(key).lower() for key in payload):
+                if any(str(key).lower() in {"token", "hf_token", "access_token", "api_token", "authorization"} for key in payload):
                     raise ApiError(400, "tokens must stay server-side; none accepted in a request")
                 repo_id = _string(payload, "repo_id")
                 if not payload.get("confirm"):
@@ -564,7 +630,7 @@ def make_handler(runtime: Runtime, static_dir: Optional[Path] = None):
                 if kind == "train":
                     from recamem import companion
 
-                    if any("token" in str(key).lower() for key in payload):
+                    if any(str(key).lower() in {"token", "hf_token", "access_token", "api_token", "authorization"} for key in payload):
                         raise ApiError(400, "tokens must stay server-side; none accepted in a request")
                     if runtime.training is None:
                         runtime.training = companion.TrainingJobRunner(

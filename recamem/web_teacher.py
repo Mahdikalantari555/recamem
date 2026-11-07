@@ -3,9 +3,11 @@
 The Droid can only learn what it is given until something goes and looks. This
 module is that something, kept deliberately small and boring: one provider
 interface, one key-free HTML provider, one key-configurable JSON provider, and
-a fetcher that refuses to be turned into a server-side request forgery tool.
+a fetcher with basic address checks. Those checks are not a complete SSRF defense:
+DNS validation and connection resolution are separate, leaving a rebinding race.
 
-Rules the fetcher enforces (``adaptation/web-grounded-learning``):
+Existing fetcher checks (``adaptation/web-grounded-learning``); these do not
+guarantee safe egress against DNS rebinding or other adversarial network behavior:
 
 * only ``http`` and ``https``;
 * every hop after a redirect re-applies the host check;

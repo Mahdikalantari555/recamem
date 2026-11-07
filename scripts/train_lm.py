@@ -45,6 +45,8 @@ def load_memmap(data_dir: Path):
 
 def get_batch(data: np.ndarray, seq_len: int, batch_size: int, device: torch.device):
     # Random contiguous windows
+    if len(data) <= seq_len + 1:
+        raise ValueError("dataset split is too short for the requested sequence length")
     max_start = len(data) - seq_len - 1
     starts = np.random.randint(0, max(max_start, 1), size=batch_size)
     x = np.stack([data[s:s + seq_len] for s in starts]).astype(np.int64)
@@ -87,7 +89,10 @@ def generate_sample(model, tokenizer, prompt_ids, max_new=64, temperature=0.8, d
 def save_checkpoint(path: Path, model, optimizer, step, tokens_seen, meta):
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
+    numpy_rng = np.random.get_state()
     torch.save({
+        "torch_rng_state": torch.get_rng_state(),
+        "numpy_rng_state": [numpy_rng[0], numpy_rng[1].tolist(), numpy_rng[2], numpy_rng[3], numpy_rng[4]],
         "model_state": model.state_dict(),
         "optimizer_state": optimizer.state_dict(),
         "step": step,
@@ -101,12 +106,17 @@ def load_checkpoint(path: Path, model, optimizer):
     ckpt = torch.load(path, map_location="cpu", weights_only=False)
     model.load_state_dict(ckpt["model_state"])
     optimizer.load_state_dict(ckpt["optimizer_state"])
+    if "torch_rng_state" in ckpt and "numpy_rng_state" in ckpt:
+        torch.set_rng_state(ckpt["torch_rng_state"])
+        rng = ckpt["numpy_rng_state"]
+        np.random.set_state((rng[0], np.asarray(rng[1], dtype=np.uint32), rng[2], rng[3], rng[4]))
     return ckpt["step"], ckpt["tokens_seen"]
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Standalone LM training")
     parser.add_argument("--core", type=str, default="C4")
+    parser.add_argument("--readout", choices=("static", "dynamic"), default="dynamic")
     parser.add_argument("--d-model", type=int, default=192)
     parser.add_argument("--n-layers", type=int, default=6)
     parser.add_argument("--n-heads", type=int, default=4)
@@ -127,6 +137,7 @@ def main() -> int:
     parser.add_argument("--push-to-hub", type=str, default=None)
     parser.add_argument("--seed", type=int, default=1337)
     parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--threads", type=int, default=min(4, os.cpu_count() or 1))
     parser.add_argument("--core-id", type=str, default=None)
     args = parser.parse_args()
 
@@ -134,8 +145,9 @@ def main() -> int:
     np.random.seed(args.seed)
 
     device = torch.device(args.device)
-    n_threads = os.cpu_count() or 4
-    torch.set_num_threads(n_threads)
+    if args.threads < 1:
+        parser.error("--threads must be positive")
+    torch.set_num_threads(args.threads)
 
     data_dir = Path(args.data_dir)
     train_data, val_data, meta = load_memmap(data_dir)
@@ -145,6 +157,7 @@ def main() -> int:
     # Build model
     cfg = {
         "core_id": args.core,
+        "readout": args.readout,
         "d_model": args.d_model,
         "n_layers": args.n_layers,
         "n_heads": args.n_heads,
@@ -204,6 +217,8 @@ def main() -> int:
     step = 0
     tokens_seen = 0
     resume_path = args.resume or args.resume_from
+    if resume_path and not Path(resume_path).is_file():
+        raise FileNotFoundError(f"Checkpoint not found: {resume_path}")
     if resume_path and Path(resume_path).is_file():
         # config hash check
         from recamem import hub as _hub
@@ -213,6 +228,8 @@ def main() -> int:
                    "n_heads": args.n_heads, "d_ff": args.d_ff, "seed": args.seed}
         if ckpt_cfg:
             _hub.check_config_match(ckpt_cfg, req_cfg)
+            if ckpt_cfg.get("core_id", args.core) != args.core or ckpt_cfg.get("tokenizer") != meta.get("tokenizer") or ckpt_cfg.get("readout", "dynamic") != args.readout:
+                raise ValueError("Checkpoint core or tokenizer does not match requested data")
         step, tokens_seen = load_checkpoint(Path(resume_path), model, optimizer)
         print(f"Resumed from {resume_path}: step={step} tokens={tokens_seen}")
 
@@ -304,7 +321,7 @@ def main() -> int:
                 pass
 
         if step % args.checkpoint_every == 0:
-            save_checkpoint(ckpt_path, model, optimizer, step, tokens_seen, {"V": V, "config": {"vocab_size": V, "d_model": args.d_model, "n_layers": args.n_layers, "n_heads": args.n_heads, "d_ff": args.d_ff, "seed": args.seed}})
+            save_checkpoint(ckpt_path, model, optimizer, step, tokens_seen, {"V": V, "config": {"vocab_size": V, "d_model": args.d_model, "n_layers": args.n_layers, "n_heads": args.n_heads, "d_ff": args.d_ff, "seed": args.seed, "core_id": args.core, "readout": args.readout, "tokenizer": meta.get("tokenizer"), "conv_kernel": 4, "use_conv": True}})
             print(f"  checkpoint saved: step={step}", flush=True)
             # Generation sample
             prompt = train_data[:8].tolist()
@@ -341,10 +358,10 @@ def main() -> int:
 
     # Estimate bytes per token
     # Compute from val stories if splits available
-    bytes_per_token = 4.0
+    bytes_per_token = meta.get("bytes_per_token")
     try:
         cand_splits = Path(".cache/tinystories/splits")
-        if (cand_splits / "val_cal.jsonl").is_file():
+        if bytes_per_token is None and (cand_splits / "val_cal.jsonl").is_file():
             vstories = []
             with (cand_splits / "val_cal.jsonl").open() as f:
                 for line in f:
@@ -352,26 +369,26 @@ def main() -> int:
                     if line:
                         vstories.append(json.loads(line).get("text", ""))
             total_bytes = sum(len(s.encode("utf-8")) for s in vstories)
-            total_tokens = len(val_data)
-            if total_tokens > 0:
-                bytes_per_token = total_bytes / total_tokens
+            val_tokens = len(val_data)
+            if val_tokens > 0:
+                bytes_per_token = total_bytes / val_tokens
     except Exception:
         pass
 
     # Final val loss
     final_val = compute_val_loss(model, val_data, args.seq_len, args.batch_size, device)
-    val_bpb = (final_val / math.log(2)) / max(bytes_per_token, 1e-6)
+    val_bpb = (final_val / math.log(2)) / bytes_per_token if bytes_per_token else None
 
     # Gate evaluation
     g0 = None  # set externally
-    g1 = val_bpb <= g1_thr if g1_thr != float("inf") else None
-    g2 = val_bpb <= g2_thr if g2_thr != float("inf") else None
-    g3 = (val_bpb <= g3_thr) if g3_thr != float("inf") else None
+    g1 = val_bpb <= g1_thr if val_bpb is not None and g1_thr != float("inf") else None
+    g2 = val_bpb <= g2_thr if val_bpb is not None and g2_thr != float("inf") else None
+    g3 = (val_bpb <= g3_thr) if val_bpb is not None and g3_thr != float("inf") else None
     # G4 (MQAR) not computed here; placeholder
     g4 = None
 
     # Final checkpoint
-    save_checkpoint(ckpt_path, model, optimizer, step, tokens_seen, {"V": V, "config": {"vocab_size": V, "d_model": args.d_model, "n_layers": args.n_layers, "n_heads": args.n_heads, "d_ff": args.d_ff, "seed": args.seed}})
+    save_checkpoint(ckpt_path, model, optimizer, step, tokens_seen, {"V": V, "config": {"vocab_size": V, "d_model": args.d_model, "n_layers": args.n_layers, "n_heads": args.n_heads, "d_ff": args.d_ff, "seed": args.seed, "core_id": args.core, "readout": args.readout, "tokenizer": meta.get("tokenizer"), "conv_kernel": 4, "use_conv": True}})
 
     # Final report
     elapsed = time.time() - t0
@@ -397,7 +414,9 @@ def main() -> int:
         "elapsed_s": elapsed,
         "tok_per_s": tokens_seen / max(elapsed, 1e-6),
         "seed": args.seed,
-        "ngram_thresholds": {"G1": g1_thr, "G2": g2_thr, "G3": g3_thr},
+        "threads": args.threads,
+        "dataset_meta": meta,
+        "ngram_thresholds": {"G1": None if g1_thr == float("inf") else g1_thr, "G2": None if g2_thr == float("inf") else g2_thr, "G3": None if g3_thr == float("inf") else g3_thr},
         "gates": {"G0": g0, "G1": g1, "G2": g2, "G3": g3, "G4": g4},
     }
     report_path.write_text(json.dumps(report, indent=2))

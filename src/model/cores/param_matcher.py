@@ -32,6 +32,8 @@ CORE_ALIASES: Dict[str, str] = {
     "gated_delta_matrix": "C4",
     "c5": "C5",
     "needle_san": "C5",
+    "c7": "C7",
+    "muir": "C7",
     "c6": "C6",
     "softmax_transformer": "C6",
 }
@@ -189,6 +191,16 @@ def estimate_candidate_lm_params(
         gates_p = 2 * (d_model * n_heads + n_heads)
         rec_p = d_model + 5 * d_model * d_model + conv_p + gates_p + d_model
         per_layer = rec_p + _swiglu_params(d_model, d_ff)
+        return shell + n_layers * per_layer
+
+    if cid == "C7":
+        if not use_conv:
+            raise ValueError("C7 requires causal convolution")
+        small, large = max(1, d_model // 16), max(2, d_model // 8)
+        ranks = 2 * small + 3 * large
+        per_layer = (d_model + 3*d_model*d_model + 3*d_model*conv_kernel
+                     + 2*d_model*ranks + 2*d_model + 2*d_model
+                     + d_model//n_heads + d_model*d_model + _swiglu_params(d_model, d_ff))
         return shell + n_layers * per_layer
 
     if cid == "C5":

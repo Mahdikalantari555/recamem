@@ -38,7 +38,8 @@ def test_training_job_runs_and_writes_provenance(tmp_path):
     assert (out_dir / "report.json").is_file()
     manifest = json.loads((out_dir / "manifest.json").read_text())
     assert manifest["dataset"] == "fixture"
-    assert isinstance(manifest["held_out_bpb"], (int, float))
+    # Random token IDs have no meaningful byte count; never invent BPB.
+    assert manifest["held_out_bpb"] is None
     assert manifest["commit"] and manifest["command"]
     assert "G2" in manifest["gates"]
     assert "HF_TOKEN" not in manifest["command"]

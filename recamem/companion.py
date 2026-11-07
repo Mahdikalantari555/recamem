@@ -30,7 +30,7 @@ TRAIN_ARGS = {
     "d_ff": "--d-ff", "vocab_size": "--vocab-size", "seq_len": "--seq-len",
     "lr": "--lr", "batch_size": "--batch-size", "grad_accum": "--grad-accum",
     "checkpoint_every": "--checkpoint-every", "seed": "--seed", "core": "--core",
-    "resume": "--resume",
+    "resume": "--resume", "threads": "--threads", "readout": "--readout",
 }
 
 
@@ -333,6 +333,7 @@ class TrainingJobRunner:
         self._processes: Dict[str, subprocess.Popen] = {}
         self._events: Dict[str, List[Dict[str, Any]]] = {}
         self._params: Dict[str, Dict[str, Any]] = {}
+        self._cancelled: set[str] = set()
         self.home = Path(home) if home else Path(
             os.environ.get("RECAMEM_HOME") or (Path.home() / ".recamem"))
 
@@ -353,11 +354,25 @@ class TrainingJobRunner:
         script = self.repo_root / "scripts" / "train_lm.py"
         if not script.is_file():
             raise CompanionActionError(f"training script missing: {script}")
-        unknown = sorted(set(params) - set(TRAIN_ARGS) - {"kind"})
+        unknown = sorted(set(params) - set(TRAIN_ARGS) - {"kind", "dataset"})
         if unknown:
             raise CompanionActionError(f"unsupported training parameters: {unknown}")
         params = dict(params)
+        dataset = params.pop("dataset", None)
+        if dataset == "cpu_smoke":
+            from scripts.prepare_cpu_smoke import prepare
+            data_dir = self.home / "datasets" / "cpu-smoke"
+            prepare(data_dir)
+            params["data_dir"] = str(data_dir)
+            if int(params.get("vocab_size", 256)) != 256:
+                raise CompanionActionError("CPU smoke corpus requires vocab_size=256")
+            params["vocab_size"] = 256
+            self._emit(job_id, {"type": "notice", "line": "Self-authored MIT smoke fixture; not evidence of language learning."})
+        elif dataset not in (None, "custom"):
+            raise CompanionActionError(f"unknown dataset: {dataset}")
         data_dir = Path(str(params.get("data_dir") or ""))
+        if params.get("data_dir") and not (data_dir / "train.bin").is_file():
+            raise CompanionActionError(f"dataset unavailable: {data_dir}")
         if not (data_dir / "train.bin").is_file():
             fixture = ensure_fixture_corpus(self.home)
             params["data_dir"] = fixture.as_posix()
@@ -420,7 +435,10 @@ class TrainingJobRunner:
         finished_at = time.time()
         with self._lock:
             self._processes.pop(job_id, None)
-        status = "done" if returncode == 0 else "failed"
+        with self._lock:
+            was_cancelled = job_id in self._cancelled
+            self._cancelled.discard(job_id)
+        status = "cancelled" if was_cancelled else "done" if returncode == 0 else "failed"
         manifest: Dict[str, Any] = {}
         checkpoint_path = None
         report: Dict[str, Any] = {}
@@ -461,6 +479,8 @@ class TrainingJobRunner:
             proc = self._processes.get(job_id)
         if proc is None or proc.poll() is not None:
             return False
+        with self._lock:
+            self._cancelled.add(job_id)
         proc.terminate()
         try:
             proc.wait(timeout=5)
