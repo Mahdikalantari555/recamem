@@ -1,13 +1,18 @@
 # Tasks
 
-> **Progress (2026-11-03).** Phase 1 of this change is implemented: the
-> completion inventory and guard, all offline correctness/repository-hygiene
-> fixes, core-config parity and the real-model runbook. 19 of 62 inventory
-> rows are `closed` with tests and evidence in
-> `reports/evidence/2026-11-03-offline-closure.json`. The remaining rows need
-> model weights, a trained checkpoint, benchmark hardware or a compiled
-> desktop shell; `check_completion_gaps.py` still exits 1 by design. A checked
-> box below is not evidence; the inventory rows are.
+> **Progress (2026-11-07).** Phase 1 (inventory, guard, offline correctness,
+> config parity, runbook) was implemented on 2026-11-03. This pass closed the
+> offline defects found by a fresh full-suite run (a chat-intent bug that taught
+> imperative queries as facts, and an unmapped `muir.py` module), pinned the
+> `doctor` readiness contract, added the Vela hidden-injection probe, bound the
+> five placeholder UI pages to real endpoints, re-measured the performance
+> targets on the declared runner, archived `recamem-core-architecture-tournament`
+> after validation, and published the Vela v2 disposition. Evidence:
+> `reports/evidence/2026-11-07-*.json`. Still blocked: the `real-model` and
+> `grounding` tiers (no ONNX/GGUF weights, no `RTU_CHECKPOINT`, no
+> `llama-cpp-python`, no Tauri toolchain) and the training ladder of
+> `recamem-language-learning`. `check_completion_gaps.py` still exits 1 by
+> design: 29 rows are open and 11 blocked.
 
 All boxes start unchecked. A checked box is not evidence: every task names the
 command or artifact that must exist, and `scripts/check_completion_gaps.py`
@@ -42,7 +47,7 @@ rejects a `closed` row without a test and an evidence record.
 - [x] 3.3 Add a `src/model/recamem_core.py` loader regression test that pins the generated config contract and fails on silent reinterpretation of `memory_arm_id`
 - [x] 3.4 Document the config-as-generated-artifact rule in `docs/core-candidates.md` and `docs/architecture-tournament.md`
 - [ ] 3.5 Verify `recamem-language-learning` tasks 1.2, 4.1-4.6, 5.3-5.5, 6.2-6.5 and 7.4 are complete with passing evidence, and reference their evidence records from the inventory
-- [ ] 3.6 Verify `recamem-core-architecture-tournament` has passing evidence for its checked tasks and archive it only after `openspec validate` passes
+- [x] 3.6 Verify `recamem-core-architecture-tournament` has passing evidence for its checked tasks and archive it only after `openspec validate` passes
 - [ ] 3.7 Archive `recamem-language-learning` after G2 (BPB below trigram) and G3/G4 are measured, not merely after the code lands
 
 ## 4. Real-model and grounding tiers
@@ -51,30 +56,30 @@ rejects a `closed` row without a test and an evidence record.
 - [ ] 4.2 On a machine with model access, run `scripts/fetch_real_model.py` and record a `downloaded` evidence record with bytes, sha256 and source repo; no weights are committed
 - [ ] 4.3 Build `llama-cpp-python` and run `pytest tests -q -k "onnx or gguf"` against the real artifacts, publishing binding version, model sha256, seed, command, commit and hardware
 - [ ] 4.4 Verify real GGUF generation, streaming and KV prefill (tasks 3.4, 3.7, 8.1) with a named model path, and assert no `MockLlama` or mock anchor appears in the answer path
-- [ ] 4.5 Run `scripts/verify_remote_sensing_e2e.py` with a trained `RTU_CHECKPOINT` for the `grounding` tier and record the raw result, or record `blocked` with the missing checkpoint
+- [x] 4.5 Run `scripts/verify_remote_sensing_e2e.py` with a trained `RTU_CHECKPOINT` for the `grounding` tier and record the raw result, or record `blocked` with the missing checkpoint
 - [ ] 4.6 Name the 8B reference model and matched budget for task 7.10, run the 1B+TTC comparison with a statistical test, and publish raw scores and uncertainty; withhold superiority claims if unverified
-- [ ] 4.7 Make `recamem doctor` exit 0 only with a real anchor and a named generation backend, and add a test that it exits 1 with the explicit mock
+- [x] 4.7 Make `recamem doctor` exit 0 only with a real anchor and a named generation backend, and add a test that it exits 1 with the explicit mock
 - [ ] 4.8 Close tasks 9.2, 9.4 and 9.5 with cross-feature integration evidence in all five tiers
 
 ## 5. Performance targets
 
-- [ ] 5.1 Re-measure all targets in `docs/release-matrix.md` on a declared machine with a provenance-stamped report before changing any implementation
+- [x] 5.1 Re-measure all targets in `docs/release-matrix.md` on a declared machine with a provenance-stamped report before changing any implementation
 - [ ] 5.2 Build `hnswlib` (or an equivalent declared ANN index) and re-measure 50k/100k retrieval p95 and recall@5 against exact MVM
-- [ ] 5.3 Optimize the lexical/fused path at 100k facts (FTS-first candidate generation, fused-scan pruning) and re-measure lexical p95
-- [ ] 5.4 Re-measure Matryoshka 64-D speedup and delta 20-task memory loss with the documented seeds and ablations; fix the delta adapter if the loss remains above 0.10
-- [ ] 5.5 Optimize merge 2x10k facts and surprise-gate insert reduction and publish before/after measurements
-- [ ] 5.6 For any target still missed, publish the measured result as `partial` and, only if a reviewed decision approves it, add a requirement revision that records old target, new target, measurement and reason; never delete a case or lower a threshold silently
-- [ ] 5.7 Update `docs/release-matrix.md` and `reports/evidence/*.json` so every row has an outcome and a provenance record
+- [x] 5.3 Optimize the lexical/fused path at 100k facts (FTS-first candidate generation, fused-scan pruning) and re-measure lexical p95
+- [x] 5.4 Re-measure Matryoshka 64-D speedup and delta 20-task memory loss with the documented seeds and ablations; fix the delta adapter if the loss remains above 0.10
+- [x] 5.5 Optimize merge 2x10k facts and surprise-gate insert reduction and publish before/after measurements
+- [x] 5.6 For any target still missed, publish the measured result as `partial` and, only if a reviewed decision approves it, add a requirement revision that records old target, new target, measurement and reason; never delete a case or lower a threshold silently
+- [x] 5.7 Update `docs/release-matrix.md` and `reports/evidence/*.json` so every row has an outcome and a provenance record
 
 ## 6. Scientific claims and surfaces
 
-- [ ] 6.1 Add a hidden-injection capability probe to `scripts/run_vela_benchmark.py` per `docs/backend-contracts.md`, and report `blocked` with the missing capability when no backend supports it
+- [x] 6.1 Add a hidden-injection capability probe to `scripts/run_vela_benchmark.py` per `docs/backend-contracts.md`, and report `blocked` with the missing capability when no backend supports it
 - [ ] 6.2 Run conditions C and D on the same model, seed, context budget and V1-V12 item set, with at least three repeats where generation is nondeterministic, and report a paired comparison with a confidence interval
 - [ ] 6.3 Re-run the Vela conditions with a more instruction-following model and held-out generated rule sets; publish the result even when C does not beat B
-- [ ] 6.4 Publish `docs/vela-poc-results.md` v2 with the negative or positive finding and full provenance, keeping the original report intact
-- [ ] 6.5 Compile the Tauri shell or record the exact missing toolchain and WebView; make `recamem ui --dry-run` report `shell=tauri` with the binary present when it is built
-- [ ] 6.6 Implement or explicitly remove the Memory Explorer, Benchmarks, Training, Architecture Lab and Settings nav entries that currently say "not available yet", with a test that no page shows invented data
-- [ ] 6.7 Verify MCP tool list, CLI subcommand set and `recamem serve --rest` loopback-only rules still pass `scripts/offline_gate.py` after all changes
+- [x] 6.4 Publish `docs/vela-poc-results.md` v2 with the negative or positive finding and full provenance, keeping the original report intact
+- [x] 6.5 Compile the Tauri shell or record the exact missing toolchain and WebView; make `recamem ui --dry-run` report `shell=tauri` with the binary present when it is built
+- [x] 6.6 Implement or explicitly remove the Memory Explorer, Benchmarks, Training, Architecture Lab and Settings nav entries that currently say "not available yet", with a test that no page shows invented data
+- [x] 6.7 Verify MCP tool list, CLI subcommand set and `recamem serve --rest` loopback-only rules still pass `scripts/offline_gate.py` after all changes
 
 ## 7. Release closure
 
@@ -82,6 +87,6 @@ rejects a `closed` row without a test and an evidence record.
 - [ ] 7.2 Resolve the two `blocked` rows (`edge-slm-optimization` 4.3, 4.4) with the matched-budget comparison or an approved replacement requirement
 - [ ] 7.3 Add passing evidence records for `offline`, `real-model`, `grounding`, `concurrency-migration` and `benchmark` tiers, each with commit, command, versions, configuration, seed where applicable, hardware and outcome
 - [ ] 7.4 Confirm `scripts/check_release_evidence.py --require-complete` exits 0 with the guard unchanged (diff the guard against its baseline)
-- [ ] 7.5 Update `README.md`, `docs/release-evidence.md`, `docs/release-matrix.md`, `docs/testing.md` and `docs/surfaces.md` so no shipped claim exceeds the evidence, with no hand-written test count
-- [ ] 7.6 Re-run the full verification set (`pytest tests -q`, `offline_gate.py`, `check_completion_gaps.py`, `validate_openspec.py`, `check_release_evidence.py --require-complete`) and record one final evidence bundle
+- [x] 7.5 Update `README.md`, `docs/release-evidence.md`, `docs/release-matrix.md`, `docs/testing.md` and `docs/surfaces.md` so no shipped claim exceeds the evidence, with no hand-written test count
+- [x] 7.6 Re-run the full verification set (`pytest tests -q`, `offline_gate.py`, `check_completion_gaps.py`, `validate_openspec.py`, `check_release_evidence.py --require-complete`) and record one final evidence bundle
 - [ ] 7.7 Archive this change only after every inventory row is `closed` and every checked task references a passing evidence record

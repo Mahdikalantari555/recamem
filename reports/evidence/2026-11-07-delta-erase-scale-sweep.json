@@ -1,0 +1,248 @@
+{
+  "tier": "benchmark",
+  "outcome": "partial",
+  "commit": "0ff833fd9002029ffa6a4064ced003c62b04aa12",
+  "command": "PYTHONPATH=. RECAMEM_ANCHOR=mock python scripts/bench_continual_learning.py --erase-scale <scale> --delta-heads <heads>",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.15.0+cu132",
+    "cpu_count": 2,
+    "threads": 1,
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "embedder": "none: the benchmark is synthetic, no anchor model is used"
+  },
+  "configuration": {
+    "protocol": "continual-20-v1 (20 tasks x 40 train / 10 eval patterns, dim 384, seeds 7/11)",
+    "scales": [
+      1.0,
+      0.5,
+      0.25,
+      0.15
+    ],
+    "scales_seeds": [
+      7,
+      8,
+      11,
+      23
+    ],
+    "head_split_seeds": [
+      7,
+      8
+    ],
+    "chance_pair_recall": 0.025
+  },
+  "measurements": {
+    "before": {
+      "artifact": "reports/evidence/2026-11-07-continual-learning.json",
+      "config": {
+        "delta_erase_scale": 1.0,
+        "delta_heads": 4
+      },
+      "delta_memory_loss": 0.1198,
+      "delta_pair_recall": null,
+      "note": "the before record predates the pair-recall metric"
+    },
+    "after_by_scale": {
+      "0.25": {
+        "delta_memory_loss": 0.094,
+        "sparse_memory_loss": 0.0318,
+        "delta_pair_recall": 0.385,
+        "sparse_pair_recall": 0.68,
+        "delta_target_met": true,
+        "artifact": "reports/evidence/2026-11-07-continual-learning-erase-0.25.json"
+      },
+      "0.15": {
+        "delta_memory_loss": 0.0752,
+        "sparse_memory_loss": 0.0228,
+        "delta_pair_recall": 0.435,
+        "sparse_pair_recall": 0.64,
+        "delta_target_met": true,
+        "artifact": "reports/evidence/2026-11-07-continual-learning-erase-0.15.json"
+      }
+    },
+    "erase_scale_sweep": {
+      "1.0": {
+        "memory_loss_mean": 0.1211,
+        "memory_loss_max": 0.1249,
+        "pair_recall_mean": 0.125,
+        "target_loss": 0.1,
+        "loss_target_met_all_seeds": false
+      },
+      "0.5": {
+        "memory_loss_mean": 0.1193,
+        "memory_loss_max": 0.1263,
+        "pair_recall_mean": 0.2275,
+        "target_loss": 0.1,
+        "loss_target_met_all_seeds": false
+      },
+      "0.25": {
+        "memory_loss_mean": 0.092,
+        "memory_loss_max": 0.0984,
+        "pair_recall_mean": 0.3538,
+        "target_loss": 0.1,
+        "loss_target_met_all_seeds": true
+      },
+      "0.15": {
+        "memory_loss_mean": 0.073,
+        "memory_loss_max": 0.0785,
+        "pair_recall_mean": 0.4125,
+        "target_loss": 0.1,
+        "loss_target_met_all_seeds": true
+      }
+    },
+    "erase_scale_runs": [
+      {
+        "delta_erase_scale": 1.0,
+        "seed": 7,
+        "memory_loss": 0.1198,
+        "pair_recall": 0.13
+      },
+      {
+        "delta_erase_scale": 1.0,
+        "seed": 8,
+        "memory_loss": 0.1217,
+        "pair_recall": 0.15
+      },
+      {
+        "delta_erase_scale": 1.0,
+        "seed": 11,
+        "memory_loss": 0.1179,
+        "pair_recall": 0.115
+      },
+      {
+        "delta_erase_scale": 1.0,
+        "seed": 23,
+        "memory_loss": 0.1249,
+        "pair_recall": 0.105
+      },
+      {
+        "delta_erase_scale": 0.5,
+        "seed": 7,
+        "memory_loss": 0.1202,
+        "pair_recall": 0.23
+      },
+      {
+        "delta_erase_scale": 0.5,
+        "seed": 8,
+        "memory_loss": 0.1168,
+        "pair_recall": 0.22
+      },
+      {
+        "delta_erase_scale": 0.5,
+        "seed": 11,
+        "memory_loss": 0.1141,
+        "pair_recall": 0.205
+      },
+      {
+        "delta_erase_scale": 0.5,
+        "seed": 23,
+        "memory_loss": 0.1263,
+        "pair_recall": 0.255
+      },
+      {
+        "delta_erase_scale": 0.25,
+        "seed": 7,
+        "memory_loss": 0.094,
+        "pair_recall": 0.385
+      },
+      {
+        "delta_erase_scale": 0.25,
+        "seed": 8,
+        "memory_loss": 0.0897,
+        "pair_recall": 0.345
+      },
+      {
+        "delta_erase_scale": 0.25,
+        "seed": 11,
+        "memory_loss": 0.0861,
+        "pair_recall": 0.36
+      },
+      {
+        "delta_erase_scale": 0.25,
+        "seed": 23,
+        "memory_loss": 0.0984,
+        "pair_recall": 0.325
+      },
+      {
+        "delta_erase_scale": 0.15,
+        "seed": 7,
+        "memory_loss": 0.0752,
+        "pair_recall": 0.435
+      },
+      {
+        "delta_erase_scale": 0.15,
+        "seed": 8,
+        "memory_loss": 0.071,
+        "pair_recall": 0.435
+      },
+      {
+        "delta_erase_scale": 0.15,
+        "seed": 11,
+        "memory_loss": 0.0674,
+        "pair_recall": 0.385
+      },
+      {
+        "delta_erase_scale": 0.15,
+        "seed": 23,
+        "memory_loss": 0.0785,
+        "pair_recall": 0.395
+      }
+    ],
+    "head_split_ablation": [
+      {
+        "delta_heads": 4,
+        "seed": 7,
+        "memory_loss": 0.1198,
+        "pair_recall": 0.13
+      },
+      {
+        "delta_heads": 4,
+        "seed": 8,
+        "memory_loss": 0.1217,
+        "pair_recall": 0.15
+      },
+      {
+        "delta_heads": 8,
+        "seed": 7,
+        "memory_loss": 0.0921,
+        "pair_recall": 0.095
+      },
+      {
+        "delta_heads": 8,
+        "seed": 8,
+        "memory_loss": 0.0842,
+        "pair_recall": 0.075
+      },
+      {
+        "delta_heads": 16,
+        "seed": 7,
+        "memory_loss": 0.0442,
+        "pair_recall": 0.02
+      },
+      {
+        "delta_heads": 16,
+        "seed": 8,
+        "memory_loss": 0.0377,
+        "pair_recall": 0.045
+      }
+    ],
+    "rejected_variants": [
+      {
+        "variant": "delta_heads=16",
+        "result": "memory loss 0.0377-0.0442 (target met) but pair recall 0.02-0.045 against 0.13-0.15 at 4 heads, i.e. chance level (chance = 0.025)",
+        "decision": "rejected: it improves the drift metric while destroying the association the metric is supposed to protect"
+      },
+      {
+        "variant": "delta_heads=8",
+        "result": "memory loss 0.0842-0.0921, pair recall 0.075-0.095",
+        "decision": "rejected for the same reason"
+      },
+      {
+        "variant": "gate sweep beta in {0.6..1.0}",
+        "result": "memory loss 0.120-0.126 across the sweep",
+        "decision": "rejected: the write gate is not the bottleneck"
+      }
+    ],
+    "verdict": "The <0.10 delta target is reproducible only as an opt-in configuration: erase_scale 0.25 (loss 0.086-0.098 on four seeds) and 0.15 (0.067-0.079) both meet it and improve association recall, but they weaken the delta rule's exact-overwrite guarantee (a re-write keeps a fraction of the old value). The default stays 1.0, so the published row stays partial."
+  }
+}

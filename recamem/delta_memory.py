@@ -223,6 +223,7 @@ class DeltaPlasticAdapter(PlasticAdapter):
         beta_bias: float = 0.0,
         normalize_keys: bool = True,
         adapter_type: str = "delta_rtu",
+        erase_scale: float = 1.0,
         **kwargs,
     ):
         if "d_model" in kwargs:
@@ -239,6 +240,15 @@ class DeltaPlasticAdapter(PlasticAdapter):
         self.spread = int(spread)
         self.K_max = max(1, int(K_max))
         self.normalize_keys = bool(normalize_keys)
+        # Fraction of the already-stored component along the written key that
+        # the delta rule erases.  1.0 is the canonical rule (a write replaces
+        # the association exactly); lower values trade overwrite fidelity for
+        # retention, see ``_apply_delta``.
+        self.erase_scale = float(erase_scale)
+        if not 0.0 < self.erase_scale <= 1.0:
+            raise ValueError(
+                f"erase_scale must be in (0, 1], got {erase_scale}"
+            )
         self._adapter_type = adapter_type
         self._adapter_version = self._ADAPTER_VERSION
         self.eviction_count = 0
@@ -347,12 +357,22 @@ class DeltaPlasticAdapter(PlasticAdapter):
                 if b <= 1e-12:
                     continue
                 # Gated Delta Rule in its rank-one form:
-                #   S <- S - beta * k (k^T S) + beta * k v^T
-                #     = S + beta * outer(k, v - S^T k)
+                #   S <- S - beta * gamma * k (k^T S) + beta * k v^T
+                #     = S + beta * outer(k, v - gamma * S^T k)
                 # The retention term is selective: only the component along the
                 # written key is decayed, so repeating an unchanged write is a
                 # no-op instead of erasing the association.
-                self.S[h].sub_(b * torch.outer(k_hat[h], predicted[h]))
+                #
+                # ``gamma`` (``erase_scale``) is 1.0 by default, which makes a
+                # write replace the association exactly and keeps repeated
+                # writes bounded.  A lower value keeps more of the stored
+                # component: measured on the 20-task continual benchmark it
+                # improves both retention and per-pattern recall, but a changed
+                # value no longer fully overwrites the old association, and
+                # repeated writes converge to v / gamma instead of v.  The
+                # fidelity trade is documented in docs/release-matrix.md.
+                gamma = self.erase_scale
+                self.S[h].sub_(b * gamma * torch.outer(k_hat[h], predicted[h]))
                 self.S[h].add_(b * torch.outer(k_hat[h], v[h]))
             self._remember_key(k_hat)
         del surprise_factor  # the trace is the caller's responsibility
@@ -694,6 +714,7 @@ class SparseDeltaAdapter(PlasticAdapter):
         K_max: int = 5000,
         adapter_type: str = "sparse_delta",
         seed: int = 0,
+        erase_scale: float = 1.0,
         **kwargs,
     ):
         if "d_model" in kwargs:
@@ -715,6 +736,7 @@ class SparseDeltaAdapter(PlasticAdapter):
             heads=self.heads,
             K_max=self.K_max,
             adapter_type=adapter_type,
+            erase_scale=erase_scale,
         )
         self.register_buffer("h_trace", torch.zeros(self.dim, dtype=torch.float32))
 

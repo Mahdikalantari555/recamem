@@ -20,18 +20,29 @@ def main() -> int:
     parser.add_argument("--eval-patterns", type=int, default=10)
     parser.add_argument("--dim", type=int, default=384)
     parser.add_argument("--seed", type=int, default=7)
+    parser.add_argument(
+        "--erase-scale", type=float, default=1.0,
+        help="Fraction of the stored component a delta write erases (1.0 = canonical rule).",
+    )
+    parser.add_argument(
+        "--delta-heads", type=int, default=4,
+        help="Head split of the dense delta memory (adapter default is 4).",
+    )
     parser.add_argument("--out", default="reports/evidence/continual-learning-20task.json")
     args = parser.parse_args()
 
     config = BenchmarkConfig(
         tasks=args.tasks, patterns_per_task=args.patterns,
         eval_per_task=args.eval_patterns, dim=args.dim, seed=args.seed,
+        delta_erase_scale=args.erase_scale, delta_heads=args.delta_heads,
     )
     results = run_benchmark(config)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(results, indent=2))
     summary = results["summary"]
+    print(f"Erase scale       : {config.delta_erase_scale} "
+          f"(heads={config.delta_heads})")
     print(f"Delta memory loss : {summary['delta_memory_loss']:.4f} "
           f"(target < {summary['delta_target']}, met={summary['delta_target_met']})")
     print(f"Sparse memory loss: {summary['sparse_memory_loss']:.4f}")

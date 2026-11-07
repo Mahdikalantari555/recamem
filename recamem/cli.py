@@ -105,18 +105,95 @@ def cmd_ingest(args) -> int:
     return 0
 
 
+def _doctor_ready(anchor_item: Dict[str, Any], items: List[Dict[str, Any]]) -> bool:
+    """Readiness means the real anchor loaded *and* every other item is ready.
+
+    ``recamem doctor`` exits 0 on this value alone: an explicit mock anchor, a
+    missing generation backend or an unwritable store each keep it non-zero
+    (verification/surface-coverage, "Doctor reflects real runtime state").
+    """
+    return bool(anchor_item.get("ready")) and all(item.get("ready") for item in items)
+
+
+def _generation_backend_status(home: Path) -> Dict[str, Any]:
+    """Resolve the generation backend from declared configuration only.
+
+    A backend is *named* when its configuration points at an artifact that
+    exists on this host: ``RECAMEM_GGUF`` for a GGUF file, a profile manifest's
+    ``gguf_model_path`` for a packaged droid, or ``RECAMEM_RTU_CHECKPOINT`` for
+    the frozen Byte-RTU peer. Nothing is inferred from a label, and a missing
+    artifact is reported as missing rather than as "offline recall still works".
+    """
+    candidates: List[tuple[str, Path, str]] = []
+    gguf = os.environ.get("RECAMEM_GGUF")
+    if gguf:
+        candidates.append(("gguf", Path(gguf).expanduser(), "RECAMEM_GGUF"))
+    checkpoint = os.environ.get("RECAMEM_RTU_CHECKPOINT")
+    if checkpoint:
+        candidates.append(
+            ("byte_rtu", Path(checkpoint).expanduser(), "RECAMEM_RTU_CHECKPOINT")
+        )
+    if home.is_dir():
+        for profile in sorted(p for p in home.iterdir() if p.is_dir()):
+            manifest = profile / "config.json"
+            if not manifest.is_file():
+                continue
+            try:
+                config = json.loads(manifest.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            declared = config.get("gguf_model_path") if isinstance(config, dict) else None
+            if declared:
+                candidates.append(
+                    ("gguf", Path(str(declared)).expanduser(), f"{profile.name}/config.json")
+                )
+    for kind, path, origin in candidates:
+        if path.is_file():
+            return {
+                "item": "generation_backend",
+                "ready": True,
+                "name": kind,
+                "path": str(path),
+                "detail": f"backend={kind} model={path.name} path={path} origin={origin}",
+            }
+    if candidates:
+        declared = ", ".join(f"{origin} -> {path}" for _, path, origin in candidates)
+        detail = f"configured backend artifact is missing ({declared})"
+    else:
+        detail = (
+            "none configured; set RECAMEM_GGUF=<local .gguf> or "
+            "RECAMEM_RTU_CHECKPOINT=<rtu.safetensors>"
+        )
+    return {
+        "item": "generation_backend",
+        "ready": False,
+        "name": "none",
+        "path": "",
+        "detail": detail,
+    }
+
+
 def cmd_doctor(args) -> int:
     from recamem import identity
-    from recamem.anchor import AnchorUnavailableError, OnnxMiniLM, resolve_anchor_mode
+    from recamem.anchor import (
+        CACHE_DIR,
+        AnchorUnavailableError,
+        OnnxMiniLM,
+        resolve_anchor_mode,
+    )
     from recamem.paths import configs_dir
 
     items: List[Dict[str, Any]] = []
     mode = "mock" if args.mock else resolve_anchor_mode()
+    expected_anchor = Path(CACHE_DIR) / "Xenova/all-MiniLM-L6-v2/onnx/model_quantized.onnx"
     anchor_item: Dict[str, Any] = {"item": "anchor", "mode": mode}
     if mode == "mock":
         anchor_item.update(
             ready=False,
-            detail="mock embeddings selected explicitly; no real anchor is loaded",
+            detail=(
+                "mock embeddings selected explicitly; no real anchor is loaded; "
+                f"expected {expected_anchor}"
+            ),
         )
     else:
         started = time.perf_counter()
@@ -151,13 +228,8 @@ def cmd_doctor(args) -> int:
             "detail": str(manifest) if manifest.exists() else f"missing {manifest}",
         }
     )
-    items.append(
-        {
-            "item": "generation_backend",
-            "ready": True,
-            "detail": "none configured (prompt/recall paths work offline)",
-        }
-    )
+    backend_item = _generation_backend_status(home)
+    items.append(backend_item)
     items.append({"item": "network", "ready": True, "detail": "offline by default; no request made"})
 
     # Memory stats: profiles under the home and the facts they hold. Read-only,
@@ -194,9 +266,10 @@ def cmd_doctor(args) -> int:
     print(f"selected_core={manifest}")
     print(f"profiles_count={len(profiles)}")
     print(f"facts={facts}")
-    print("generation_backend=none")
+    print(f"generation_backend={backend_item['name']}")
+    print(f"generation_backend_path={backend_item.get('path') or 'none'}")
     print("offline=yes")
-    ready = all(item["ready"] for item in items[1:]) and bool(anchor_item["ready"])
+    ready = _doctor_ready(anchor_item, items[1:])
     for item in items:
         print(f"item={item['item']} ready={'yes' if item['ready'] else 'no'} detail={item['detail']}")
     return 0 if ready else 1
@@ -311,6 +384,29 @@ def cmd_serve(args) -> int:
         return 1
 
 
+TAURI_TOOLCHAIN = ("cargo", "rustc", "pkg-config")
+
+
+def _tauri_toolchain_status() -> Dict[str, bool]:
+    """Which executables the Tauri shell needs on this host.
+
+    `src-tauri/` is scaffolded but never compiled in this repository, so the
+    honest report names the missing pieces instead of claiming a desktop shell
+    (verification/surface-coverage, "Tauri toolchain unavailable").
+    """
+    import shutil
+
+    return {name: shutil.which(name) is not None for name in TAURI_TOOLCHAIN}
+
+
+def _tauri_toolchain_detail() -> str:
+    status = _tauri_toolchain_status()
+    missing = [name for name, present in status.items() if not present]
+    if not missing:
+        return "present; run `cargo build --release` in src-tauri to produce the binary"
+    return "missing " + ",".join(missing) + " and a platform WebView"
+
+
 def cmd_ui(args) -> int:
     """Launch the WebUI (browser). Tauri is opt-in via --tauri and falls back to browser."""
     from recamem import api
@@ -324,9 +420,12 @@ def cmd_ui(args) -> int:
     url = f"http://127.0.0.1:{port}/"
 
     if args.dry_run:
-        print(f"shell={'tauri' if (args.tauri and binary.is_file()) else 'browser'}")
+        shell = "tauri" if (args.tauri and binary.is_file()) else "browser"
+        print(f"shell={shell}")
         print(f"dist={dist} exists={'yes' if dist.is_dir() else 'no'}")
         print(f"binary={binary} exists={'yes' if binary.is_file() else 'no'}")
+        if shell != "tauri":
+            print(f"toolchain={_tauri_toolchain_detail()}")
         print(f"url={url}")
         return 0
 

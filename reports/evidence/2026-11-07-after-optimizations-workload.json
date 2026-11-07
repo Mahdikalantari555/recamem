@@ -1,0 +1,257 @@
+{
+  "tier": "benchmark",
+  "outcome": "passed",
+  "commit": "0ff833fd9002029ffa6a4064ced003c62b04aa12",
+  "command": "PYTHONPATH=. python scripts/bench_workloads.py",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.15.0+cu132",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+    "cpu_count": 2,
+    "threads": 1,
+    "hnswlib": "absent",
+    "onnxruntime": "absent",
+    "streamlit": "absent",
+    "llama_cpp": "absent"
+  },
+  "configuration": {
+    "retrieval_facts": [
+      10000,
+      50000,
+      100000
+    ],
+    "quick": false,
+    "dense_index_mode": "exact-fallback",
+    "note": "Measurements on this runner. hnswlib/onnxruntime/llama_cpp are absent, so index and reranker numbers describe the documented fallbacks."
+  },
+  "measurements": {
+    "environment": {
+      "python": "3.11.2",
+      "torch": "2.15.0+cu132",
+      "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+      "cpu_count": 2,
+      "threads": 1,
+      "hnswlib": "absent",
+      "onnxruntime": "absent",
+      "streamlit": "absent",
+      "llama_cpp": "absent"
+    },
+    "retrieval_latency": [
+      {
+        "facts": 10000,
+        "p50_ms": 1.807,
+        "p95_ms": 2.203,
+        "runs_ms": [
+          2.203,
+          1.857,
+          1.807,
+          1.796,
+          1.594
+        ],
+        "target_ms": 5.0,
+        "met": true
+      },
+      {
+        "facts": 50000,
+        "p50_ms": 5.261,
+        "p95_ms": 11.312,
+        "runs_ms": [
+          5.497,
+          5.24,
+          5.009,
+          11.312,
+          5.261
+        ],
+        "target_ms": 5.0,
+        "met": false
+      },
+      {
+        "facts": 100000,
+        "p50_ms": 9.685,
+        "p95_ms": 10.999,
+        "runs_ms": [
+          9.685,
+          9.161,
+          10.125,
+          10.999,
+          9.455
+        ],
+        "target_ms": 5.0,
+        "met": false
+      }
+    ],
+    "lexical_sla": {
+      "facts": 100000,
+      "p50_ms": 126.817,
+      "p95_ms": 137.122,
+      "target_ms": 5.0,
+      "met": false
+    },
+    "lexical_ablation": {
+      "exact_scan": {
+        "fts_first": false,
+        "p50_ms": 130.812,
+        "p95_ms": 143.585,
+        "target_ms": 5.0,
+        "met": false,
+        "lexical_candidates": 0
+      },
+      "fts_first": {
+        "fts_first": true,
+        "p50_ms": 1.165,
+        "p95_ms": 1.368,
+        "target_ms": 5.0,
+        "met": true,
+        "lexical_candidates": 20
+      },
+      "facts": 100000,
+      "query_text": "NDVI-1234",
+      "top5_overlap": 0.2
+    },
+    "two_stage_scan": [
+      {
+        "facts": 50000,
+        "p50_ms": 4.835,
+        "p95_ms": 5.818,
+        "target_ms": 5.0,
+        "recall_at_5": 0.2,
+        "met": false
+      },
+      {
+        "facts": 100000,
+        "p50_ms": 7.441,
+        "p95_ms": 15.753,
+        "target_ms": 5.0,
+        "recall_at_5": 0.2,
+        "met": false
+      }
+    ],
+    "dense_index": {
+      "facts": 20000,
+      "mode": "exact-fallback",
+      "p50_ms": 2.673,
+      "p95_ms": 2.797,
+      "recall_at_5": 1.0,
+      "target_p95_ms": 5.0,
+      "target_recall": 0.95,
+      "met": true
+    },
+    "matryoshka": {
+      "facts": 20000,
+      "baseline_p50_ms": 9.66,
+      "first_stage_p50_ms": 1.308,
+      "speedup": 7.39,
+      "baseline_quality": 1.0,
+      "first_stage_quality": 1.0,
+      "relative_quality_loss": 0.0,
+      "target_speedup": 6.0,
+      "target_loss": 0.05,
+      "met": true
+    },
+    "sparse_memory": {
+      "code_dim": 2048,
+      "active_per_row": 128,
+      "sparsity": 0.9375,
+      "code_bytes": 262144,
+      "traced_peak_kib": 176.1,
+      "encode_p50_ms": 5.965,
+      "target_sparsity": 0.9375,
+      "met": true
+    },
+    "surprise_gate": {
+      "propositions": 400,
+      "episodic_absorbed": 200,
+      "reduction": 0.5,
+      "target_reduction": 0.4,
+      "met": true,
+      "fixture": "redundant_stream (each fact stated twice)",
+      "redundant_stream": {
+        "propositions": 400,
+        "episodic_absorbed": 200,
+        "episodic_skipped_duplicate": 200,
+        "reduction": 0.5,
+        "target_reduction": 0.4,
+        "met": true
+      },
+      "unique_stream": {
+        "propositions": 200,
+        "episodic_absorbed": 200,
+        "episodic_skipped_duplicate": 0,
+        "reduction": 0.0,
+        "target_reduction": 0.4,
+        "met": false
+      }
+    },
+    "decision_head": {
+      "k=5": {
+        "p50_ms": 0.0458,
+        "p95_ms": 0.0938
+      },
+      "k=10": {
+        "p50_ms": 0.0454,
+        "p95_ms": 0.0856
+      },
+      "k=20": {
+        "p50_ms": 0.0458,
+        "p95_ms": 0.079
+      }
+    },
+    "adapter_instantiation": {
+      "factory_p50_ms": 6.631,
+      "direct_p50_ms": 6.623,
+      "ratio": 1.0,
+      "target_ms": 10.0,
+      "met": true
+    },
+    "edge_slm": {
+      "catalog": {
+        "models": 13,
+        "with_quantization": 13,
+        "with_task_tags": 13,
+        "with_provenance_url": 4,
+        "with_tok_s": 1,
+        "unknown_tok_s": 12
+      },
+      "recommend_p50_ms": 0.043,
+      "recommend_p95_ms": 0.094,
+      "catalog_read_budget_ms": 20.0,
+      "catalog_read_met": true,
+      "ttc_search_p50_ms": 0.04,
+      "ttc_search_p95_ms": 0.087,
+      "ttc_candidates": 6,
+      "ttc_stop_reason": "search_complete",
+      "ttc_consumed": {
+        "candidates": 6,
+        "depth": 3,
+        "tokens": 48,
+        "seconds": 3.117500000371365e-05
+      },
+      "ttc_budget_s": 5.0,
+      "ttc_within_budget": true,
+      "note": "model-free stub generator: measures routing and search overhead only"
+    },
+    "lifecycle": {
+      "merge_2x10k": {
+        "seconds": 1.508,
+        "target_seconds": 5.0,
+        "status": "merged",
+        "writes": 10000,
+        "met": true
+      },
+      "distill_10k_to_2k": {
+        "seconds": 4.798,
+        "target_seconds": 10.0,
+        "semantic_facts": 4000,
+        "met": true
+      },
+      "stream_100_messages": {
+        "seconds": 0.025,
+        "messages_per_minute": 235909.7,
+        "target_messages_per_minute": 100,
+        "met": true
+      }
+    }
+  }
+}

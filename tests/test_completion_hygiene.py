@@ -129,5 +129,12 @@ def test_real_model_runbook_exists_and_is_honest():
 
 def test_release_matrix_marks_open_targets():
     text = (ROOT / "docs" / "release-matrix.md").read_text(encoding="utf-8")
-    assert "## Open targets (2026-11-03)" in text
+    assert "## Open targets (2026-11-07)" in text
     assert "completion-gaps.json" in text
+
+
+def test_docs_have_no_hand_written_test_counts():
+    """`docs/testing.md` says the collect-only output is authoritative."""
+    from scripts.offline_gate import check_test_counts
+
+    assert check_test_counts() == []

@@ -48,11 +48,12 @@ def _mrr(ranked: Sequence[int], relevant: Sequence[int]) -> float:
     return 0.0
 
 
-def _tokenize(terms: List[str]) -> str:
-    """Build a quoted OR'd FTS5 MATCH expression from query terms.
+def _fts_tokens(terms: List[str]) -> List[str]:
+    """Split query words into FTS5 tokens, dropping English function words.
 
-    English function words are dropped: they match nearly every fact and
-    would otherwise swamp the BM25 lexical signal.
+    FTS5's unicode61 tokenizer splits "NDVI-1234" into "ndvi" and "1234";
+    collapsing the word first would query a token that never exists, which made
+    the lexical channel return nothing for every code-like query.
     """
     stop = {
         "a", "an", "the", "and", "or", "but", "of", "to", "in", "on", "at",
@@ -63,13 +64,20 @@ def _tokenize(terms: List[str]) -> str:
         "would", "will", "shall", "may", "about", "into", "over", "under",
         "between", "during", "through", "out", "up", "down", "you", "your",
     }
-    clean = [
-        t for t in (re.sub(r"[^a-z0-9\u00C0-\uFFFF]", "", w.lower()) for w in terms)
-        if t and t not in stop
-    ]
+    clean: List[str] = []
+    for word in terms:
+        for part in re.split(r"[^a-z0-9\u00C0-\uFFFF]+", word.lower()):
+            if part and part not in stop and part not in clean:
+                clean.append(part)
+    return clean[:32]
+
+
+def _tokenize(terms: List[str]) -> str:
+    """Build a quoted OR'd FTS5 MATCH expression from query terms."""
+    clean = _fts_tokens(terms)
     if not clean:
         return ""
-    return " OR ".join(f'"{t}"' for t in clean[:32])
+    return " OR ".join(f'"{t}"' for t in clean)
 
 
 # The closed origin vocabulary for a stored fact (web-grounded-learning 3.2).
@@ -98,6 +106,7 @@ class KnowledgeStore:
 
     _RRF_K = 60.0
     _CANDS = 200  # per-signal candidate pool before RRF fusion
+    _FTS_FIRST_LIMIT = 512  # selective-match ceiling for the FTS-first path
 
     def __init__(self, db_path: str = ":memory:", dim: int = 384):
         self.db_path = db_path
@@ -117,6 +126,14 @@ class KnowledgeStore:
         # Cached dense matrix, rebuilt only on insert. Per-query recall reuses it.
         self._vec_cache: Optional[torch.Tensor] = None
         self._id_cache: Optional[List[int]] = None
+        self._pos_cache: Optional[Dict[int, int]] = None
+        # FTS-first candidate generation is opt-in: when enabled and a lexical
+        # query contains a selective term, the lexical CTE and the dense scan
+        # both use that term's candidate set instead of ranking every OR match.
+        # Off by default because gating on the rare term drops facts that are
+        # semantically relevant without containing it; both configurations are
+        # measured and published side by side.
+        self.fts_first = False
         # Optional hybrid retrieval (HNSW / reranker / Matryoshka). Defaults
         # preserve the exact dense MVM path byte-for-byte.
         self.dense_index = None
@@ -130,12 +147,21 @@ class KnowledgeStore:
     # Optional hybrid retrieval
     # ------------------------------------------------------------------ #
     def configure_retrieval(self, dense_index=None, reranker=None,
-                            matryoshka=None, rerank_limit: int = 50) -> Dict[str, Any]:
-        """Enable approximate candidates and/or reranking for this store."""
+                            matryoshka=None, rerank_limit: int = 50,
+                            fts_first: bool = False) -> Dict[str, Any]:
+        """Enable approximate candidates, reranking or the FTS-first path.
+
+        ``fts_first`` replaces the full-matrix dense scan and the O(matches)
+        lexical ranking with the rarest query term's candidate set when that
+        set is selective (<= 512 rows). It is off by default: it changes which
+        facts can be returned, so it is a measured, explicit choice. Retrieval
+        traces report ``fts_first_candidates`` so the policy is never implicit.
+        """
         self.dense_index = dense_index
         self.reranker = reranker
         self.matryoshka = matryoshka
         self.rerank_limit = int(rerank_limit)
+        self.fts_first = bool(fts_first)
         self._index_signature = None
         return self.retrieval_status()
 
@@ -144,6 +170,7 @@ class KnowledgeStore:
             "dense_index": None,
             "reranker": None,
             "matryoshka": None,
+            "fts_first": bool(self.fts_first),
         }
         if self.dense_index is not None:
             if hasattr(self.dense_index, "stats"):
@@ -164,7 +191,17 @@ class KnowledgeStore:
                 "limit": int(getattr(self.reranker, "limit", self.rerank_limit)),
             }
         if self.matryoshka is not None:
-            status["matryoshka"] = self.matryoshka.metadata()
+            # ``matryoshka`` may be a MatryoshkaAnchor (metadata) or a DualIndex
+            # wrapping one (search); report whichever contract is present.
+            if hasattr(self.matryoshka, "metadata"):
+                status["matryoshka"] = self.matryoshka.metadata()
+            elif hasattr(getattr(self.matryoshka, "anchor", None), "metadata"):
+                status["matryoshka"] = {
+                    **self.matryoshka.anchor.metadata(),
+                    "stage": "fast_then_full",
+                }
+            else:
+                status["matryoshka"] = {"kind": type(self.matryoshka).__name__}
         return status
 
     def _sync_dense_index(self) -> bool:
@@ -178,8 +215,112 @@ class KnowledgeStore:
             self._index_signature = (len(ids), ids[-1] if ids else None, len(ids))
         return True
 
-    def _dense_candidates(self, q: torch.Tensor, k: int):
-        """Return (ids, scores) from the configured index, else exact MVM."""
+    def _sync_matryoshka(self) -> bool:
+        """Rebuild the two-stage index when the fact set changed."""
+        if self.matryoshka is None:
+            return False
+        vecs, ids = self._load_dense()
+        index_ids = list(getattr(self.matryoshka, "ids", []))
+        if index_ids != ids:
+            self.matryoshka.rebuild(ids, vecs)
+        return True
+
+    def _batch_max_similarity(self, matrix: torch.Tensor, batch: torch.Tensor,
+                              chunk: int = 512) -> torch.Tensor:
+        """Highest cosine between each batch row and any stored vector.
+
+        Blocked so peak memory stays bounded (chunk x stored-vectors floats)
+        instead of materialising the full batch x store product.
+        """
+        maxima = torch.empty(len(batch))
+        for start in range(0, len(batch), chunk):
+            block = batch[start:start + chunk]
+            try:
+                import numpy as np
+
+                if (matrix.dtype == torch.float32 and block.dtype == torch.float32
+                        and matrix.device.type == "cpu"):
+                    scores = np.dot(block.numpy(), matrix.numpy().T)
+                    maxima[start:start + len(block)] = torch.from_numpy(
+                        scores.max(axis=1)
+                    )
+                    continue
+            except Exception:  # pragma: no cover - numpy is a core dependency
+                pass
+            maxima[start:start + len(block)] = (block @ matrix.T).max(dim=1).values
+        return maxima
+
+    def _dense_scores(self, matrix: torch.Tensor, q: torch.Tensor) -> torch.Tensor:
+        """Score one query against a dense matrix.
+
+        The contiguous float32 cache is handed to the system BLAS as an sgemv
+        (``np.dot``), which measured ~1.8x faster than ``torch.mv`` for a single
+        vector on the same data and returns the same float32 products. Torch is
+        the fallback, so a build without numpy still works.
+        """
+        try:
+            import numpy as np
+
+            if matrix.dtype == torch.float32 and matrix.device.type == "cpu":
+                return torch.from_numpy(np.dot(matrix.numpy(), q.numpy()))
+        except Exception:  # pragma: no cover - numpy is a core dependency
+            pass
+        return torch.mv(matrix, q)
+
+    def _lexical_candidates(self, terms: List[str]) -> Tuple[Optional[List[int]], Optional[str]]:
+        """FTS-first candidate ids from the most selective query term.
+
+        The rare term decides the candidate set: "ndvi" matches every fact in a
+        code corpus while "1234" matches a handful, and the OR expression is
+        dominated by the common one. ``None`` means the match is not selective,
+        so the exact full scan runs -- a lexical query that matches nothing (or
+        almost everything) must not narrow what the dense channel can retrieve.
+        """
+        if not self.fts_first or not terms:
+            return None, None
+        best_token: Optional[str] = None
+        best_count = 0
+        for token in _fts_tokens(terms):
+            try:
+                # Capped count: stop after limit+1 matches, so a token that
+                # matches the whole corpus costs the same as a selective one.
+                count = self.conn.execute(
+                    "SELECT COUNT(*) FROM (SELECT 1 FROM facts_fts "
+                    "WHERE facts_fts MATCH ? LIMIT ?)",
+                    (f'"{token}"', self._FTS_FIRST_LIMIT + 1),
+                ).fetchone()[0]
+            except Exception:
+                return None, None
+            if count and (best_token is None or count < best_count):
+                best_token, best_count = token, count
+                if count == 1:
+                    break
+        if best_token is None or best_count > self._FTS_FIRST_LIMIT:
+            return None, None
+        rows = self.conn.execute(
+            "SELECT f.id FROM facts_fts JOIN facts f ON f.id = facts_fts.rowid "
+            "WHERE facts_fts MATCH ? AND f.superseded = 0 "
+            "ORDER BY bm25(facts_fts) LIMIT ?",
+            (f'"{best_token}"', self._FTS_FIRST_LIMIT),
+        ).fetchall()
+        candidates = [int(row[0]) for row in rows]
+        if not candidates:
+            return None, None
+        return candidates, f'"{best_token}"' 
+
+    def _dense_candidates(self, q: torch.Tensor, k: int,
+                          restrict_ids: Optional[List[int]] = None):
+        """Return (ids, scores) from the index, a pruned scan, or an exact MVM."""
+        if self.matryoshka is not None:
+            try:
+                self._sync_matryoshka()
+                pruned = self.matryoshka.search(
+                    q, k=k, stage="fast_then_full", confirm=max(4 * k, 200)
+                )
+                if pruned.get("ids"):
+                    return pruned["ids"], pruned["scores"]
+            except Exception as exc:  # fall back to the exact path
+                self.last_retrieval_trace = {"dense_index_error": str(exc)}
         try:
             if self._sync_dense_index():
                 ids, scores = self.dense_index.search(q, k)
@@ -188,7 +329,19 @@ class KnowledgeStore:
         except Exception as exc:  # fall back without corrupting the store
             self.last_retrieval_trace = {"dense_index_error": str(exc)}
         vecs, ids_all = self._load_dense()
-        sims = torch.mv(vecs, q)
+        if restrict_ids:
+            positions = self._pos_cache or {}
+            kept = [(fact_id, positions[fact_id]) for fact_id in restrict_ids
+                    if fact_id in positions]
+            if kept:
+                sub = vecs[torch.tensor([pos for _, pos in kept], dtype=torch.long)]
+                scores = self._dense_scores(sub, q)
+                top = scores.topk(k=min(k, len(kept)))
+                return (
+                    [kept[i][0] for i in top.indices.tolist()],
+                    top.values.tolist(),
+                )
+        sims = self._dense_scores(vecs, q)
         top = sims.topk(k=min(k, len(ids_all)))
         return ([ids_all[i] for i in top.indices.tolist()], top.values.tolist())
 
@@ -478,20 +631,31 @@ class KnowledgeStore:
         inserted = duplicate = invalid = 0
         matrix, _ids = self._load_dense()
         matrix = matrix if len(matrix) else None
+        # Normalise and validate once, then dedupe the whole batch with a
+        # blocked matrix product. The previous loop issued one ``torch.mv`` per
+        # row: 10k single-vector products for a 10k-fact merge, which cost 6.1 s
+        # of the 8.7 s merge. The same products as a batched GEMM run at
+        # BLAS speed (~0.5 s for the same work) with identical results.
+        pending_rows: List[tuple] = []
+        for row in rows:
+            try:
+                vec = torch.as_tensor(row["vec"]).detach().float().reshape(-1)
+                if vec.numel() != self.dim or not torch.isfinite(vec).all():
+                    invalid += 1
+                    continue
+                pending_rows.append((row, vec / torch.linalg.vector_norm(vec).clamp(min=1e-8)))
+            except Exception:
+                invalid += 1
+        if dedupe_threshold is not None and matrix is not None and pending_rows:
+            batch = torch.stack([vec for _row, vec in pending_rows])
+            keep = self._batch_max_similarity(matrix, batch) < dedupe_threshold
+            duplicate = int((~keep).sum().item())
+            pending_rows = [item for item, kept in zip(pending_rows, keep.tolist()) if kept]
         with self._write_lock:
             self.conn.execute("BEGIN")
             try:
-                for row in rows:
+                for row, vec in pending_rows:
                     try:
-                        vec = torch.as_tensor(row["vec"]).detach().float().reshape(-1)
-                        if vec.numel() != self.dim or not torch.isfinite(vec).all():
-                            invalid += 1
-                            continue
-                        vec = vec / torch.linalg.vector_norm(vec).clamp(min=1e-8)
-                        if dedupe_threshold is not None and matrix is not None:
-                            if float(torch.mv(matrix, vec).max().item()) >= dedupe_threshold:
-                                duplicate += 1
-                                continue
                         origin = row.get("origin") or (
                             row.get("source") if row.get("source") in ORIGINS else "user_text"
                         )
@@ -511,6 +675,14 @@ class KnowledgeStore:
                         self.conn.execute(
                             "INSERT INTO facts_vecs(id, vec) VALUES (?,?)",
                             (cursor.lastrowid, vec.numpy().tobytes()),
+                        )
+                        # ``facts_fts`` is an explicit external-content table:
+                        # nothing populates it automatically, so a merged fact
+                        # that skips this insert is invisible to the lexical
+                        # channel (and therefore to every hybrid query).
+                        self.conn.execute(
+                            "INSERT INTO facts_fts(rowid, text) VALUES (?,?)",
+                            (cursor.lastrowid, row["text"]),
                         )
                         inserted += 1
                     except Exception:
@@ -698,6 +870,7 @@ class KnowledgeStore:
         if not rows:
             self._vec_cache = torch.zeros((0, self.dim))
             self._id_cache = []
+            self._pos_cache = {}
             return self._vec_cache, self._id_cache
         ids = [r[0] for r in rows]
         buf = b"".join(r[1] for r in rows)
@@ -706,6 +879,7 @@ class KnowledgeStore:
         )
         self._vec_cache = arr.clone().contiguous()
         self._id_cache = ids
+        self._pos_cache = {fact_id: position for position, fact_id in enumerate(ids)}
         return self._vec_cache, self._id_cache
 
     def _query_vec(self, query_vec: torch.Tensor) -> torch.Tensor:
@@ -857,7 +1031,14 @@ class KnowledgeStore:
             return results[: max(top_k, 1)]
 
         q = self._query_vec(query_vec)
-        dense_ids, dense_vals = self._dense_candidates(q, min(self._CANDS, len(ids)))
+        lex_match = _tokenize(query_text.split())
+        has_lex = bool(lex_match)
+        # FTS-first candidate generation: a selective lexical match narrows the
+        # dense scan to the rows it can actually return.
+        restrict_ids, selective_lex = self._lexical_candidates(query_text.split())
+        dense_ids, dense_vals = self._dense_candidates(
+            q, min(self._CANDS, len(ids)), restrict_ids=restrict_ids
+        )
         with self._write_lock:
             self.conn.execute("DROP TABLE IF EXISTS _dense_cands")
             self.conn.execute(
@@ -871,9 +1052,6 @@ class KnowledgeStore:
                     for rank, fact_id in enumerate(dense_ids)
                 ],
             )
-
-        lex_match = _tokenize(query_text.split())
-        has_lex = bool(lex_match)
 
         # Original used FULL OUTER JOIN - we emulate with UNION for compatibility
         # But we keep original SQL structure for correctness
@@ -926,7 +1104,8 @@ class KnowledgeStore:
                 threshold=threshold,
                 top_k=top_k,
             )
-            params = [lex_match] if has_lex else []
+            sql_lex = selective_lex or lex_match
+            params = [sql_lex] if has_lex else []
             cursor = self.conn.execute(fused_sql, params)
             rows = cursor.fetchall()
         except Exception as e:
@@ -987,7 +1166,8 @@ class KnowledgeStore:
                 threshold=threshold,
                 top_k=top_k,
             )
-            params = [lex_match] if has_lex else []
+            sql_lex = selective_lex or lex_match
+            params = [sql_lex] if has_lex else []
             rows = self.conn.execute(fused_sql, params).fetchall()
 
         results = []
@@ -1079,6 +1259,7 @@ class KnowledgeStore:
             "candidates": len(results),
             "requested_strategy": strategy,
             "executed_strategy": executed_strategy,
+            "fts_first_candidates": len(restrict_ids or []),
             "semantic_hits": sum(
                 1 for entry in results if entry.get("retrieval_store") == "semantic"
             ),

@@ -82,3 +82,23 @@ def test_help_lists_the_new_surfaces(tmp_path):
     assert result.returncode == 0
     for name in ("run", "ui", "serve", "doctor"):
         assert name in result.stdout
+
+
+def test_ui_dry_run_names_the_missing_tauri_toolchain(tmp_path):
+    result = run_cli(["ui", "--dry-run", "--tauri"], tmp_path / "home")
+
+    assert result.returncode == 0
+    # Without a compiled binary the shell is the browser, and the report says why.
+    assert "shell=browser" in result.stdout
+    assert "binary=" in result.stdout and "exists=no" in result.stdout
+    assert "toolchain=" in result.stdout
+    assert "WebView" in result.stdout
+
+
+def test_ui_shell_is_tauri_only_with_a_binary_on_disk():
+    from recamem.cli import _tauri_toolchain_status
+
+    status = _tauri_toolchain_status()
+    assert set(status) == {"cargo", "rustc", "pkg-config"}
+    # Each entry is a measurement, not an assumption.
+    assert all(isinstance(value, bool) for value in status.values())

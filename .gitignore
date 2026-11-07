@@ -21,6 +21,7 @@
 # Completion inventory and its dated evidence records are shipped on purpose.
 !/reports/completion-gaps.json
 !/reports/evidence/2026-11-03-*.json
+!/reports/evidence/2026-11-07-*.json
 # Real model weights for the manual real-model tier (docs/testing.md).
 # Downloaded by scripts/fetch_real_model.py; never committed.
 /models/

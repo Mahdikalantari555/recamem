@@ -1,0 +1,99 @@
+{
+  "tier": "offline",
+  "outcome": "passed",
+  "status": "offline and benchmark tiers of finish-implementation-and-close-gaps after the 2026-11-07 closure pass; real-model and grounding remain blocked",
+  "date": "2026-11-07",
+  "commit": "a6c0264110039b1d27de4ca8ba5f11b157e63138",
+  "command": "PYTHONPATH=. RECAMEM_ANCHOR=mock python -m pytest tests -q && PYTHONPATH=. python scripts/offline_gate.py && PYTHONPATH=. python scripts/check_completion_gaps.py --schema-only && PYTHONPATH=. python scripts/validate_openspec.py && PYTHONPATH=. python scripts/check_release_evidence.py && PYTHONPATH=. RECAMEM_ANCHOR=mock python scripts/verify_remote_sensing_e2e.py",
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.15.0+cu132",
+    "numpy": "2.4.6",
+    "pytest": "9.2.0",
+    "safetensors": "0.8.0",
+    "psutil": "7.2.2",
+    "onnxruntime": "absent",
+    "llama_cpp": "absent",
+    "hnswlib": "absent"
+  },
+  "configuration": {
+    "anchor": "mock (explicit, via tests/conftest.py and RECAMEM_ANCHOR)",
+    "seed": "per-test; tiny_corpus fixture uses 1337",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "hnswlib": "absent (exact fallback measured)"
+  },
+  "hardware": "sandbox Linux x86_64, 2 vCPU Xeon @ 2.60 GHz, CPU only, no GPU, 3 GB RAM",
+  "result": {
+    "passed": 1195,
+    "failed": 0,
+    "skipped": 5,
+    "duration_seconds": 159.32,
+    "collected": 1198,
+    "baseline": "reports/evidence/2026-11-03-offline-baseline.json (6 failed, 1062 passed, 2 skipped)",
+    "note": "The 2026-11-03 baseline had three real failures that are now fixed with regression tests: the remote-sensing E2E reload turn (chat intent) and the unmapped muir.py module."
+  },
+  "checks": [
+    {
+      "name": "full_offline_suite",
+      "command": "PYTHONPATH=. RECAMEM_ANCHOR=mock python -m pytest tests -q",
+      "outcome": "passed",
+      "passed": 1195,
+      "failed": 0,
+      "skipped": 5
+    },
+    {
+      "name": "offline_gate",
+      "command": "PYTHONPATH=. python scripts/offline_gate.py",
+      "outcome": "passed",
+      "checks": 7,
+      "failed": 0
+    },
+    {
+      "name": "completion_inventory_structure",
+      "command": "PYTHONPATH=. python scripts/check_completion_gaps.py --schema-only",
+      "outcome": "passed",
+      "closed_rows": 24,
+      "open_or_blocked_rows": 40
+    },
+    {
+      "name": "completion_inventory_strict",
+      "command": "PYTHONPATH=. python scripts/check_completion_gaps.py",
+      "outcome": "failed_by_design",
+      "exit_code": 1,
+      "reason": "40 rows are not closed; the strict mode is expected to fail while work remains"
+    },
+    {
+      "name": "openspec_structure",
+      "command": "PYTHONPATH=. python scripts/validate_openspec.py",
+      "outcome": "passed"
+    },
+    {
+      "name": "release_evidence_schema",
+      "command": "PYTHONPATH=. python scripts/check_release_evidence.py",
+      "outcome": "passed",
+      "entries": 489
+    },
+    {
+      "name": "release_evidence_complete",
+      "command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "outcome": "failed_by_design",
+      "exit_code": 1,
+      "reason": "grounding and real-model tiers have no passing evidence; edge-slm-optimization rows 1.4/2.5/5.2 stay partial and 4.3/4.4 stay blocked"
+    },
+    {
+      "name": "remote_sensing_e2e",
+      "command": "PYTHONPATH=. RECAMEM_ANCHOR=mock python scripts/verify_remote_sensing_e2e.py",
+      "outcome": "passed",
+      "gate": "ALL END-TO-END VERIFICATION CHECKS PASSED"
+    },
+    {
+      "name": "doctor",
+      "command": "PYTHONPATH=. python -m recamem.cli doctor --mock",
+      "outcome": "failed_by_design",
+      "exit_code": 1,
+      "reason": "explicit mock anchor and no named generation backend; doctor is specified to exit non-zero"
+    }
+  ],
+  "conclusion": "Every offline contract and the remote-sensing E2E pass with the explicit mock anchor. This is the offline tier only: no real-anchor, grounding or release-completion claim follows from it."
+}
