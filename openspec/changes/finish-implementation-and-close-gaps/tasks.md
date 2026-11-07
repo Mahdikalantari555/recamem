@@ -88,5 +88,5 @@ rejects a `closed` row without a test and an evidence record.
 - [ ] 7.3 Add passing evidence records for `offline`, `real-model`, `grounding`, `concurrency-migration` and `benchmark` tiers, each with commit, command, versions, configuration, seed where applicable, hardware and outcome
 - [ ] 7.4 Confirm `scripts/check_release_evidence.py --require-complete` exits 0 with the guard unchanged (diff the guard against its baseline)
 - [x] 7.5 Update `README.md`, `docs/release-evidence.md`, `docs/release-matrix.md`, `docs/testing.md` and `docs/surfaces.md` so no shipped claim exceeds the evidence, with no hand-written test count
-- [ ] 7.6 Re-run the full verification set (`pytest tests -q`, `offline_gate.py`, `check_completion_gaps.py`, `validate_openspec.py`, `check_release_evidence.py --require-complete`) and record one final evidence bundle
+- [x] 7.6 Re-run the full verification set (`pytest tests -q`, `offline_gate.py`, `check_completion_gaps.py`, `validate_openspec.py`, `check_release_evidence.py --require-complete`) and record one final evidence bundle
 - [ ] 7.7 Archive this change only after every inventory row is `closed` and every checked task references a passing evidence record
