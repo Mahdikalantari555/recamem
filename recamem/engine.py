@@ -37,6 +37,21 @@ from recamem.consolidation import (
 # ---------------------------------------------------------------------------
 _ANAPHORA_RE = re.compile(r"^(It|They|This|These|Those)\b")
 
+# A chat turn that opens with one of these words is a request for information,
+# never a declarative fact worth learning. ``Define remote sensing`` and
+# ``Can you define remote sensing?`` must follow the same path, otherwise the
+# engine silently teaches the question itself as a fact and the recall answer
+# disappears (regression: tests/test_chat_intent.py).
+QUERY_OPENERS = frozenset({
+    "what", "who", "whom", "whose", "when", "where", "why", "how", "which",
+    "is", "are", "am", "was", "were", "do", "does", "did", "can", "could",
+    "would", "should", "will", "shall", "may", "might", "must",
+    "tell", "explain", "describe", "summarize", "summarise", "define",
+    "list", "name", "state", "show", "give", "find", "cite", "quote",
+    "compare", "contrast", "calculate", "compute", "count", "translate",
+    "recommend", "suggest", "recall", "identify", "clarify",
+})
+
 # Function-predicate verb set for SVO slot extraction (kept deliberately coarse).
 _VERB_SET = {
     "is", "are", "was", "were", "be", "been", "being", "has", "have", "had",
@@ -1072,12 +1087,7 @@ class DroidEngine(nn.Module):
         words = re.findall(r"[a-z0-9]+", c)
         if not words:
             return True
-        if words[0] in {
-            "what", "who", "when", "where", "why", "how", "which",
-            "is", "are", "am", "was", "were", "do", "does", "did",
-            "can", "could", "would", "should", "tell", "explain",
-            "describe", "summarize",
-        }:
+        if words[0] in QUERY_OPENERS:
             return True
         return False
 
@@ -1120,7 +1130,7 @@ class DroidEngine(nn.Module):
 
         # Online conversational absorption: remember declarative statements from chat
         learned_in_chat = 0
-        if not is_explicit_teach and not lower.startswith(("/", "what", "who", "when", "where", "why", "how", "tell", "explain")):
+        if not is_explicit_teach and not lower.startswith("/"):
             declarative_props = [
                 p for p in self._split_propositions(user_message)
                 if not self._is_question_clause(p)

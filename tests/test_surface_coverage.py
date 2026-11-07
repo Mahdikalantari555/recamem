@@ -57,6 +57,7 @@ MODULE_TESTS = {
     "src/model/cores/diagonal_cores.py": "tests/test_core_candidates.py",
     "src/model/cores/ssm_core.py": "tests/test_core_candidates.py",
     "src/model/cores/matrix_cores.py": "tests/test_core_candidates.py",
+    "src/model/cores/muir.py": "tests/test_muir_cpu.py",
     "src/model/cores/attention_cores.py": "tests/test_core_candidates.py",
     "src/model/cores/registry.py": "tests/test_core_candidates.py",
     "src/model/cores/tokenizer.py": "tests/test_candidate_objectives.py",

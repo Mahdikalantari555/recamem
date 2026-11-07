@@ -15,11 +15,11 @@ import type { Health } from "./lib/schemas";
 const NAV: NavItem[] = [
   { id: "playground", label: "Playground", hint: "Prompt, answer, decision inspector", available: true },
   { id: "experiments", label: "Experiments", hint: "Recorded runs and jobs", available: true },
-  { id: "memory", label: "Memory Explorer", hint: "Browse stored facts", available: false },
-  { id: "benchmarks", label: "Benchmarks", hint: "LoCoMo / LongMemEval / DMR", available: false },
-  { id: "training", label: "Training", hint: "Continual learning jobs", available: false },
-  { id: "architecture", label: "Architecture Lab", hint: "Inspect the memory layout", available: false },
-  { id: "settings", label: "Settings", hint: "Anchor mode and storage", available: false },
+  { id: "memory", label: "Memory Explorer", hint: "Search and teach stored facts", available: true },
+  { id: "benchmarks", label: "Benchmarks", hint: "Benchmark status and recorded runs", available: true },
+  { id: "training", label: "Training", hint: "Jobs and their real status", available: true },
+  { id: "architecture", label: "Architecture Lab", hint: "Runtime and profile metadata", available: true },
+  { id: "settings", label: "Settings", hint: "Anchor mode and storage", available: true },
 ];
 
 export default function App() {

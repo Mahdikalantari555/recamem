@@ -72,10 +72,22 @@ recamem serve --web              # API + frontend on http://127.0.0.1:8000/
 the Python server. When `web/dist` is missing, `recamem serve --web` serves a page
 that says the UI is not built and prints the build command — no blank screen.
 
-Pages ship progressively (`docs/ui-design.md` §5): Playground (prompt, answer,
-decision inspector, cancel, Reset Memory) and a minimal Experiments view are
-live. Memory Explorer, Benchmarks, Training, Architecture Lab and Settings are
-listed in the nav as *not available yet* rather than showing invented data.
+Pages (`docs/ui-design.md` §5): Playground (prompt, answer, decision inspector,
+cancel, Reset Memory), Experiments, and — since 2026-11-07 — Memory Explorer,
+Benchmarks, Training, Architecture Lab and Settings. Each one is bound to a real
+endpoint and shows nothing when the endpoint returns nothing:
+
+| Page | Data source | Empty state |
+| --- | --- | --- |
+| Memory Explorer | `POST /api/v1/recall`, `POST /api/v1/teach` | "no stored fact matched" |
+| Benchmarks | `POST /api/v1/bench` status, `GET /api/v1/experiments` | backend `blocked` reason, empty run list |
+| Training | `GET /api/v1/jobs`, `POST /api/v1/jobs/{id}/cancel` | "no job has been created" |
+| Architecture Lab | `GET /api/v1/health`, `GET /api/v1/models` | "unavailable"/"no profile" |
+| Settings | `GET /api/v1/health` (read-only) | "unavailable" |
+
+`tests/test_web_surfaces.py` fails if an entry is disabled again, if a page stops
+calling the API client, if the former placeholder copy returns, or if a page
+hardcodes a measurement.
 
 Accessibility and motion: skip link, roving-tabindex tabs, `aria-current` on the
 active nav item, visible focus rings from the design tokens, `aria-live` status
@@ -95,8 +107,20 @@ recamem ui               # Tauri binary if built, otherwise the browser fallback
 
 The Rust toolchain and a platform WebView are not available in this repository's
 CI environment, so the shell is scaffolded and reviewed but not compiled here.
-`recamem ui` reports that honestly: `shell=browser` and
-`binary=... exists=no`.
+`recamem ui --dry-run` names the missing pieces instead of implying a desktop
+build:
+
+```text
+shell=browser
+dist=/…/web/dist exists=yes
+binary=/…/src-tauri/target/release/recamem exists=no
+toolchain=missing cargo,rustc,pkg-config and a platform WebView
+url=http://127.0.0.1:8000/
+```
+
+On 2026-11-07 the sandbox reports exactly that: `cargo`, `rustc` and
+`pkg-config` are all absent and no WebView can be linked. `shell=tauri` is
+printed only when the binary actually exists on disk.
 
 ## Definition of done (design §20)
 
@@ -109,10 +133,15 @@ CI environment, so the shell is scaffolded and reviewed but not compiled here.
 - [x] Core install works without `[web]`, Node or Rust.
 - [x] API is loopback-only and rejects path/name escapes.
 - [x] Reduced motion, keyboard navigation and visible focus.
-- [ ] `recamem ui` opening the Tauri window — blocked here: no Rust toolchain
-      or WebView (`recamem ui --dry-run` prints `shell=browser`).
-- [ ] `recamem doctor` exit 0 — blocked here: no ONNX weights, so the anchor is
-      the explicit mock and doctor correctly exits 1.
+- [ ] `recamem ui` opening the Tauri window — blocked here: no `cargo`/`rustc`,
+      no `pkg-config`, no platform WebView; `recamem ui --dry-run` prints
+      `shell=browser` plus `toolchain=missing cargo,rustc,pkg-config and a
+      platform WebView`.
+- [ ] `recamem doctor` exit 0 — blocked here: no ONNX weights and no named
+      generation backend, so the anchor is the explicit mock and doctor
+      correctly exits 1. The command now names the expected anchor path and the
+      `RECAMEM_GGUF`/`RECAMEM_RTU_CHECKPOINT` variables it looked for, and
+      `_doctor_ready` pins "exit 0 only with a real anchor and a ready backend".
 
 ## Svelte companion app (additive surface)
 

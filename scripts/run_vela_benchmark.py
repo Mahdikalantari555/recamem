@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
 import os
 import re
@@ -13,10 +15,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-MODEL_PATH = os.environ.get(
-    "RECAMEM_GGUF",
-    "/mnt/d/AI/.lmstudio/models/OpenBMB/MiniCPM5-2B-Q4_K_M/MiniCPM5-2B-Q4_K_M.gguf",
-)
+# A model is named by the caller or by the environment; a machine-local path is
+# never a default (model/gguf-backend: "Provenance reference is portable").
+MODEL_PATH = os.environ.get("RECAMEM_GGUF", "")
+
+# What condition C needs in order to isolate the plastic-memory contribution.
+REQUIRED_CAPABILITY = "hidden_injection"
 
 TRAINING_FACTS = [
     ("T1", "In the fictional Vela greenhouse, every bed has a soil code and a growth phase. Decisions are governed only by the rules recorded for Vela. Do not apply real-world agricultural knowledge to Vela."),
@@ -142,69 +146,186 @@ def score_categories(results):
     return cats
 
 
-def main():
-    from recamem.gguf import GgufBackend
+def probe_hidden_injection(backend) -> dict:
+    """Ask the backend what it can do before running condition C.
 
-    if not Path(MODEL_PATH).exists():
-        print(f"BLOCKED: model not found at {MODEL_PATH}")
-        sys.exit(1)
+    ``docs/backend-contracts.md`` defines the capability contract; a backend
+    that cannot inject a hidden trace makes C and D identical in effect, so the
+    probe runs first and a missing capability is reported as ``blocked`` rather
+    than turned into a score (evaluation/vela-benchmark-poc).
+    """
+    from recamem.backend_contracts import capabilities_of
 
-    backend = GgufBackend(model_path=MODEL_PATH, n_ctx=1024, n_gpu_layers=0, verbose=False, n_threads=16, n_batch=512)
-    all_facts_text = [t for _, t in TRAINING_FACTS]
+    caps = capabilities_of(backend)
+    supported = bool(getattr(caps, "hidden", False))
+    return {
+        "backend": getattr(caps, "name", None) or type(backend).__name__,
+        "required_capability": REQUIRED_CAPABILITY,
+        "hidden_injection": supported,
+        "kv_priming": bool(getattr(caps, "kv_prime", False)),
+        "capabilities": caps.to_dict(),
+        "outcome": "passed" if supported else "blocked",
+        "missing_capability": None if supported else REQUIRED_CAPABILITY,
+    }
 
-    report = {
-        "model_path": MODEL_PATH,
+
+def _sha256(path: str) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _write_report(payload: dict, out_path: Path) -> Path:
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(payload, indent=2))
+    return out_path
+
+
+def _blocked(reason: str, *, model_path: str = "", missing: str = "") -> dict:
+    return {
+        "outcome": "blocked",
+        "reason": reason,
+        "missing_artifact": missing,
+        "model_path": model_path,
         "commit": _git_commit(),
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "conditions": {},
+        "claim": (
+            "none: no condition C-versus-D comparison was run, so no "
+            "plastic-memory effect is claimed"
+        ),
     }
 
-    # Condition A
-    print("Running condition A...")
-    res_a = run_condition("A", all_facts_text, backend=backend)
-    report["conditions"]["A"] = {"results": res_a, "categories": score_categories(res_a)}
 
-    # Condition B
-    print("Running condition B...")
-    res_b = run_condition("B", all_facts_text, backend=backend)
-    report["conditions"]["B"] = {"results": res_b, "categories": score_categories(res_b)}
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--model", default=MODEL_PATH,
+                        help="local GGUF artifact (default: $RECAMEM_GGUF)")
+    parser.add_argument("--probe-only", action="store_true",
+                        help="report the hidden-injection capability and exit")
+    parser.add_argument("--out", type=Path, default=None, help="report path")
+    args = parser.parse_args(argv)
 
-    # Condition C
-    print("Running condition C...")
+    model_path = args.model or ""
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    kind = "capability" if args.probe_only else "poc"
+    out_path = args.out or (ROOT / "reports" / f"vela-{kind}-{stamp}.json")
+
+    if not model_path:
+        payload = _blocked(
+            "no model configured; pass --model or set RECAMEM_GGUF",
+            missing="a named local GGUF artifact",
+        )
+    elif not Path(model_path).is_file():
+        payload = _blocked(
+            f"model not found at {model_path}", model_path=model_path, missing=model_path
+        )
+    else:
+        try:
+            from recamem.gguf import GgufBackend
+        except ImportError as exc:
+            payload = _blocked(
+                f"llama-cpp-python is not importable: {exc}",
+                model_path=model_path,
+                missing="llama-cpp-python binding",
+            )
+        else:
+            backend = GgufBackend(
+                model_path=model_path, n_ctx=1024, n_gpu_layers=0,
+                verbose=False, n_threads=16, n_batch=512,
+            )
+            probe = probe_hidden_injection(backend)
+            provenance = {
+                "model_path": model_path,
+                "model_sha256": _sha256(model_path),
+                "backend": probe["backend"],
+                "seed": 0,
+                "temperature": 0.0,
+                "context_budget": 1024,
+                "commit": _git_commit(),
+                "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+            if args.probe_only or probe["outcome"] != "passed":
+                payload = {
+                    **provenance,
+                    "outcome": probe["outcome"],
+                    "probe": probe,
+                    "reason": (
+                        "hidden injection supported"
+                        if probe["outcome"] == "passed"
+                        else (
+                            f"backend {probe['backend']} does not support "
+                            f"{REQUIRED_CAPABILITY}; prompt-only C-versus-D cannot "
+                            "isolate the plastic-memory contribution"
+                        )
+                    ),
+                    "conditions": {},
+                    "claim": (
+                        "none: no plastic-memory effect is claimed from a "
+                        "prompt-only comparison"
+                    ),
+                }
+            else:
+                payload = _run_conditions(backend, provenance, probe)
+
+    print(f"outcome={payload['outcome']}")
+    if payload["outcome"] != "passed":
+        print(f"reason={payload['reason']}")
+    print(f"Report written: {_write_report(payload, out_path)}")
+    return 0 if payload["outcome"] == "passed" else 1
+
+
+def _run_conditions(backend, provenance: dict, probe: dict) -> dict:
+    all_facts_text = [t for _, t in TRAINING_FACTS]
+    report = {**provenance, "outcome": "passed", "probe": probe, "conditions": {}}
+
+    for cond in ("A", "B"):
+        print(f"Running condition {cond}...")
+        res = run_condition(cond, all_facts_text, backend=backend)
+        report["conditions"][cond] = {"results": res, "categories": score_categories(res)}
+
     from recamem.engine import DroidEngine
+    print("Running condition C...")
     engine_c = DroidEngine(name="vela-c", gguf_backend=backend)
     for _, text in TRAINING_FACTS:
         engine_c.teach(text, source="vela")
     res_c = run_condition("C", all_facts_text, engine=engine_c, backend=backend)
-    report["conditions"]["C"] = {"results": res_c, "categories": score_categories(res_c), "rtu_enabled": True}
+    report["conditions"]["C"] = {
+        "results": res_c, "categories": score_categories(res_c),
+        "rtu_enabled": True, "injection": probe["required_capability"],
+    }
 
-    # Condition D (RTU frozen: skip plastic updates)
     print("Running condition D...")
     import recamem.engine as _eng
+
     class _NoOpUpdate:
         applied_lr = 0.0
         scheduling_supported = True
+
     _orig_apply = _eng.apply_plastic_update
     _eng.apply_plastic_update = lambda *a, **k: _NoOpUpdate()
-    engine_d = DroidEngine(name="vela-d", gguf_backend=backend)
-    for _, text in TRAINING_FACTS:
-        engine_d.teach(text, source="vela")
-    _eng.apply_plastic_update = _orig_apply
+    try:
+        engine_d = DroidEngine(name="vela-d", gguf_backend=backend)
+        for _, text in TRAINING_FACTS:
+            engine_d.teach(text, source="vela")
+    finally:
+        _eng.apply_plastic_update = _orig_apply
     res_d = run_condition("D", all_facts_text, engine=engine_d, backend=backend)
-    report["conditions"]["D"] = {"results": res_d, "categories": score_categories(res_d), "rtu_enabled": False}
+    report["conditions"]["D"] = {
+        "results": res_d, "categories": score_categories(res_d),
+        "rtu_enabled": False, "injection": probe["required_capability"],
+    }
 
-    # Condition E
     print("Running condition E...")
     res_e = run_condition("E", all_facts_text, backend=backend)
     report["conditions"]["E"] = {"results": res_e, "categories": score_categories(res_e)}
 
-    out_path = ROOT / "reports" / f"vela-poc-{int(time.time())}.json"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(report, indent=2))
-    print(f"Report written: {out_path}")
-    for cid in ["A", "B", "C", "D", "E"]:
-        tot = report["conditions"][cid]["categories"]["TOTAL"]
-        print(f"Condition {cid}: {tot['correct']}/{tot['total']} = {tot['accuracy']:.3f}")
+    for cid in ("A", "B", "C", "D", "E"):
+        total = report["conditions"][cid]["categories"]["TOTAL"]
+        print(f"Condition {cid}: {total['correct']}/{total['total']} = {total['accuracy']:.3f}")
+    return report
 
 
 def _git_commit():
@@ -216,4 +337,4 @@ def _git_commit():
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

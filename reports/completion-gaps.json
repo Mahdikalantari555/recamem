@@ -435,7 +435,7 @@
     },
     {
       "id": "O-008",
-      "source": "docs/surfaces.md#line-112",
+      "source": "docs/surfaces.md#line-136",
       "owner": "finish-implementation-and-close-gaps#7.1",
       "tier": "offline",
       "status": "blocked",
@@ -448,7 +448,7 @@
     },
     {
       "id": "O-009",
-      "source": "docs/surfaces.md#line-114",
+      "source": "docs/surfaces.md#line-140",
       "owner": "finish-implementation-and-close-gaps#7.1",
       "tier": "offline",
       "status": "blocked",

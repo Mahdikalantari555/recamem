@@ -11,6 +11,16 @@ future reasoning is influenced by past experience rather than simple retrieval.
 Every claim is measured, not asserted. See `plans/09_recamem_plan.md`,
 `reports/recamem-core-selection.md` and `docs/`.
 
+**Measured status (2026-11-07).** The `offline` and `benchmark` tiers pass on a
+2 vCPU CPU-only runner (counts live in `reports/evidence/`, not in this file). `real-model` and `grounding`
+are **blocked**: no ONNX MiniLM weights, no GGUF artifact, no trained
+`RTU_CHECKPOINT`, so `recamem doctor` exits 1 and
+`scripts/check_release_evidence.py --require-complete` exits 1 by design. The
+Vela PoC measured **no advantage** for memory over ordinary retrieval
+(`docs/vela-poc-results-v2.md`); several latency/size targets are still missed
+and are published as `partial` in `docs/release-matrix.md`. No release claim
+exceeds the evidence.
+
 ## Install
 
 ```bash

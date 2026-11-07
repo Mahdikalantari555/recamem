@@ -41,6 +41,20 @@ The default mode is expected to fail during implementation. It is a second,
 independent guard: it does **not** replace `--require-complete` above and it
 must not be weakened to merge.
 
+## Current state (2026-11-07)
+
+| Tier | Record | Outcome |
+| --- | --- | --- |
+| offline | `reports/evidence/2026-11-07-offline-closure-2.json` | passed |
+| benchmark | `reports/evidence/2026-11-07-workload-benchmarks.json`, `2026-11-07-continual-learning.json` | passed |
+| concurrency-migration | `reports/evidence/2026-10-21-concurrency-migration.json` | passed (not re-run) |
+| grounding | `reports/evidence/2026-11-07-grounding-blocked.json` | blocked — no trained `RTU_CHECKPOINT` |
+| real-model | `reports/evidence/2026-11-07-real-model-blocked.json` | blocked — no ONNX/GGUF weights, no `llama-cpp-python` |
+
+`--require-complete` therefore exits 1 and completion is **not** declared. Five
+`edge-slm-optimization` rows remain `partial`/`blocked`; the completion inventory
+reports 62 gaps with the open rows named in `reports/completion-gaps.json`.
+
 ## Row schema
 
 - `id`: exact `source-path#task-id` or `source-path#requirement-name` from inventory.
