@@ -69,3 +69,15 @@ export function jobEvents(id: string, onEvent: (event: Record<string, unknown>) 
   };
   return () => source.close();
 }
+
+export const nativeGenerate = (jobId: string, prompt: string) =>
+  post<{ response: string; memory_used: boolean }>('/native/generate', { job_id: jobId, prompt, max_tokens: 32 });
+
+export type LearningStatus = { status: 'blocked' | 'paused'; enabled: boolean; threads: number; reason: string; pending: number; training_active: boolean; resource_limits_enforced: boolean };
+export const getLearning = () => request<LearningStatus>('/learning');
+export const configureLearning = (enabled: boolean, threads: number) =>
+  post<LearningStatus>('/learning/configure', { enabled, threads });
+
+export const nativeMemoryGenerate = (jobId: string, prompt: string) =>
+  post<{ response: string; status: string; memory_used: boolean; model_weights_updated: boolean; evidence: { id?: number; text: string; source?: string; source_url?: string; retrieval_store?: string; source_cluster_ids?: number[] }[]; warning: string }>(
+    '/native/memory-generate', { job_id: jobId, prompt, max_tokens: 32 });

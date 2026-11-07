@@ -63,9 +63,9 @@ def _memory_payload(engine, prompt: str, top_k: int = 3) -> list[Dict[str, Any]]
     return rows
 
 
-def run_once(prompt: str, engine, *, mode: str = "chat", profile: Optional[str] = None,
-             top_k: int = 3) -> Dict[str, Any]:
-    """Execute one prompt and return the JSON-serialisable payload."""
+def _run_once_impl(prompt: str, engine, *, mode: str = "chat", profile: Optional[str] = None,
+                   top_k: int = 3) -> Dict[str, Any]:
+    """Existing runner behavior used by the shared session."""
     if not isinstance(prompt, str) or not prompt.strip():
         raise RunnerError("prompt must be a non-empty string")
     if mode not in {"chat", "recall", "teach"}:
@@ -99,6 +99,14 @@ def run_once(prompt: str, engine, *, mode: str = "chat", profile: Optional[str] 
     payload["memory"] = _memory_payload(engine, prompt, top_k=top_k)
     payload["response"] = engine.chat(prompt)
     return payload
+
+
+def run_once(prompt: str, engine, *, mode: str = "chat", profile: Optional[str] = None,
+             top_k: int = 3) -> Dict[str, Any]:
+    """Execute a request through the shared session with the legacy contract."""
+    from recamem.agent_session import AgentSession
+
+    return AgentSession(engine, profile=profile).handle(prompt, mode=mode, top_k=top_k)
 
 
 def run_loop(engine, stdin: Iterable[str], stdout: TextIO, *, mode: str = "chat",

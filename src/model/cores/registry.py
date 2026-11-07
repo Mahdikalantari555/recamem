@@ -9,6 +9,7 @@ import torch.nn as nn
 from src.model.cores.attention_cores import NeedleSANCore, SoftmaxTransformerCore
 from src.model.cores.contracts import CandidateLM
 from src.model.cores.diagonal_cores import StackedGatedRTUCore, UnstackedRTUCore
+from src.model.cores.muir import MuirCore
 from src.model.cores.matrix_cores import GatedDeltaMatrixCore, RetNetDecayMatrixCore
 from src.model.cores.param_matcher import (
     ALL_CORE_IDS,
@@ -127,6 +128,12 @@ def build_core(
             conv_kernel=conv_kernel,
             chunk_size=chunk_size,
         )
+    if cid == "C7":
+        if not use_conv:
+            raise ValueError("C7 requires causal convolution")
+        return MuirCore(d_model=d_model, n_layers=n_layers, n_heads=n_heads,
+                        d_ff=d_ff, conv_kernel=conv_kernel,
+                        readout=cfg_dict.get("readout", "dynamic"), gate_ranks=cfg_dict.get("gate_ranks"))
     if cid == "C5":
         return NeedleSANCore(
             d_model=d_model,

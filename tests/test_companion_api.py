@@ -161,3 +161,71 @@ def test_companion_search_action_and_chat_remembering(server):
     assert "searched" in res["result"] or "available" in res["result"]
 
 
+
+
+def test_cpu_smoke_training_and_native_generation(server):
+    import time
+    status, job = _post(server, '/api/v1/jobs', {
+        'kind': 'train', 'dataset': 'cpu_smoke', 'core': 'C7', 'lm_tokens': 32,
+        'threads': 1, 'd_model': 8, 'n_layers': 1, 'n_heads': 2, 'd_ff': 16,
+        'vocab_size': 256, 'seq_len': 16, 'batch_size': 1, 'grad_accum': 1,
+        'checkpoint_every': 100, 'seed': 1337,
+    })
+    assert status == 202, job
+    for _ in range(150):
+        _, current = _get(server, '/api/v1/jobs/' + job['id'])
+        if current['status'] in ('done', 'failed', 'cancelled'):
+            break
+        time.sleep(.1)
+    assert current['status'] == 'done', current
+    assert current['result']['report']['dataset_meta']['kind'] == 'smoke_fixture'
+    status, answer = _post(server, '/api/v1/native/generate', {
+        'job_id': job['id'], 'prompt': 'A seed', 'max_tokens': 2})
+    assert status == 200 and answer['memory_used'] is False
+    assert isinstance(answer['response'], str)
+    status, _ = _post(server, '/api/v1/native/generate', {
+        'job_id': job['id'], 'prompt': 'A seed', 'max_tokens': 1000})
+    assert status == 400
+
+
+def test_learning_status_and_configuration_are_honest(server):
+    status, result = _get(server, '/api/v1/learning')
+    assert status == 200 and result['status'] == 'blocked'
+    assert result['training_active'] is False
+    status, result = _post(server, '/api/v1/learning/configure', {'enabled': False, 'threads': 2})
+    assert status == 200 and result['status'] == 'paused'
+    status, result = _get(server, '/api/v1/learning')
+    assert result['threads'] == 2 and not result['enabled']
+    status, result = _post(server, '/api/v1/learning/configure', {'enabled': True, 'threads': True})
+    assert status == 400
+
+
+def test_native_memory_generation_requires_real_job_and_returns_evidence(server):
+    import time
+
+    status, result = _post(server, '/api/v1/native/memory-generate', {'job_id': 'missing', 'prompt': 'hi'})
+    assert status == 404
+    status, job = _post(server, '/api/v1/jobs', {
+        'kind': 'train', 'dataset': 'cpu_smoke', 'core': 'C4', 'lm_tokens': 32,
+        'd_model': 8, 'n_layers': 1, 'n_heads': 2, 'd_ff': 16, 'vocab_size': 256,
+        'seq_len': 16, 'batch_size': 1, 'grad_accum': 1, 'threads': 1, 'seed': 1337,
+    })
+    assert status == 202
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
+        _, current = _get(server, f"/api/v1/jobs/{job['id']}")
+        if current['status'] in ('done', 'failed', 'cancelled'):
+            break
+        time.sleep(0.1)
+    assert current['status'] == 'done', current
+    status, _ = _post(server, '/api/v1/teach', {'text': 'The calibration constant is 0.98.'})
+    assert status == 200
+    status, result = _post(server, '/api/v1/native/memory-generate',
+                           {'job_id': job['id'], 'prompt': 'What is the calibration constant?', 'max_tokens': 3})
+    assert status == 200, result
+    assert result['memory_used'] is True and result['model_weights_updated'] is False
+    assert result['evidence'][0]['text'] == 'The calibration constant is 0.98.'
+    assert result['evidence'][0]['source'] == 'user_text'
+    status, result = _post(server, '/api/v1/native/memory-generate',
+                           {'job_id': job['id'], 'prompt': 'hello', 'max_tokens': True})
+    assert status == 400

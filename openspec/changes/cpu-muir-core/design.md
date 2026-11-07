@@ -1,0 +1,11 @@
+# Design
+
+Implement a new candidate in `src/model/cores/`, using the existing `SequenceCore`, `CandidateLM`, registry and parameter-matching contracts. Follow the paper's equations and Appendix J: causal depthwise Q/K/V convolution with SiLU, per-head normalized queries and keys, channel-wise decay, separate low-rank erase/write/output gates, and static plus optional dynamic query readout gain. Allocate smaller configurable ranks to decay and erase than write/output/readout; rank values must be valid for tiny widths rather than blindly copying 64/128. Preserve the paper's ordering and explicitly document any departure. Width savings only count if the FFN is expanded under an actual measured parameter budget.
+
+A simple sequential PyTorch implementation is the correctness oracle, not a claim of fast CPU training. For each head store the key-by-value state and causal convolution history; reflect both in state reporting. Explicitly translate orientation if adapting C4's value-by-key layout. FP32 reference and CPU step/sequence semantics first; maintain residual/FFN and layer-hook behavior. A later parallel CPU implementation may follow the paper's boundary-pivoted division-free method but must compare outputs, final state and gradients to a float64 sequential oracle including extreme decays and partial chunks; CPU performance must be measured, not inferred from TPU results.
+
+Make new weights and config explicit and versioned. No implicit C4 migration or selected-manifest modification. Preserve externally supplied states, initial nonzero states, batch handling, chunk continuation, convolution cache, and reset behavior. Ensure no dependence on online RTRL. Store precision and hardware details in evidence.
+
+Evaluate Muir against C4 at matched actual parameter counts and shared data, tokenizer, token and compute budgets, seeds, and inference settings. Measure training time, memory, language loss and recall; compare no/static/dynamic readout and report variance. CPU speed is a release decision, not a promise. The paper's static and dynamic readouts have differing retention trade-offs, so retain both as experimental choices.
+
+Reference: https://arxiv.org/html/2611.08376v1 (CC BY 4.0). Attribute any code actually adapted from Appendix J and verify license compatibility.

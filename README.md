@@ -22,6 +22,45 @@ pip install -e ".[web]"        # + REST/web surface (fastapi, uvicorn)
 pip install -e ".[dev]"        # everything the test tiers use
 ```
 
+## Run Learning Studio on CPU
+
+From a checkout, Python 3.10 or newer is required. A virtual environment keeps
+RecaMem's dependencies separate from your system Python:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate              # Windows: .venv\Scripts\activate
+python -m pip install --upgrade pip
+python -m pip install -e .             # CPU use; no GGUF or llama.cpp required
+recamem companion --no-browser
+```
+
+Open **http://127.0.0.1:8000/**. The default server is loopback-only; stop it
+with Ctrl+C. The committed Svelte build is served by the same Python process,
+so Node is not needed just to run it. To rebuild after changing the UI, install
+Node.js and run `npm --prefix companion ci && npm --prefix companion run build`,
+then start the companion again.
+
+In the Learning Studio, press **Start training**; the basic view selects a
+fixed C4 smoke configuration automatically. The default run prepares the included self-authored smoke corpus, trains a tiny
+model on the CPU and shows real progress; open **Evaluation** to inspect the
+held-out loss and try a generated sample. The corpus and run are *only a
+pipeline test*: they do not produce a useful language model or demonstrate
+language understanding. Muir is an experimental sequential reference, not the
+paper's optimized accelerator kernel. Model weights are not included.
+
+**Memory & companion** uses the existing RecaMem engine and normally needs the
+real ONNX anchor configured and its model files installed; missing weights are
+reported as unavailable. `pip install -e ".[onnx]"` installs the optional ONNX
+runtime dependencies, not the weights. See `docs/real-model-runbook.md` and run
+`recamem doctor` for expected paths. For testing only, mock embeddings must be
+explicitly selected; they are not a real language or embedding model. The CPU
+native checkpoint sampler and normal memory-backed chat are separate paths; an
+experimental evaluation button can include recalled evidence. Training a
+checkpoint does not automatically attach it to the companion or update its
+memory. See `docs/cpu-muir-learning.md` for CLI training, checkpoints and current
+limitations.
+
 ## Quick start
 
 ```bash
@@ -103,12 +142,30 @@ See `docs/cloud-training.md`. Train on Colab and sync via HuggingFace Hub:
 ## Companion app
 
 `recamem companion` serves the committed `companion/dist` build next to the
-versioned API, with no Node or weights required at runtime. It offers an
-online chat with a virtual pet whose state comes from measured memory signals,
-a training view that runs `scripts/train_lm.py` as a real cancellable job, and
-a provenance-backed "best checkpoint" picker. See `docs/surfaces.md`.
+versioned API, without Node at runtime. Learning Studio offers CPU smoke
+training and evaluation; the companion chat and memory features require a
+working configured anchor and backend. The advanced training view runs
+`scripts/train_lm.py` as a cancellable job and includes a provenance-backed
+checkpoint picker. See `docs/surfaces.md` and `docs/cpu-muir-learning.md`.
 
 ```bash
 recamem companion --dry-run
 npm --prefix companion install && npm --prefix companion run build
 ```
+
+### Direction: independent background learning
+
+The intended direction is a CPU-local model that automatically selects compatible
+model and tokenizer settings and learns incrementally in the background from
+approved sources, with resource limits, status, evaluation and rollback. This is
+**not implemented yet**: the Learning Studio currently runs a manually started,
+bounded smoke test, not continuous learning. It does not learn while the app or
+machine is stopped. Web research remains separately opt-in and unimplemented.
+The plan and remaining tasks are in
+`openspec/changes/autonomous-incremental-learning/`.
+
+The initial background-learning control plane persists a per-profile preference
+and shows **blocked** or **paused** in the Studio. A consent and reference-only
+intake ledger exists as a Python primitive, but is not connected to teaching or
+a training worker. Its saved thread setting is not yet enforced. No queued
+record should be interpreted as a trained model update.
