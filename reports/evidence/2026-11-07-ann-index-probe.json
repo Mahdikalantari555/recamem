@@ -1,0 +1,95 @@
+{
+  "tier": "benchmark",
+  "outcome": "partial",
+  "commit": "0ff833fd9002029ffa6a4064ced003c62b04aa12",
+  "command": "PYTHONPATH=. python scripts/bench_ann_prototype.py",
+  "configuration": {
+    "index": "numpy IVF probe (not shipped; recamem does not import this file)",
+    "nlist": 256,
+    "probes": [
+      4,
+      8,
+      16,
+      32
+    ],
+    "corpus": "uniform random unit vectors, i.e. the same mock embedding distribution the workload benchmark measures",
+    "note": "hnswlib is unavailable here (no Python.h and no C++ toolchain), so this is the declared alternative required by task 5.2"
+  },
+  "measurements": [
+    {
+      "facts": 50000,
+      "dim": 384,
+      "nlist": 256,
+      "build_seconds": 1.24,
+      "queries": 40,
+      "probes": [
+        {
+          "nprobe": 4,
+          "p50_ms": 0.297,
+          "p95_ms": 0.369,
+          "recall_at_5": 0.29,
+          "mean_candidates": 781
+        },
+        {
+          "nprobe": 8,
+          "p50_ms": 0.561,
+          "p95_ms": 0.606,
+          "recall_at_5": 0.32,
+          "mean_candidates": 1562
+        },
+        {
+          "nprobe": 16,
+          "p50_ms": 1.069,
+          "p95_ms": 1.154,
+          "recall_at_5": 0.375,
+          "mean_candidates": 3125
+        },
+        {
+          "nprobe": 32,
+          "p50_ms": 2.011,
+          "p95_ms": 3.409,
+          "recall_at_5": 0.445,
+          "mean_candidates": 6250
+        }
+      ]
+    },
+    {
+      "facts": 100000,
+      "dim": 384,
+      "nlist": 256,
+      "build_seconds": 2.35,
+      "queries": 40,
+      "probes": [
+        {
+          "nprobe": 4,
+          "p50_ms": 0.546,
+          "p95_ms": 0.627,
+          "recall_at_5": 0.25,
+          "mean_candidates": 1562
+        },
+        {
+          "nprobe": 8,
+          "p50_ms": 1.013,
+          "p95_ms": 1.073,
+          "recall_at_5": 0.275,
+          "mean_candidates": 3125
+        },
+        {
+          "nprobe": 16,
+          "p50_ms": 1.906,
+          "p95_ms": 2.126,
+          "recall_at_5": 0.35,
+          "mean_candidates": 6250
+        },
+        {
+          "nprobe": 32,
+          "p50_ms": 4.547,
+          "p95_ms": 7.783,
+          "recall_at_5": 0.45,
+          "mean_candidates": 12500
+        }
+      ]
+    }
+  ],
+  "verdict": "recall@5 stays far below the 0.95 contract at every probe that fits the 5 ms budget, because uniformly random 384-D vectors have no cluster structure for a coarse quantizer to exploit. The exact scan stays the shipped path."
+}

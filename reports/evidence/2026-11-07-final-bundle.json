@@ -1,0 +1,80 @@
+{
+  "tier": "offline",
+  "outcome": "passed",
+  "kind": "final verification bundle",
+  "date": "2026-11-07",
+  "commit": "a6c0264110039b1d27de4ca8ba5f11b157e63138",
+  "records": [
+    "reports/evidence/2026-11-07-offline-closure-2.json",
+    "reports/evidence/2026-11-07-workload-benchmarks.json",
+    "reports/evidence/2026-11-07-continual-learning.json",
+    "reports/evidence/2026-11-07-vela-capability-probe.json",
+    "reports/evidence/2026-11-07-grounding-blocked.json",
+    "reports/evidence/2026-11-07-real-model-blocked.json"
+  ],
+  "commands": [
+    {
+      "command": "pytest tests -q",
+      "exit_code": 0,
+      "outcome": "passed"
+    },
+    {
+      "command": "scripts/offline_gate.py",
+      "exit_code": 0,
+      "outcome": "passed"
+    },
+    {
+      "command": "scripts/check_completion_gaps.py --schema-only",
+      "exit_code": 0,
+      "outcome": "passed"
+    },
+    {
+      "command": "scripts/check_completion_gaps.py",
+      "exit_code": 1,
+      "outcome": "expected: 40 rows open or blocked"
+    },
+    {
+      "command": "scripts/validate_openspec.py",
+      "exit_code": 0,
+      "outcome": "passed"
+    },
+    {
+      "command": "scripts/check_release_evidence.py",
+      "exit_code": 0,
+      "outcome": "passed"
+    },
+    {
+      "command": "scripts/check_release_evidence.py --require-complete",
+      "exit_code": 1,
+      "outcome": "expected: grounding and real-model tiers blocked"
+    },
+    {
+      "command": "scripts/verify_remote_sensing_e2e.py",
+      "exit_code": 0,
+      "outcome": "passed with the explicit mock anchor"
+    },
+    {
+      "command": "scripts/run_vela_benchmark.py --probe-only",
+      "exit_code": 1,
+      "outcome": "blocked: no GGUF artifact"
+    },
+    {
+      "command": "recamem doctor --mock",
+      "exit_code": 1,
+      "outcome": "expected: mock anchor"
+    }
+  ],
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.15.0+cu132",
+    "numpy": "2.4.6",
+    "pytest": "9.2.0",
+    "safetensors": "0.8.0",
+    "psutil": "7.2.2",
+    "onnxruntime": "absent",
+    "llama_cpp": "absent",
+    "hnswlib": "absent"
+  },
+  "hardware": "sandbox Linux x86_64, 2 vCPU Xeon @ 2.60 GHz, CPU only, no GPU, 3 GB RAM",
+  "conclusion": "The offline and benchmark tiers pass. Completion is NOT declared: the grounding and real-model tiers are blocked, 40 inventory rows are open or blocked, and the release gate exits 1 by design."
+}

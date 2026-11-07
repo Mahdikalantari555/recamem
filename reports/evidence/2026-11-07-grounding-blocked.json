@@ -1,0 +1,29 @@
+{
+  "tier": "grounding",
+  "outcome": "blocked",
+  "date": "2026-11-07",
+  "commit": "a6c0264110039b1d27de4ca8ba5f11b157e63138",
+  "command": "RTU_CHECKPOINT=<trained checkpoint> PYTHONPATH=. python scripts/verify_remote_sensing_e2e.py",
+  "reason": "No trained RTU_CHECKPOINT exists in this checkout (droids/ is git-ignored and no script/train_byte_rtu.py run produced one here), so the grounding tier cannot be measured.",
+  "observed": {
+    "mock_anchor_e2e": "passed (offline tier only): teaching, recall, continual-learning and reload checks",
+    "anchor": "mock (explicit)",
+    "trained_checkpoint": null
+  },
+  "missing_artifacts": [
+    "droids/<name>/rtu.safetensors (a trained Byte-RTU checkpoint)"
+  ],
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.15.0+cu132",
+    "numpy": "2.4.6",
+    "pytest": "9.2.0",
+    "safetensors": "0.8.0",
+    "psutil": "7.2.2",
+    "onnxruntime": "absent",
+    "llama_cpp": "absent",
+    "hnswlib": "absent"
+  },
+  "hardware": "sandbox Linux x86_64, 2 vCPU Xeon @ 2.60 GHz, CPU only, no GPU, 3 GB RAM",
+  "conclusion": "A mock-anchor E2E pass is an offline result; the grounding tier stays blocked and is not reported as passed."
+}

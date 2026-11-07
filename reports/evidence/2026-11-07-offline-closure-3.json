@@ -1,0 +1,58 @@
+{
+  "tier": "offline",
+  "outcome": "passed",
+  "kind": "offline verification",
+  "date": "2026-11-07",
+  "commit": "6188ce07f720a89b887df875622f38095c985d9f",
+  "commands": [
+    {
+      "command": "PYTHONPATH=. RECAMEM_ANCHOR=mock pytest tests -q",
+      "exit_code": 0,
+      "outcome": "passed",
+      "summary": "1214 passed, 5 skipped"
+    },
+    {
+      "command": "PYTHONPATH=. python scripts/offline_gate.py",
+      "exit_code": 0,
+      "outcome": "passed",
+      "summary": "gate=pass checks=7 failed=0"
+    },
+    {
+      "command": "PYTHONPATH=. python scripts/verify_remote_sensing_e2e.py",
+      "exit_code": 0,
+      "outcome": "passed with the explicit mock anchor"
+    },
+    {
+      "command": "PYTHONPATH=. python -m recamem.cli doctor",
+      "exit_code": 1,
+      "outcome": "expected: mock anchor and no real generation backend"
+    },
+    {
+      "command": "PYTHONPATH=. python scripts/check_completion_gaps.py --schema-only",
+      "exit_code": 0,
+      "outcome": "passed",
+      "summary": "65 gaps: 27 closed, 38 open/blocked"
+    },
+    {
+      "command": "PYTHONPATH=. python scripts/validate_openspec.py",
+      "exit_code": 0,
+      "outcome": "passed"
+    },
+    {
+      "command": "openspec validate --all",
+      "exit_code": 0,
+      "outcome": "passed",
+      "summary": "72 passed"
+    },
+    {
+      "command": "PYTHONPATH=. python scripts/check_release_evidence.py",
+      "exit_code": 0,
+      "outcome": "passed"
+    },
+    {
+      "command": "PYTHONPATH=. python scripts/check_release_evidence.py --require-complete",
+      "exit_code": 1,
+      "outcome": "expected: grounding and real-model tiers blocked"
+    }
+  ]
+}

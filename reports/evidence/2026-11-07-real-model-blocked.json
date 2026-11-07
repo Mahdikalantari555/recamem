@@ -1,0 +1,32 @@
+{
+  "tier": "real-model",
+  "outcome": "blocked",
+  "date": "2026-11-07",
+  "commit": "a6c0264110039b1d27de4ca8ba5f11b157e63138",
+  "command": "recamem doctor --mock ; pytest tests -q -k \"onnx or gguf\"",
+  "reason": "No real ONNX MiniLM weights and no GGUF artifact exist on this host, and llama-cpp-python is not installed. The sandbox has no route to the Hugging Face model host, so nothing was downloaded.",
+  "missing_artifacts": [
+    "~/.cache/huggingface/Xenova/all-MiniLM-L6-v2/onnx/model_quantized.onnx",
+    "a named local .gguf artifact (RECAMEM_GGUF)",
+    "llama-cpp-python binding",
+    "onnxruntime + transformers extras"
+  ],
+  "observed": {
+    "doctor_anchor": "mock (explicit) -> exit 1",
+    "doctor_generation_backend": "none",
+    "anchor_error": "Model not found in /home/user/.cache/huggingface; expected .../model_quantized.onnx"
+  },
+  "environment": {
+    "python": "3.11.2",
+    "torch": "2.15.0+cu132",
+    "numpy": "2.4.6",
+    "pytest": "9.2.0",
+    "safetensors": "0.8.0",
+    "psutil": "7.2.2",
+    "onnxruntime": "absent",
+    "llama_cpp": "absent",
+    "hnswlib": "absent"
+  },
+  "hardware": "sandbox Linux x86_64, 2 vCPU Xeon @ 2.60 GHz, CPU only, no GPU, 3 GB RAM",
+  "conclusion": "real-model tier remains blocked; no real-anchor or real-generation claim is made."
+}
