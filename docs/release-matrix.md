@@ -13,7 +13,7 @@ Evidence records live in `reports/evidence/`; the machine-readable ledger is
 
 | Tier | Status | Evidence | What it covers |
 | --- | --- | --- | --- |
-| offline | **passing** | `2026-11-07-offline-closure-2.json` | full `pytest tests -q` plus both gates and the remote-sensing E2E; exact counts live in the record, not in prose |
+| offline | **passing** | `2026-11-07-offline-closure-3.json`, `2026-11-07-final-bundle-2.json` | full `pytest tests -q` plus both gates and the remote-sensing E2E; exact counts live in the record, not in prose |
 | benchmark | **passing** | `2026-11-07-after-optimizations-workload.json`, `2026-11-07-continual-learning.json`, `2026-11-07-delta-erase-scale-sweep.json` | every workload below, re-measured on the declared 2 vCPU runner with mock embeddings; the pre-optimisation run is kept as `2026-11-07-workload-benchmarks.json` |
 | concurrency-migration | **passing** | `2026-10-21-concurrency-migration.json` | profile locks, stream ownership, migrations (not re-run on 2026-11-07) |
 | grounding | **blocked** | `2026-11-07-grounding-blocked.json` | needs a trained `RTU_CHECKPOINT`; generation quality cannot be asserted from random weights |

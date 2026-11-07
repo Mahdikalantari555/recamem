@@ -45,7 +45,7 @@ must not be weakened to merge.
 
 | Tier | Record | Outcome |
 | --- | --- | --- |
-| offline | `reports/evidence/2026-11-07-offline-closure-2.json` | passed |
+| offline | `reports/evidence/2026-11-07-offline-closure-3.json` (bundle: `2026-11-07-final-bundle-2.json`) | passed |
 | benchmark | `reports/evidence/2026-11-07-after-optimizations-workload.json`, `2026-11-07-continual-learning.json`, `2026-11-07-delta-erase-scale-sweep.json`, `2026-11-07-ann-index-probe.json` | passed (the pre-optimisation run stays as `2026-11-07-workload-benchmarks.json`) |
 | concurrency-migration | `reports/evidence/2026-10-21-concurrency-migration.json` | passed (not re-run) |
 | grounding | `reports/evidence/2026-11-07-grounding-blocked.json` | blocked — no trained `RTU_CHECKPOINT` |
