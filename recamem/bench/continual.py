@@ -38,6 +38,10 @@ class BenchmarkConfig:
     density: float = 0.4
     ewc_lambda: float = 200.0
     ewc_lr: float = 0.02
+    # Fraction of the stored component along the written key that the delta
+    # rule erases.  1.0 is the canonical rule; the retention/fidelity sweep in
+    # docs/release-matrix.md reports both configurations.
+    delta_erase_scale: float = 1.0
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -52,6 +56,7 @@ class BenchmarkConfig:
             "density": self.density,
             "ewc_lambda": self.ewc_lambda,
             "ewc_lr": self.ewc_lr,
+            "delta_erase_scale": self.delta_erase_scale,
         }
 
 
@@ -105,6 +110,14 @@ class _MemorySystem:
     def active_set(self, keys: torch.Tensor) -> Optional[torch.Tensor]:
         return None
 
+    def read_of(self, key: torch.Tensor) -> torch.Tensor:
+        """Memory response to ``key`` in the value space used for scoring."""
+        raise NotImplementedError
+
+    def target_of(self, value: torch.Tensor) -> torch.Tensor:
+        """The value-space target a correct read is compared against."""
+        raise NotImplementedError
+
 
 class DeltaSystem(_MemorySystem):
     def __init__(self, config: BenchmarkConfig, sparse: bool = False):
@@ -113,10 +126,14 @@ class DeltaSystem(_MemorySystem):
         self.config = config
         self.sparse = sparse
         if sparse:
-            self.adapter = SparseDeltaAdapter(dim=config.dim)
+            self.adapter = SparseDeltaAdapter(
+                dim=config.dim, erase_scale=config.delta_erase_scale
+            )
             self.adapter.set_beta_constant(config.delta_gate)
         else:
-            self.adapter = DeltaPlasticAdapter(dim=config.dim)
+            self.adapter = DeltaPlasticAdapter(
+                dim=config.dim, erase_scale=config.delta_erase_scale
+            )
             self.adapter.set_beta_constant(config.delta_gate)
         self.name = "sparse_delta" if sparse else "delta_rtu"
         self.update_latencies: List[float] = []
@@ -149,6 +166,16 @@ class DeltaSystem(_MemorySystem):
                 target = self.adapter.W_V(value)
             total += float(F.cosine_similarity(read, target, dim=0).item())
         return total / max(1, len(keys))
+
+    def read_of(self, key):
+        if self.sparse:
+            return self.adapter.delta.read(self.adapter.coder.encode(key))
+        return self.adapter.read(key)
+
+    def target_of(self, value):
+        if self.sparse:
+            return self.adapter.delta.W_V(self.adapter.coder.encode(value))
+        return self.adapter.W_V(value)
 
     def active_set(self, keys):
         if not self.sparse:
@@ -206,6 +233,12 @@ class EWCSystem(_MemorySystem):
         predictions = keys @ self.weight.detach().T
         return float(F.cosine_similarity(predictions, values, dim=1).mean().item())
 
+    def read_of(self, key):
+        return key @ self.weight.detach().T
+
+    def target_of(self, value):
+        return value
+
 
 def compute_memory_loss(best: Dict[int, float],
                         final: Dict[int, float]) -> float:
@@ -230,6 +263,29 @@ def _measure_retention(system: _MemorySystem, seen: List[Dict],
     for task in seen:
         scores[task["task_id"]] = system.score(task["eval_keys"], task["eval_values"])
     return scores
+
+
+def pair_recall(system: "_MemorySystem", tasks: List[Dict]) -> Optional[float]:
+    """Top-1 association recall: does a read pick its own value out of the task?
+
+    Memory loss measures how far a read drifts from its value; it does not say
+    whether the read still identifies *which* association it belongs to.  For
+    each evaluation pattern this scores the read against every training value
+    of the same task and checks that its own association ranks first.  Chance
+    for 40 patterns per task is 0.025.
+    """
+    if not hasattr(system, "read_of"):
+        return None
+    correct = total = 0
+    for task in tasks:
+        targets = [system.target_of(value).detach() for value in task["train_values"]]
+        for key, value in zip(task["eval_keys"], task["eval_values"]):
+            read = system.read_of(key).detach()
+            sims = [float(F.cosine_similarity(read, target, dim=0)) for target in targets]
+            expected = int((task["train_values"] - value).abs().sum(dim=1).argmin())
+            correct += int(max(range(len(sims)), key=lambda i: sims[i]) == expected)
+            total += 1
+    return correct / total if total else None
 
 
 def _run_system(system: _MemorySystem, tasks: List[Dict],
@@ -288,6 +344,7 @@ def _run_system(system: _MemorySystem, tasks: List[Dict],
         "final_scores": {str(k): v for k, v in sorted(final.items())},
         "best_scores": {str(k): v for k, v in sorted(best.items())},
         "history": history,
+        "pair_recall": pair_recall(system, tasks),
         "interference_overlap": overlap,
         "code_utilization": utilization,
         "update_latency_ms_p95": p95,
@@ -328,6 +385,10 @@ def run_benchmark(config: Optional[BenchmarkConfig] = None) -> Dict[str, Any]:
     results["summary"] = {
         "code_utilization": results["sparse_delta"]["code_utilization"],
         "delta_memory_loss": delta_loss,
+        "delta_pair_recall": results["delta_rtu"]["pair_recall"],
+        "sparse_pair_recall": results["sparse_delta"]["pair_recall"],
+        "ewc_pair_recall": results["ewc"]["pair_recall"],
+        "delta_erase_scale": config.delta_erase_scale,
         "sparse_memory_loss": sparse_loss,
         "ewc_memory_loss": ewc_loss,
         "delta_target": 0.10,

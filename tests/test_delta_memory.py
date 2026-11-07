@@ -453,3 +453,62 @@ def test_custom_adapter_registry_name_survives_create_save_load_resave(tmp_path)
         assert resaved["plastic_adapter"] == registry_name
     finally:
         registry_module._ADAPTER_REGISTRY.pop(registry_name, None)
+
+
+# --------------------------------------------------------------------------- #
+# Erase scale (retention vs overwrite fidelity, documented in the matrix)
+# --------------------------------------------------------------------------- #
+def test_erase_scale_defaults_to_the_canonical_rule():
+    adapter = DeltaPlasticAdapter(dim=64)
+    assert adapter.erase_scale == 1.0
+    for bad in (0.0, -0.1, 1.5):
+        with pytest.raises(ValueError):
+            DeltaPlasticAdapter(dim=64, erase_scale=bad)
+
+
+def test_erase_scale_one_still_replaces_the_association_exactly():
+    adapter = DeltaPlasticAdapter(dim=64, erase_scale=1.0)
+    adapter.set_beta_constant(1.0)
+    key = torch.randn(64)
+    v1, v2 = torch.randn(64), torch.randn(64)
+    adapter.write_association(key, v1)
+    adapter.write_association(key, v2)
+    read = adapter.read(key)
+    assert F.cosine_similarity(read, adapter.W_V(v2), dim=0) > 0.999
+    assert F.cosine_similarity(read, adapter.W_V(v1), dim=0) < 0.05
+
+
+def test_partial_erase_retains_the_old_association():
+    """A lower erase scale keeps part of the old association on purpose."""
+    adapter = DeltaPlasticAdapter(dim=64, erase_scale=0.25)
+    adapter.set_beta_constant(1.0)
+    key = torch.randn(64)
+    v1, v2 = torch.randn(64), torch.randn(64)
+    adapter.write_association(key, v1)
+    first = adapter.read(key)
+    adapter.write_association(key, v2)
+    read = adapter.read(key)
+    assert F.cosine_similarity(first, adapter.W_V(v1), dim=0) > 0.999
+    # Mostly the new value, but a quarter of the old component survives:
+    # for orthogonal values ~0.8 with the new one and ~0.6 with the old.
+    assert F.cosine_similarity(read, adapter.W_V(v2), dim=0) > 0.75
+    assert F.cosine_similarity(read, adapter.W_V(v1), dim=0) > 0.4
+
+
+def test_partial_erase_repeated_writes_stay_bounded():
+    """Steady state is v / erase_scale, so 20 repeats stay inside 10x."""
+    adapter = DeltaPlasticAdapter(dim=64, erase_scale=0.25)
+    adapter.set_beta_constant(1.0)
+    key, value = torch.randn(64), torch.randn(64)
+    for _ in range(20):
+        adapter.write_association(key, value)
+    expected = adapter.W_V(value)
+    assert F.cosine_similarity(adapter.read(key), expected, dim=0) > 0.999
+    assert float(adapter.S.norm()) < 10 * float(expected.detach().norm())
+
+
+def test_benchmark_config_records_the_erase_scale():
+    from src.model.continual_bench import BenchmarkConfig
+
+    assert BenchmarkConfig().to_dict()["delta_erase_scale"] == 1.0
+    assert BenchmarkConfig(delta_erase_scale=0.25).to_dict()["delta_erase_scale"] == 0.25

@@ -194,6 +194,26 @@ def _is_contradiction(new_text: str, old_text: str) -> bool:
     return slot_clash or polarity
 
 
+def _is_repeat_of(new_text: str, old_text: str, min_overlap: float = 0.6) -> bool:
+    """True when ``new_text`` restates ``old_text`` instead of adding content.
+
+    Dense similarity alone is not enough: sentences that differ only in a
+    quantity (``line 0`` vs ``line 10``) embed almost identically under a
+    bag-of-words anchor but are different facts. Numbers must match exactly
+    and the content tokens must overlap at `min_overlap` (Jaccard).
+    """
+    new_tokens = set(_tokens(new_text))
+    old_tokens = set(_tokens(old_text))
+    if not new_tokens or not old_tokens:
+        return False
+    new_numbers = {t for t in new_tokens if any(ch.isdigit() for ch in t)}
+    old_numbers = {t for t in old_tokens if any(ch.isdigit() for ch in t)}
+    if new_numbers != old_numbers:
+        return False
+    union = new_tokens | old_tokens
+    return len(new_tokens & old_tokens) / len(union) >= min_overlap
+
+
 def _policy_update_targets(text: str):
     """Return (soil, phase) tokens if text is an explicit policy update.
 
@@ -575,6 +595,10 @@ class DroidEngine(nn.Module):
         self.base_lr = 0.05
         self.last_query: Optional[str] = None
         self.surprise_threshold = surprise_threshold
+        # A proposition that the store already holds at this cosine similarity
+        # is not new knowledge: it updates plasticity and access counters but
+        # does not get a second episodic row.
+        self.duplicate_threshold = 0.95
         self.K_max = K_max
         self.test_time_training = test_time_training
         self.ttt_steps_this_session = 0
@@ -824,6 +848,7 @@ class DroidEngine(nn.Module):
         novelty_losses = []
         superseded_total = 0
         episodic_absorbed = 0
+        duplicates_skipped = 0
         surprises = []
         update_results = []
         inserted_ids = []
@@ -852,24 +877,41 @@ class DroidEngine(nn.Module):
             )
             update_results.append(update_result)
             if should_insert:
-                conflicts = []
+                similar: List[Dict[str, Any]] = []
                 try:
-                    conflicts = [c["id"] for c in self.knowledge.find_similar(e_i, 0.65) if _is_contradiction(prop, c["text"]) and _allow_supersede(prop, c["text"])]
+                    similar = self.knowledge.find_similar(e_i, 0.65)
                 except Exception:  # noqa: BLE001
-                    pass
-                try:
-                    new_id = self.knowledge.insert_fact(
-                        prop, source, time.time(), self.step_count + i, float(surprise), e_i,
-                        origin=origin, source_url=source_url, source_query=source_query,
-                    )
-                    episodic_absorbed += 1
-                    inserted_ids.append(new_id)
-                    inserted_props.append(prop)
-                    for old_id in conflicts:
-                        self.knowledge.supersede(old_id, new_id)
-                    superseded_total += len(conflicts)
-                except Exception as e:
-                    pass
+                    similar = []
+                conflicts = [c["id"] for c in similar
+                             if _is_contradiction(prop, c["text"]) and _allow_supersede(prop, c["text"])]
+                # The surprise gate sees prediction error, which stays high on a
+                # fresh plastic state even when the fact is already stored. The
+                # store's own content is the other half of "is this new?"; a
+                # near-duplicate keeps its plasticity update and access counters
+                # but does not create a second episodic row.
+                near_duplicate = any(
+                    float(hit.get("similarity") or hit.get("dense_similarity") or 0.0)
+                    >= self.duplicate_threshold
+                    and _is_repeat_of(prop, hit.get("text") or "")
+                    for hit in similar
+                )
+                if near_duplicate:
+                    duplicates_skipped += 1
+                else:
+                    try:
+                        new_id = self.knowledge.insert_fact(
+                            prop, source, time.time(), self.step_count + i,
+                            float(surprise), e_i,
+                            origin=origin, source_url=source_url, source_query=source_query,
+                        )
+                        episodic_absorbed += 1
+                        inserted_ids.append(new_id)
+                        inserted_props.append(prop)
+                        for old_id in conflicts:
+                            self.knowledge.supersede(old_id, new_id)
+                        superseded_total += len(conflicts)
+                    except Exception:
+                        pass
         # Explicit policy-update pass: supersede prior rules sharing soil+phase.
         for prop, new_id in zip(inserted_props, inserted_ids):
             target = _policy_update_targets(prop)
@@ -922,6 +964,8 @@ class DroidEngine(nn.Module):
             "status": "learned",
             "propositions": len(propositions),
             "episodic_absorbed": episodic_absorbed,
+            "episodic_skipped_duplicate": duplicates_skipped,
+            "duplicate_threshold": self.duplicate_threshold,
             "elapsed_ms": elapsed * 1000,
             "avg_novelty": avg_novelty,
             "avg_surprise": avg_surprise,
