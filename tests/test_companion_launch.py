@@ -40,3 +40,19 @@ def test_committed_dist_is_servable_without_node():
     html = (dist / "index.html").read_text()
     assert "RecaMem Companion" in html
     assert "http://127.0.0.1" not in html and "localhost" not in html.lower()
+
+
+def test_committed_dist_ships_the_observatory():
+    """The 3D studio must be in the build the Python server actually serves."""
+    dist = ROOT / "companion" / "dist"
+    html = (dist / "index.html").read_text()
+    assert "RecaMem Companion" in html
+    bundles = list((dist / "assets").glob("*.js"))
+    assert bundles, "no JS bundle in the committed dist"
+    text = "\n".join(path.read_text(errors="ignore") for path in bundles)
+    # The scene is created lazily from the observatory component; the label and
+    # the no-WebGL copy must ship, and three.js must come from the same origin.
+    assert "learning observatory" in text.lower()
+    assert "Accessible 2D" in text
+    assert "cdn.jsdelivr" not in text and "unpkg.com" not in text
+    assert any(path.name.startswith("three.module") for path in (dist / "assets").glob("*.js"))
