@@ -182,3 +182,10 @@ progress is computed from parsed `tokens=` output, not elapsed time, and with no
 real corpus the server uses a deterministic fixture corpus labelled
 `dataset_source=fixture` — a pipeline smoke run, never a language-learning
 result. `scripts/run_companion.py` verifies the whole surface headlessly.
+
+The companion also ships an optional **Learning observatory** view: a Three.js
+scene of the records above (memory count, recorded actions, jobs) with an
+equivalent semantic list and table. It reads only the same-origin GET endpoints,
+never starts training, and degrades to the 2D table when WebGL is unavailable.
+Provenance, budgets, the Threlte decision and the unverified items are in
+`docs/three-dimensional-studio.md`.

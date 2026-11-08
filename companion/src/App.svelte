@@ -3,9 +3,10 @@
   import ChatPanel from './components/ChatPanel.svelte';
   import Pet from './components/Pet.svelte';
   import TrainingView from './components/TrainingView.svelte';
+  import Observatory from './components/Observatory.svelte';
   import { getState } from './lib/api';
   import type { CompanionState, Pet as PetState } from './lib/types';
-  let view = $state<'workspace' | 'companion' | 'advanced'>('workspace');
+  let view = $state<'workspace' | 'companion' | 'advanced' | 'observatory'>('workspace');
   let engineState = $state<CompanionState | null>(null);
   let pet = $state<PetState | null>(null);
   let factId = $state<number | null>(null);
@@ -18,7 +19,16 @@
 </script>
 <a class="skip-link" href="#main">Skip to content</a>
 {#if view === 'workspace'}
-  <CpuWorkspace openCompanion={() => view = 'companion'} openAdvanced={() => view = 'advanced'} />
+  <CpuWorkspace
+    openCompanion={() => view = 'companion'}
+    openAdvanced={() => view = 'advanced'}
+    openObservatory={() => view = 'observatory'}
+  />
+{:else if view === 'observatory'}
+  <div class="companion-page" id="main">
+    <button class="back-button" onclick={() => view = 'workspace'}>← Back to learning studio</button>
+    <Observatory />
+  </div>
 {:else if view === 'advanced'}
   <div class="companion-page" id="main"><button class="back-button" onclick={() => view = 'workspace'}>← Back to learning studio</button><div class="companion-title"><div class="eyebrow">✳ &nbsp; ADVANCED TRAINING</div><h1>Advanced experiments.</h1><p>Existing training, checkpoint and hub tools.</p></div><TrainingView onChanged={refresh} /></div>
 {:else}

@@ -3,7 +3,11 @@
   import type { Job, Health } from '../lib/types';
   import LearningConstellation from './LearningConstellation.svelte';
   import type { LearningStatus } from '../lib/api';
-  let { openCompanion, openAdvanced }: { openCompanion: () => void; openAdvanced: () => void } = $props();
+  let { openCompanion, openAdvanced, openObservatory }: {
+    openCompanion: () => void;
+    openAdvanced: () => void;
+    openObservatory: () => void;
+  } = $props();
   let threads = $state(1);
   let job = $state<Job | null>(null);
   let jobs = $state<Job[]>([]);
@@ -83,6 +87,7 @@
       <button class:active={section === 'datasets'} onclick={() => section = 'datasets'}><span>▤</span> Datasets</button>
       <button class:active={section === 'evaluation'} onclick={() => section = 'evaluation'}><span>◈</span> Evaluation</button>
       <button onclick={openCompanion}><span>✧</span> Memory & companion <span class="arrow">↗</span></button>
+      <button onclick={openObservatory}><span>◍</span> Learning observatory <span class="arrow">↗</span></button>
       <button onclick={openAdvanced}><span>⚙</span> Advanced training <span class="arrow">↗</span></button>
     </div>
     <div class="side-bottom"><div class="side-cpu"><span class="cpu-icon">▦</span><div><b>Local workspace</b><small>CPU execution</small></div><span class="online-dot"></span></div><p>Built for learning, one<br />step at a time.</p></div>
